@@ -3098,19 +3098,7 @@ window.addEventListener('load',function wmApplyDevActualFunctionLock_(){
 </div>
 
 <script>
-window.WORDMATE_APPS_SCRIPT_URL = (function wmResolveDevAppsScriptUrl(){
-  const injectedUrl = String(window.WM_APPS_SCRIPT_URL || window.WM_EXEC_URL || '').trim();
-  if(injectedUrl) return injectedUrl;
-  const host = String(window.location.hostname || '').toLowerCase();
-  const path = String(window.location.pathname || '').toLowerCase();
-  if(host.includes('word-mate-test') || /^\/test(?:-|\/|$)/.test(path)){
-    return 'https://script.google.com/macros/s/AKfycbzRlU8mLizcOC3Ycmy1B_hHRIQ6PzRs3Kit_Eaf-pCtdFzjKs04w5KwFsmB5OFAs9dH/exec';
-  }
-  if(host.includes('word-mate-real') || /^\/dev(?:\/|$)/.test(path)){
-    return 'https://script.google.com/macros/s/AKfycbw_x_YPqGjjYeUJ0HIEVhGBbbw4TBDeAjJ3aNUQJix_my_j4kAsnm48IxfIm5ai60gu/exec';
-  }
-  throw new Error('DEV TEST/REAL 접속 환경을 판정할 수 없습니다.');
-})();
+window.WORDMATE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzRlU8mLizcOC3Ycmy1B_hHRIQ6PzRs3Kit_Eaf-pCtdFzjKs04w5KwFsmB5OFAs9dH/exec';
 
 (function(){
   function root(){
@@ -4734,24 +4722,18 @@ window.WORDMATE_APPS_SCRIPT_URL = (function wmResolveDevAppsScriptUrl(){
    🧪 WORD MATE Study.html - TEST / REAL 전환 설정
    ============================================================
 
-   ✅ TEST/REAL 파일은 동일하며 현재 접속 주소 또는 서버 주입값으로 자동 선택합니다.
+   ✅ 리얼부스로 옮길 때 실제로 수정하는 곳은 아래 한 줄뿐입니다.
 
-   ⚠️ 테스트/리얼 전환 목적으로 파일을 수정하지 않습니다.
+      테스트부스 적용: const WM_ENV = 'TEST';
+      리얼부스 적용: const WM_ENV = 'REAL';
+
+   ⚠️ 아래 WM_ENV 한 줄 외에는 테스트/리얼 전환 목적으로 수정하지 않습니다.
    ⚠️ 이 파일의 모든 URL 호출은 반드시 WM_CONFIG 또는 아래 자동 선택 상수를 사용합니다.
    ⚠️ 공통 코드 아래에서 URL을 직접 문자열로 새로 쓰지 않습니다.
-   🚨 배포 체크: 동일 파일 적용 → Script Properties WM_ENV 확인 → 배포 → 기능 테스트
+   🚨 리얼 배포 체크: ① WM_ENV TEST → REAL 변경 → ② 저장(Ctrl+S) → ③ 배포(Deploy) → ④ 리얼 테스트 완료
 ============================================================ -->
 <script>
-function wmDetectBoothEnvironment(){
-  const injected = String(window.WM_RUNTIME_ENV || '').trim().toUpperCase();
-  if(injected === 'TEST' || injected === 'REAL') return injected;
-  const host = String(window.location.hostname || '').toLowerCase();
-  const path = String(window.location.pathname || '').toLowerCase();
-  if(host.includes('word-mate-test') || /^\/test(?:-|\/|$)/.test(path)) return 'TEST';
-  if(host.includes('word-mate-real') || /^\/(?:64|67|68|lms|dev)(?:\/|$)/.test(path)) return 'REAL';
-  throw new Error('TEST/REAL 접속 환경을 판정할 수 없습니다.');
-}
-const WM_ENV = wmDetectBoothEnvironment();
+const WM_ENV = 'TEST';
 
 /* ============================================================
    🔒 자동 선택 + 공통 확인 영역 - 수정 금지하기

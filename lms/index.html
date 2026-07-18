@@ -54,16 +54,7 @@
      *
      * 기능 추가 및 구조 변경은 새로운 LOCK 버전에서만 진행한다.
      ****************************************************************************************************/
-function wmDetectBoothEnvironment(){
-  const injected = String(window.WM_RUNTIME_ENV || '').trim().toUpperCase();
-  if(injected === 'TEST' || injected === 'REAL') return injected;
-  const host = String(window.location.hostname || '').toLowerCase();
-  const path = String(window.location.pathname || '').toLowerCase();
-  if(host.includes('word-mate-test') || /^\/test(?:-|\/|$)/.test(path)) return 'TEST';
-  if(host.includes('word-mate-real') || /^\/(?:64|67|68|lms|dev)(?:\/|$)/.test(path)) return 'REAL';
-  throw new Error('TEST/REAL 접속 환경을 판정할 수 없습니다.');
-}
-const WM_ENV = wmDetectBoothEnvironment();
+    const WM_ENV = 'TEST';
 
     const WM_ENV_CONFIG = {
       TEST: {
