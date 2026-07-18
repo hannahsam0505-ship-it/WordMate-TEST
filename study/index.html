@@ -2004,6 +2004,25 @@ function wmStudySetDataCacheKey(setId){
 
 const WM_STUDY_SET_FETCH_PROMISES = {};
 
+async function wmDiagnoseStudyJsonpFailure(url, reason){
+  const info = {
+    reason:String(reason || ''),
+    apiUrl:String(API_URL || ''),
+    requestUrl:String(url || ''),
+    online:navigator.onLine,
+    pageUrl:String(window.location.href || '')
+  };
+  try{
+    const response = await fetch(url, {method:'GET', cache:'no-store', credentials:'omit', redirect:'follow'});
+    info.httpStatus = response.status;
+    info.contentType = String(response.headers.get('content-type') || '');
+    info.responseStart = String((await response.text()) || '').slice(0, 180);
+  }catch(error){
+    info.fetchError = String(error && error.message ? error.message : error);
+  }
+  return 'JSONP DIAG ' + JSON.stringify(info);
+}
+
 function wmReadStudySetDataCache(setId){
   try{
     const parsed = JSON.parse(localStorage.getItem(wmStudySetDataCacheKey(setId)) || "null");
@@ -2040,9 +2059,23 @@ function wmFetchStudySetData(setId){
       + "&studentId=" + encodeURIComponent(WM_STUDENT_ID)
       + "&sessionToken=" + encodeURIComponent(WM_SESSION_TOKEN)
       + "&callback=" + encodeURIComponent(callbackName) + "&t=" + Date.now();
-    script.onerror = function(){ if(finished) return; finished=true; cleanup(); delete WM_STUDY_SET_FETCH_PROMISES[key]; reject(new Error("JSONP load error")); };
+    script.onerror = async function(){
+      if(finished) return;
+      finished=true;
+      const failedUrl = String(script && script.src || '');
+      cleanup();
+      delete WM_STUDY_SET_FETCH_PROMISES[key];
+      reject(new Error(await wmDiagnoseStudyJsonpFailure(failedUrl, 'script.onerror')));
+    };
     document.body.appendChild(script);
-    setTimeout(function(){ if(finished) return; finished=true; cleanup(); delete WM_STUDY_SET_FETCH_PROMISES[key]; reject(new Error("JSONP timeout")); }, 10000);
+    setTimeout(async function(){
+      if(finished) return;
+      finished=true;
+      const failedUrl = String(script && script.src || '');
+      cleanup();
+      delete WM_STUDY_SET_FETCH_PROMISES[key];
+      reject(new Error(await wmDiagnoseStudyJsonpFailure(failedUrl, 'timeout')));
+    }, 10000);
   });
   return WM_STUDY_SET_FETCH_PROMISES[key];
 }
