@@ -2498,47 +2498,19 @@ async function wmLoadLearningProgress(){
   }
 
   try{
-    const callbackName = "wmProgressCallback_" + Date.now();
-    const result = await new Promise((resolve, reject)=>{
-      let finished = false;
-      let script = null;
-
-      function cleanup(){
-        try{ delete window[callbackName]; }catch(e){ window[callbackName] = undefined; }
-        if(script && script.parentNode){ script.parentNode.removeChild(script); }
-      }
-
-      window[callbackName] = function(response){
-        if(finished) return;
-        finished = true;
-        cleanup();
-        resolve(response);
-      };
-
-      script = document.createElement("script");
-      script.src = WM_PROGRESS_API_URL
-        + "&callback=" + encodeURIComponent(callbackName)
-        + "&studentId=" + encodeURIComponent(WM_STUDENT_ID)
-        + "&set_id=" + encodeURIComponent(currentSetId)
-        + "&sessionToken=" + encodeURIComponent(WM_SESSION_TOKEN)
-        + "&t=" + Date.now();
-
-      script.onerror = function(){
-        if(finished) return;
-        finished = true;
-        cleanup();
-        reject(new Error("progress JSONP load error"));
-      };
-
-      document.body.appendChild(script);
-
-      setTimeout(function(){
-        if(finished) return;
-        finished = true;
-        cleanup();
-        reject(new Error("progress JSONP timeout"));
-      }, 12000);
+    const requestUrl = WM_PROGRESS_API_URL
+      + "&studentId=" + encodeURIComponent(WM_STUDENT_ID)
+      + "&set_id=" + encodeURIComponent(currentSetId)
+      + "&sessionToken=" + encodeURIComponent(WM_SESSION_TOKEN)
+      + "&t=" + Date.now();
+    const response = await fetch(requestUrl, {
+      method:"GET",
+      cache:"no-store",
+      credentials:"omit",
+      redirect:"follow"
     });
+    if(!response.ok) throw new Error("progress HTTP " + response.status);
+    const result = await response.json();
 
     if(result && (result.sessionExpired === true || result.sessionValid === false || result.valid === false)){
       wmStudyShowSessionExpiredModal();
