@@ -2575,6 +2575,14 @@ function wmApplyResumeProgress(progress){
      학습 종료/재접속 후 이어학습하면 같은 Set_ID라도 새 행 INSERT가 되게 합니다. */
   WM_RECORD_SESSION_ID = "";
 
+  /* WM_NEW_SET_STEP1_STALE_COMPLETED_STEPS_BLOCK_20260720_V1
+     현재진행_DB가 다음 세트의 Step1을 가리킬 때 이전 세트의 Step 시간으로 만든
+     completedSteps를 적용하지 않습니다. Step1이 공식 현재값이면 반드시 새 세트로 시작합니다. */
+  if(progressStep === "STEP1"){
+    completedSteps = [];
+    return 1;
+  }
+
   if(progressStep === "COMPLETE"){
     completedSteps = [];
     return 1;
