@@ -101,19 +101,30 @@ const WM_LMS_URL = WM_CONFIG.LMS_URL;
 <div id="wm-test-booth-banner">🧪 TEST 부스</div>
 <style>
   #wm-test-booth-banner{
-    width:100%;
+    position:fixed;
+    top:8px;
+    left:8px;
+    z-index:9998;
+    width:114px;
+    height:38px;
     box-sizing:border-box;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+    border-radius:8px;
     background:#dc2626;
     color:#fff;
     text-align:center;
-    font-size:28px;
+    font-size:14px;
     font-weight:900;
-    line-height:1.25;
-    padding:14px 10px;
+    line-height:1;
+    padding:0 8px;
     letter-spacing:-0.02em;
+    white-space:nowrap;
+    pointer-events:none;
+    box-shadow:0 3px 10px rgba(0,0,0,.18);
     font-family:Pretendard, "Noto Sans KR", Arial, sans-serif;
-    position:relative;
-    z-index:999999;
   }
 </style>
 <script>
@@ -530,7 +541,7 @@ const WM_LMS_URL = WM_CONFIG.LMS_URL;
     position:fixed;
     top:14px;
     right:14px;
-    z-index:9999;
+    z-index:10001;
     width:auto;
     min-width:44px;
     height:44px;
@@ -2019,31 +2030,70 @@ function wmWriteStudySetDataCache(setId, data){
 function wmFetchStudySetData(setId){
   const key = String(setId || "").trim().toUpperCase();
   if(WM_STUDY_SET_FETCH_PROMISES[key]) return WM_STUDY_SET_FETCH_PROMISES[key];
+
   WM_STUDY_SET_FETCH_PROMISES[key] = new Promise((resolve, reject)=>{
-    const callbackName = "wmSetFastCallback_" + Date.now() + "_" + Math.random().toString(36).slice(2);
-    let finished = false;
-    let script = null;
-    function cleanup(){
-      try{ delete window[callbackName]; }catch(e){ window[callbackName] = undefined; }
-      if(script && script.parentNode) script.parentNode.removeChild(script);
+    let attempt = 0;
+    const maxAttempts = 2;
+
+    function runAttempt(){
+      attempt++;
+      const callbackName = "wmSetFastCallback_" + Date.now() + "_" + attempt + "_" + Math.random().toString(36).slice(2);
+      let finished = false;
+      let script = document.createElement("script");
+      let timeoutId = null;
+
+      function cleanup(){
+        if(timeoutId) clearTimeout(timeoutId);
+        try{ delete window[callbackName]; }catch(e){ window[callbackName] = undefined; }
+        if(script && script.parentNode) script.parentNode.removeChild(script);
+      }
+
+      function retryOrReject(reason){
+        if(finished) return;
+        finished = true;
+        cleanup();
+        if(attempt < maxAttempts){
+          setTimeout(runAttempt, 350);
+          return;
+        }
+        delete WM_STUDY_SET_FETCH_PROMISES[key];
+        reject(new Error("SET_DATA_JSONP_" + reason));
+      }
+
+      window[callbackName] = function(result){
+        if(finished) return;
+        finished = true;
+        cleanup();
+        if(result && result.success){
+          wmWriteStudySetDataCache(setId, result);
+          dbLoadError = "";
+        }
+        delete WM_STUDY_SET_FETCH_PROMISES[key];
+        resolve(result);
+      };
+
+      script.async = true;
+      script.src = API_URL + "?action=getSetData&set_id=" + encodeURIComponent(setId)
+        + "&studentId=" + encodeURIComponent(WM_STUDENT_ID)
+        + "&sessionToken=" + encodeURIComponent(WM_SESSION_TOKEN)
+        + "&callback=" + encodeURIComponent(callbackName)
+        + "&attempt=" + attempt
+        + "&t=" + Date.now();
+
+      script.onerror = function(){
+        retryOrReject("LOAD_FAILED");
+      };
+
+      timeoutId = setTimeout(function(){
+        retryOrReject("TIMEOUT");
+      }, 15000);
+
+      document.body.appendChild(script);
     }
-    window[callbackName] = function(result){
-      if(finished) return;
-      finished = true;
-      cleanup();
-      if(result && result.success) wmWriteStudySetDataCache(setId, result);
-      delete WM_STUDY_SET_FETCH_PROMISES[key];
-      resolve(result);
-    };
-    script = document.createElement("script");
-    script.src = API_URL + "?action=getSetData&set_id=" + encodeURIComponent(setId)
-      + "&studentId=" + encodeURIComponent(WM_STUDENT_ID)
-      + "&sessionToken=" + encodeURIComponent(WM_SESSION_TOKEN)
-      + "&callback=" + encodeURIComponent(callbackName) + "&t=" + Date.now();
-    script.onerror = function(){ if(finished) return; finished=true; cleanup(); delete WM_STUDY_SET_FETCH_PROMISES[key]; reject(new Error("JSONP load error")); };
-    document.body.appendChild(script);
-    setTimeout(function(){ if(finished) return; finished=true; cleanup(); delete WM_STUDY_SET_FETCH_PROMISES[key]; reject(new Error("JSONP timeout")); }, 10000);
+
+    runAttempt();
   });
+
   return WM_STUDY_SET_FETCH_PROMISES[key];
 }
 
@@ -2106,6 +2156,7 @@ async function loadSetFromDB(){
 
     isDbReady = true;
     isDbLoading = false;
+    dbLoadError = "";
     return true;
   }catch(error){
     console.error(error);
