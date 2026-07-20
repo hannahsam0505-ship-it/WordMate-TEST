@@ -163,6 +163,7 @@ const WM_LOGIN_URL = WM_CONFIG.LOGIN_URL;
 const WM_MAP_URL = WM_CONFIG.MAP_URL;
 const WM_STUDY_URL = WM_CONFIG.STUDY_URL;
 const WM_LMS_URL = WM_CONFIG.LMS_URL;
+const WM_TEST_STUDY_BUILD_VERSION = 'STUDY_V2';
 
 /* WM_MAP_FRAME_RUNTIME_VERIFY_20260713_V2
  * 전달용 플래그가 아니라 실제 세션 승인·DB 수신·맵 렌더 완료를
@@ -3963,6 +3964,7 @@ async function startStudy(setId){
   const studyUrl =
     framePageUrl
     + '?wmEntry=map'
+    + '&wmBuild=' + encodeURIComponent(WM_TEST_STUDY_BUILD_VERSION)
     + '&mode=study'
     + '&set_id=WM' + encodeURIComponent(selectedSetId)
     + '&setId=' + encodeURIComponent(selectedSetId)

@@ -2582,28 +2582,16 @@ function wmApplyResumeProgress(progress){
 
   completedSteps = wmNormalizeCompletedStepsFromProgress(progress);
 
-  /* WM_STUDY_RESUME_SERVER_STEP_PRIORITY_FIX_V1
-     현재진행_DB의 현재Step을 복귀 기준으로 우선합니다.
-     이전 학습행의 completedSteps가 섞여 있어도 현재Step 이후 기록은 제거하여
-     Step1 완료 직후 Step5/TEST로 건너뛰는 현상을 차단합니다. */
-  const validProgressSteps = ["STEP1", "STEP2", "STEP3", "STEP4", "STEP5", "BEFORE_TEST", "TEST"];
-  if(validProgressSteps.includes(progressStep)){
-    const allowedStepIdsByProgress = {
-      STEP1: [],
-      STEP2: ["step1_flash_card"],
-      STEP3: ["step1_flash_card", "step2_choose_meaning"],
-      STEP4: ["step1_flash_card", "step2_choose_meaning", "step3_choose_english"],
-      STEP5: ["step1_flash_card", "step2_choose_meaning", "step3_choose_english", "step4_memory"],
-      BEFORE_TEST: ["step1_flash_card", "step2_choose_meaning", "step3_choose_english", "step4_memory"],
-      TEST: ["step1_flash_card", "step2_choose_meaning", "step3_choose_english", "step4_memory", "step6_last_flash_review"]
-    };
-    const allowedStepIds = allowedStepIdsByProgress[progressStep] || [];
-    completedSteps = completedSteps.filter(step=>allowedStepIds.includes(step.stepId));
-    return wmStageFromProgressStep(progressStep);
+  /* WM_STUDY_RESUME_STEP_APPLY_FIX_20260623_V2
+     completedSteps가 있으면 실제 완료 배열 기준으로 다음 Step을 계산하고,
+     completedSteps가 비어 있으면 서버 currentProgressStep 값을 그대로 적용합니다.
+     기존 코드는 completedSteps가 비어 있을 때 서버 STEP 값을 무시해서 무조건 Step1로 복귀했습니다. */
+  if(completedSteps.length){
+    const nextStep = wmCurrentProgressStepCode("step_completed");
+    return wmStageFromProgressStep(nextStep);
   }
 
-  const nextStep = wmCurrentProgressStepCode("step_completed");
-  return wmStageFromProgressStep(nextStep);
+  return wmStageFromProgressStep(progressStep);
 }
 
 
