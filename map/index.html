@@ -398,6 +398,40 @@ const WM_LMS_URL = WM_CONFIG.LMS_URL;
 })();
 </script>
 
+<!-- TEST_BOOTH_BANNER_START -->
+<div id="wm-test-booth-banner">🧪 TEST</div>
+<style>
+  #wm-test-booth-banner{
+    width:auto;
+    box-sizing:border-box;
+    background:#dc2626;
+    color:#fff;
+    text-align:center;
+    font-size:15px;
+    font-weight:900;
+    line-height:1.25;
+    padding:10px 13px;
+    letter-spacing:-0.02em;
+    font-family:Pretendard, "Noto Sans KR", Arial, sans-serif;
+    position:fixed;
+    top:12px;
+    left:12px;
+    border-radius:999px;
+    box-shadow:0 4px 12px rgba(0,0,0,.18);
+    z-index:99999;
+    pointer-events:none;
+  }
+</style>
+<script>
+(function(){
+  const banner = document.getElementById('wm-test-booth-banner');
+  if(banner && WM_ENV !== 'TEST'){
+    banner.style.display = 'none';
+  }
+})();
+</script>
+<!-- TEST_BOOTH_BANNER_END -->
+
 
 <!-- ==========================================================
    ✅ 여기 아래부터는 TEST/REAL 공통 코드 영역
