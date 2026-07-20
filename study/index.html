@@ -2491,6 +2491,19 @@ function wmNormalizeCompletedStepsFromProgress(progress){
   })).filter(step=>step.stepId);
 }
 
+function wmFilterCompletedStepsForCurrentProgress(steps, progressStep){
+  const allowedByProgress = {
+    STEP2: ["step1_flash_card"],
+    STEP3: ["step1_flash_card", "step2_choose_meaning"],
+    STEP4: ["step1_flash_card", "step2_choose_meaning", "step3_choose_english"],
+    STEP5: ["step1_flash_card", "step2_choose_meaning", "step3_choose_english", "step4_memory"],
+    BEFORE_TEST: ["step1_flash_card", "step2_choose_meaning", "step3_choose_english", "step4_memory"],
+    TEST: ["step1_flash_card", "step2_choose_meaning", "step3_choose_english", "step4_memory", "step6_last_flash_review"]
+  };
+  const allowed = allowedByProgress[String(progressStep || "").toUpperCase().trim()] || [];
+  return steps.filter(step=>allowed.includes(step.stepId));
+}
+
 async function wmLoadLearningProgress(){
   /* WM_STUDY_RESUME_FORCE_RELOAD_V1
      복귀 적용 공식: 학습 시작 버튼을 누를 때마다 getLearningProgress를 다시 호출합니다.
@@ -2588,17 +2601,19 @@ function wmApplyResumeProgress(progress){
     return 1;
   }
 
-  completedSteps = wmNormalizeCompletedStepsFromProgress(progress);
+  /* WM_RESUME_SERVER_CURRENT_STEP_AUTHORITY_FIX_20260720_V1
+     서버 currentProgressStep을 공식 복귀 위치로 사용합니다.
+     과거 회차의 뒤쪽 completedSteps가 함께 반환되어도 현재 Step 뒤 기록은 제거하여
+     Step1 완료 후 Step6으로 건너뛰는 현상을 차단합니다. */
+  completedSteps = wmFilterCompletedStepsForCurrentProgress(
+    wmNormalizeCompletedStepsFromProgress(progress),
+    progressStep
+  );
 
   /* WM_STUDY_RESUME_STEP_APPLY_FIX_20260623_V2
      completedSteps가 있으면 실제 완료 배열 기준으로 다음 Step을 계산하고,
      completedSteps가 비어 있으면 서버 currentProgressStep 값을 그대로 적용합니다.
      기존 코드는 completedSteps가 비어 있을 때 서버 STEP 값을 무시해서 무조건 Step1로 복귀했습니다. */
-  if(completedSteps.length){
-    const nextStep = wmCurrentProgressStepCode("step_completed");
-    return wmStageFromProgressStep(nextStep);
-  }
-
   return wmStageFromProgressStep(progressStep);
 }
 
