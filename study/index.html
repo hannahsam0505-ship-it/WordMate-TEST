@@ -2019,29 +2019,31 @@ function wmWriteStudySetDataCache(setId, data){
 function wmFetchStudySetData(setId){
   const key = String(setId || "").trim().toUpperCase();
   if(WM_STUDY_SET_FETCH_PROMISES[key]) return WM_STUDY_SET_FETCH_PROMISES[key];
-  const requestUrl = API_URL + "?action=getSetData&set_id=" + encodeURIComponent(setId)
-    + "&studentId=" + encodeURIComponent(WM_STUDENT_ID)
-    + "&sessionToken=" + encodeURIComponent(WM_SESSION_TOKEN)
-    + "&t=" + Date.now();
-  WM_STUDY_SET_FETCH_PROMISES[key] = fetch(requestUrl, {
-    method:"GET",
-    cache:"no-store",
-    credentials:"omit",
-    redirect:"follow"
-  })
-    .then(function(response){
-      if(!response.ok) throw new Error("콘텐츠 HTTP " + response.status);
-      return response.json();
-    })
-    .then(function(result){
+  WM_STUDY_SET_FETCH_PROMISES[key] = new Promise((resolve, reject)=>{
+    const callbackName = "wmSetFastCallback_" + Date.now() + "_" + Math.random().toString(36).slice(2);
+    let finished = false;
+    let script = null;
+    function cleanup(){
+      try{ delete window[callbackName]; }catch(e){ window[callbackName] = undefined; }
+      if(script && script.parentNode) script.parentNode.removeChild(script);
+    }
+    window[callbackName] = function(result){
+      if(finished) return;
+      finished = true;
+      cleanup();
       if(result && result.success) wmWriteStudySetDataCache(setId, result);
       delete WM_STUDY_SET_FETCH_PROMISES[key];
-      return result;
-    })
-    .catch(function(error){
-      delete WM_STUDY_SET_FETCH_PROMISES[key];
-      throw error;
-    });
+      resolve(result);
+    };
+    script = document.createElement("script");
+    script.src = API_URL + "?action=getSetData&set_id=" + encodeURIComponent(setId)
+      + "&studentId=" + encodeURIComponent(WM_STUDENT_ID)
+      + "&sessionToken=" + encodeURIComponent(WM_SESSION_TOKEN)
+      + "&callback=" + encodeURIComponent(callbackName) + "&t=" + Date.now();
+    script.onerror = function(){ if(finished) return; finished=true; cleanup(); delete WM_STUDY_SET_FETCH_PROMISES[key]; reject(new Error("JSONP load error")); };
+    document.body.appendChild(script);
+    setTimeout(function(){ if(finished) return; finished=true; cleanup(); delete WM_STUDY_SET_FETCH_PROMISES[key]; reject(new Error("JSONP timeout")); }, 10000);
+  });
   return WM_STUDY_SET_FETCH_PROMISES[key];
 }
 
@@ -2498,19 +2500,47 @@ async function wmLoadLearningProgress(){
   }
 
   try{
-    const requestUrl = WM_PROGRESS_API_URL
-      + "&studentId=" + encodeURIComponent(WM_STUDENT_ID)
-      + "&set_id=" + encodeURIComponent(currentSetId)
-      + "&sessionToken=" + encodeURIComponent(WM_SESSION_TOKEN)
-      + "&t=" + Date.now();
-    const response = await fetch(requestUrl, {
-      method:"GET",
-      cache:"no-store",
-      credentials:"omit",
-      redirect:"follow"
+    const callbackName = "wmProgressCallback_" + Date.now();
+    const result = await new Promise((resolve, reject)=>{
+      let finished = false;
+      let script = null;
+
+      function cleanup(){
+        try{ delete window[callbackName]; }catch(e){ window[callbackName] = undefined; }
+        if(script && script.parentNode){ script.parentNode.removeChild(script); }
+      }
+
+      window[callbackName] = function(response){
+        if(finished) return;
+        finished = true;
+        cleanup();
+        resolve(response);
+      };
+
+      script = document.createElement("script");
+      script.src = WM_PROGRESS_API_URL
+        + "&callback=" + encodeURIComponent(callbackName)
+        + "&studentId=" + encodeURIComponent(WM_STUDENT_ID)
+        + "&set_id=" + encodeURIComponent(currentSetId)
+        + "&sessionToken=" + encodeURIComponent(WM_SESSION_TOKEN)
+        + "&t=" + Date.now();
+
+      script.onerror = function(){
+        if(finished) return;
+        finished = true;
+        cleanup();
+        reject(new Error("progress JSONP load error"));
+      };
+
+      document.body.appendChild(script);
+
+      setTimeout(function(){
+        if(finished) return;
+        finished = true;
+        cleanup();
+        reject(new Error("progress JSONP timeout"));
+      }, 12000);
     });
-    if(!response.ok) throw new Error("progress HTTP " + response.status);
-    const result = await response.json();
 
     if(result && (result.sessionExpired === true || result.sessionValid === false || result.valid === false)){
       wmStudyShowSessionExpiredModal();
