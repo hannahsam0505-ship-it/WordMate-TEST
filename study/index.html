@@ -101,19 +101,24 @@ const WM_LMS_URL = WM_CONFIG.LMS_URL;
 <div id="wm-test-booth-banner">🧪 TEST 부스</div>
 <style>
   #wm-test-booth-banner{
-    width:100%;
+    width:auto;
     box-sizing:border-box;
     background:#dc2626;
     color:#fff;
     text-align:center;
-    font-size:28px;
+    font-size:15px;
     font-weight:900;
     line-height:1.25;
-    padding:14px 10px;
+    padding:10px 13px;
     letter-spacing:-0.02em;
     font-family:Pretendard, "Noto Sans KR", Arial, sans-serif;
-    position:relative;
-    z-index:999999;
+    position:fixed;
+    top:12px;
+    left:12px;
+    border-radius:999px;
+    box-shadow:0 4px 12px rgba(0,0,0,.18);
+    z-index:99999;
+    pointer-events:none;
   }
 </style>
 <script>
