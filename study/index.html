@@ -57,6 +57,10 @@ const WM_MAP_URL = WM_CONFIG.MAP_URL;
 const WM_STUDY_URL = WM_CONFIG.STUDY_URL;
 const WM_LMS_URL = WM_CONFIG.LMS_URL;
 
+function wmBuildApiActionUrl(action){
+  return API_URL + "?authuser=0&action=" + encodeURIComponent(String(action || "").trim());
+}
+
 /* WM_STUDY_DIRECT_ENTRY_GUARD_V1
    로그인 → 학습맵 → Study 경로로 들어온 경우만 허용합니다.
    주소창 직접 /study 진입은 Study 화면·세션검사·서버 호출 전에 로그인으로 이동합니다. */
@@ -854,13 +858,13 @@ function getSaveApiUrl(){
   /* WM_STUDY_SAVE_EXEC_URL_FIX_V2
      HtmlService iframe 안의 window.location.href는 /exec가 아닐 수 있으므로
      저장 API는 반드시 서버 배포 /exec 상수(API_URL)를 기준으로 호출합니다. */
-  return API_URL + "?action=saveLearningRecordV2";
+  return wmBuildApiActionUrl("saveLearningRecordV2");
 }
 
 function getProgressApiUrl(){
   /* WM_STUDY_PROGRESS_EXEC_URL_FIX_V2
      복귀 조회도 저장과 동일하게 실제 Apps Script /exec 상수(API_URL)를 기준으로 호출합니다. */
-  return API_URL + "?action=getStudyProgressFast";
+  return wmBuildApiActionUrl("getStudyProgressFast");
 }
 
 
@@ -929,8 +933,7 @@ async function wmStudyCheckCurrentSession(options){
 
   wmStudySessionCheckPromise = (async function(){
     try{
-      const url = API_URL
-        + '?action=checkStudentSession'
+      const url = wmBuildApiActionUrl('checkStudentSession')
         + '&studentId=' + encodeURIComponent(WM_STUDENT_ID)
         + '&sessionToken=' + encodeURIComponent(WM_SESSION_TOKEN)
         + '&t=' + Date.now();
@@ -1175,7 +1178,7 @@ async function wmFetchStudentLearningMode(){
 
   try{
     const res = await fetch(
-      API_URL + '?action=getStudentLearningMode&studentId=' + encodeURIComponent(WM_STUDENT_ID) + '&setId=' + encodeURIComponent(currentSetId) + '&ts=' + Date.now(),
+      wmBuildApiActionUrl('getStudentLearningMode') + '&studentId=' + encodeURIComponent(WM_STUDENT_ID) + '&setId=' + encodeURIComponent(currentSetId) + '&ts=' + Date.now(),
       { method:'GET', cache:'no-store' }
     );
     const data = await res.json();
@@ -2036,7 +2039,7 @@ function wmFetchStudySetData(setId){
       resolve(result);
     };
     script = document.createElement("script");
-    script.src = API_URL + "?action=getSetData&set_id=" + encodeURIComponent(setId)
+    script.src = wmBuildApiActionUrl("getSetData") + "&set_id=" + encodeURIComponent(setId)
       + "&studentId=" + encodeURIComponent(WM_STUDENT_ID)
       + "&sessionToken=" + encodeURIComponent(WM_SESSION_TOKEN)
       + "&callback=" + encodeURIComponent(callbackName) + "&t=" + Date.now();
@@ -4016,7 +4019,7 @@ function wmLogStudyRuntimeExecutionLockStatus(){
 
   window[callbackName] = finish;
   script.onerror = function(){finish(null);};
-  script.src = API_URL + "?action=studyRuntimeExecutionLockStatus&callback=" + encodeURIComponent(callbackName) + "&_=" + Date.now();
+  script.src = wmBuildApiActionUrl("studyRuntimeExecutionLockStatus") + "&callback=" + encodeURIComponent(callbackName) + "&_=" + Date.now();
   document.head.appendChild(script);
   setTimeout(function(){finish(null);},12000);
 }
@@ -4059,7 +4062,7 @@ window.wmLogLevelTransitionNoticeLockStatus = function(){
 
   window[callbackName]=finish;
   script.onerror=function(){finish(null);};
-  script.src=API_URL+"?action=levelTransitionNoticeLockStatus&callback="+encodeURIComponent(callbackName)+"&_="+Date.now();
+  script.src=wmBuildApiActionUrl("levelTransitionNoticeLockStatus")+"&callback="+encodeURIComponent(callbackName)+"&_="+Date.now();
   document.head.appendChild(script);
   setTimeout(function(){finish(null);},12000);
 };
@@ -4128,7 +4131,7 @@ function wmLogStudySpeedLockStatus(){
 
   window[callbackName] = finish;
   script.onerror = function(){ finish(null); };
-  script.src = API_URL + "?action=studySpeedLockStatus&callback=" + encodeURIComponent(callbackName) + "&_=" + Date.now();
+  script.src = wmBuildApiActionUrl("studySpeedLockStatus") + "&callback=" + encodeURIComponent(callbackName) + "&_=" + Date.now();
   document.head.appendChild(script);
   setTimeout(function(){ finish(null); }, 12000);
 }
@@ -4167,7 +4170,7 @@ function wmLogCodeGsAllLockStatusOnStudy_(){
 
   window[callbackName] = finish;
   script.onerror = function(){ finish(null); };
-  script.src = API_URL + "?action=codeGsAllLockStatus&callback=" + encodeURIComponent(callbackName) + "&_=" + Date.now();
+  script.src = wmBuildApiActionUrl("codeGsAllLockStatus") + "&callback=" + encodeURIComponent(callbackName) + "&_=" + Date.now();
   document.head.appendChild(script);
   setTimeout(function(){ finish(null); }, 12000);
 }
