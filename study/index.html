@@ -3114,16 +3114,17 @@ async function startLearning(){
   renderDbLoading();
   const sessionPromise = wmStudyCheckCurrentSession();
 
-  /* WM_STUDY_PARALLEL_START_V1_20260711
-     세트·학습모드·현재진행 핵심 4개를 동시에 불러옵니다. */
+  /* WM_STUDY_PROGRESS_AFTER_CORE_LOAD_V1
+     세션·세트·학습모드 확인 뒤 진행복원을 순차 호출합니다.
+     Apps Script JSONP 동시 호출 중 진행조회만 탈락해 Step1로 초기화되는 현상을 차단합니다. */
   const needsDbLoad = !isDbReady || !originalWords.length;
   const parallelLoad = await Promise.all([
     sessionPromise,
     needsDbLoad ? WM_STUDY_SPEED_LOCKS.SET_LOAD.loadSetFromDB() : Promise.resolve(true),
-    wmPrepareStudyModeForCurrentSet(),
-    wmLoadLearningProgress()
+    wmPrepareStudyModeForCurrentSet()
   ]);
   if(!parallelLoad[0] || !parallelLoad[1]) return;
+  const progress = await wmLoadLearningProgress();
   wmStudyStartSessionWatcher();
 
   clearInterval(testTimer);
@@ -3133,7 +3134,6 @@ async function startLearning(){
   wmCurrentStepStartTime=learningStartTime;
   latestSavedPayload=null;
 
-  const progress = parallelLoad[3];
   const resumeStage = wmApplyResumeProgress(progress);
 
   stage=resumeStage;
