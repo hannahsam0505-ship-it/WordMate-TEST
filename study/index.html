@@ -2821,7 +2821,7 @@ async function saveLearningRecord(status="completed"){
         finished = true;
         cleanup();
         reject(new Error("save JSONP timeout"));
-      }, 12000);
+      }, 60000);
     });
 
     if(result && (result.sessionExpired === true || result.sessionValid === false || result.valid === false)){
@@ -2840,6 +2840,18 @@ async function saveLearningRecord(status="completed"){
   }catch(error){
     return {ok:false, error:String(error), payload};
   }
+}
+
+async function wmEnsureFinalSave_(){
+  let result = finalSavePromise ? await finalSavePromise : null;
+  if(wmIsSaveSuccess(result)) return result;
+
+  /* WM_REAL_FINAL_SAVE_RETRY_V1_20260727
+     최초 응답 타임아웃으로 실패 고정된 Promise를 폐기하고,
+     현재 학습기록ID를 그대로 사용해 중복 없이 완료 저장을 다시 확인합니다. */
+  finalSavePromise = WM_STUDY_SPEED_LOCKS.FINAL_SAVE.saveLearningRecord("completed");
+  result = await finalSavePromise;
+  return result;
 }
 
 function returnToLmsIfReady(){
@@ -3722,9 +3734,10 @@ async function goFinalExit(){
     saveIcon.setAttribute("aria-label", "학습기록 저장 확인 중");
   }
 
-  const saveResult = finalSavePromise ? await finalSavePromise : await WM_STUDY_SPEED_LOCKS.FINAL_SAVE.saveLearningRecord("completed");
+  const saveResult = await wmEnsureFinalSave_();
   if(!wmIsSaveSuccess(saveResult)){
-    if(saveStatus) saveStatus.textContent="학습기록 저장에 실패했습니다. 화면을 닫지 말고 관리자에게 알려주세요.";
+    const saveError=String((saveResult && (saveResult.error || (saveResult.response && (saveResult.response.error || saveResult.response.message)))) || "응답 확인 실패");
+    if(saveStatus) saveStatus.textContent="학습기록 저장 확인 실패: "+saveError;
     return;
   }
 
@@ -3750,9 +3763,10 @@ async function goNextLearning(){
     saveIcon.setAttribute("aria-label", "학습기록 저장 확인 중");
   }
 
-  const saveResult = finalSavePromise ? await finalSavePromise : await WM_STUDY_SPEED_LOCKS.FINAL_SAVE.saveLearningRecord("completed");
+  const saveResult = await wmEnsureFinalSave_();
   if(!wmIsSaveSuccess(saveResult)){
-    if(saveStatus) saveStatus.textContent="학습기록 저장에 실패했습니다. 화면을 닫지 말고 관리자에게 알려주세요.";
+    const saveError=String((saveResult && (saveResult.error || (saveResult.response && (saveResult.response.error || saveResult.response.message)))) || "응답 확인 실패");
+    if(saveStatus) saveStatus.textContent="학습기록 저장 확인 실패: "+saveError;
     return;
   }
 
@@ -3872,7 +3886,8 @@ const WM_STUDY_RUNTIME_EXECUTION_LOCKS = Object.freeze({
     wmStageFromProgressStep, wmNormalizeCompletedStepsFromProgress,
     buildOfficialTimeSummary, wmNormalizeDbStepLabel,
     wmBuildCurrentProgressDbFields, wmIsSaveSuccess,
-    wmGetOfficialSaveResponse, wmNormalizeOfficialNextSetId
+    wmGetOfficialSaveResponse, wmNormalizeOfficialNextSetId,
+    wmEnsureFinalSave_
   }),
   STUDY_SCREEN_FLOW: Object.freeze({
     showStudyConfirmModal, renderStep4SkippedNotice, getTestList,
@@ -3920,7 +3935,8 @@ const WM_STUDY_LOCKS = Object.freeze({
   }),
   STUDY_SAVE: Object.freeze({
     markStepCompleted, queueStepSave, wmLoadLearningProgress, wmApplyResumeProgress,
-    buildLearningPayload, saveProgressSnapshot, saveLearningRecord
+    buildLearningPayload, saveProgressSnapshot, saveLearningRecord,
+    wmEnsureFinalSave_
   }),
   STUDY_MODE_SET_LOCK: Object.freeze({
     wmReadCachedStudyMode, wmCacheStudyMode, wmClearCachedStudyMode,
@@ -4026,6 +4042,73 @@ function wmLogStudyRuntimeExecutionLockStatus(){
   window[callbackName] = finish;
   script.onerror = function(){finish(null);};
   script.src = API_URL + "?action=studyRuntimeExecutionLockStatus&callback=" + encodeURIComponent(callbackName) + "&_=" + Date.now();
+  document.head.appendChild(script);
+  setTimeout(function(){finish(null);},12000);
+}
+
+/* WM ROUND RECORD RECOVERY DETAILED LOCK STATUS 20260727 */
+function wmLogRoundRecordRecoveryLockStatus_(){
+  const lockDate = "2026-07-27";
+  const clientTargets = [
+    {name:"wmEnsureFinalSave_", expected:WM_STUDY_LOCKS.STUDY_SAVE.wmEnsureFinalSave_},
+    {name:"goFinalExit", expected:WM_STUDY_LOCKS.STUDY_EXIT.goFinalExit},
+    {name:"goNextLearning", expected:WM_STUDY_LOCKS.STUDY_EXIT.goNextLearning}
+  ];
+  const clientRows = clientTargets.map(target=>{
+    const descriptor = Object.getOwnPropertyDescriptor(window, target.name);
+    const exists = typeof window[target.name] === "function";
+    const exactReference = window[target.name] === target.expected;
+    const writableBlocked = !!descriptor && descriptor.writable === false;
+    const configurableBlocked = !!descriptor && descriptor.configurable === false;
+    return {
+      적용일:lockDate,
+      위치:"STUDY",
+      함수:target.name,
+      함수존재:exists ? "YES" : "NO",
+      원본참조일치:exactReference ? "YES" : "NO",
+      교체차단_writable_false:writableBlocked ? "YES" : "NO",
+      삭제차단_configurable_false:configurableBlocked ? "YES" : "NO",
+      최종상태:exists && exactReference && writableBlocked && configurableBlocked ? "LOCKED" : "CHECK REQUIRED"
+    };
+  });
+  const callbackName = "wmRoundRecordRecoveryLockCallback_" + Date.now();
+  const script = document.createElement("script");
+  let finished = false;
+
+  function finish(serverResult){
+    if(finished) return;
+    finished = true;
+    try{delete window[callbackName];}catch(error){window[callbackName]=undefined;}
+    if(script.parentNode) script.parentNode.removeChild(script);
+
+    const functions = serverResult && serverResult.functions ? serverResult.functions : {};
+    const serverRows = Object.keys(functions).map(name=>{
+      const status = functions[name] || {};
+      return {
+        적용일:String(serverResult && serverResult.lockDate || lockDate),
+        위치:"CODE.GS",
+        함수:name,
+        함수존재:status.registered === true ? "YES" : "NO",
+        원본참조일치:status.exactReference === true ? "YES" : "NO",
+        교체차단_writable_false:"SERVER REGISTRY",
+        삭제차단_configurable_false:status.registryFrozen === true ? "YES" : "NO",
+        최종상태:status.registered === true && status.exactReference === true && status.registryFrozen === true ? "LOCKED" : "CHECK REQUIRED"
+      };
+    });
+    const allRows = clientRows.concat(serverRows);
+    const verified = allRows.length === 7 && allRows.every(row=>row.최종상태 === "LOCKED");
+
+    console.group("🔒 WORD MATE ROUND RECORD RECOVERY LOCK STATUS");
+    console.log("TODAY LOCK DATE :", lockDate);
+    console.log("이번 작업: 저장응답 재확인·나가기 차단 해제 + 회차별 신규기록·현재진행DB 복구");
+    console.table(allRows);
+    console.log(verified ? "🔒 ROUND RECORD RECOVERY LOCK VERIFIED — 7/7" : "❌ ROUND RECORD RECOVERY LOCK CHECK REQUIRED");
+    console.groupEnd();
+  }
+
+  window[callbackName] = finish;
+  script.onerror = function(){finish(null);};
+  script.src = API_URL + "?action=roundRecordRecoveryLockStatus&callback=" + encodeURIComponent(callbackName) + "&_=" + Date.now();
   document.head.appendChild(script);
   setTimeout(function(){finish(null);},12000);
 }
@@ -4206,5 +4289,6 @@ wmLogStudyRuntimeExecutionLockStatus();
 wmLogStudySpeedLockStatus();
 wmLogCodeGsAllLockStatusOnStudy_();
 window.wmLogLevelTransitionNoticeLockStatus();
+wmLogRoundRecordRecoveryLockStatus_();
 renderStart();
 </script>
