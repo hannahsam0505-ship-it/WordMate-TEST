@@ -8696,6 +8696,8 @@ document.addEventListener('keydown',function(e){
   }
 
   var WM_COMMENT_STUDENT_ROWS=[];
+  var WM_COMMENT_RECORD_ROWS=[];
+  var WM_COMMENT_MASTER_ROWS=[];
 
   function wmCommentText(value){
     return String(value===null||value===undefined?'':value).trim();
@@ -8712,12 +8714,62 @@ document.addEventListener('keydown',function(e){
     return '';
   }
 
+  function wmCommentNumber(value){
+    var n=Number(String(value===null||value===undefined?'':value).replace(/[^0-9.\-]/g,''));
+    return Number.isFinite(n)?n:0;
+  }
+
   function wmCommentStudentId(row){return wmCommentField(row,['학생ID','StudentID','학생아이디','아이디']);}
   function wmCommentStudentName(row){return wmCommentField(row,['학생이름','학생명','이름','StudentName']);}
   function wmCommentClassName(row){return wmCommentField(row,['반명','반','Class','현재반','클래스']);}
   function wmCommentTeacherName(row){return wmCommentField(row,['교사명','현재담당교사','담당교사','Teacher']);}
   function wmCommentAttendancePromise(row){return wmCommentField(row,['출석약속','주간출석약속','출석 약속']);}
   function wmCommentSetPromise(row){return wmCommentField(row,['세트약속','주간세트약속','세트 약속']);}
+  function wmCommentRecordDate(row){return wmCommentField(row,['학습날짜','학습일','날짜','StudyDate','등록일']);}
+  function wmCommentRecordSet(row){return wmCommentField(row,['Set_ID','Set ID','세트ID','세트']);}
+  function wmCommentRecordScore(row){return wmCommentNumber(wmCommentField(row,['점수','원점수','최근점수','Score']));}
+  function wmCommentRecordStandardScore(row){
+    var value=wmCommentField(row,['표준점수','평균표준점수','실질점수','평균실질점수','StandardScore']);
+    return value===''?wmCommentRecordScore(row):wmCommentNumber(value);
+  }
+  function wmCommentRecordTime(row){return wmCommentNumber(wmCommentField(row,['총소요시간','세트학습시간','총 소요시간','학습시간','TotalTime']));}
+  function wmCommentRecordComplete(row){
+    var value=wmCommentField(row,['완료상태','완료','상태','Complete']);
+    return !value||/^(완료|complete|completed|y|yes|true|1)$/i.test(value);
+  }
+
+  function wmCommentParseDate(value){
+    if(value instanceof Date&&!Number.isNaN(value.getTime())) return value;
+    var text=wmCommentText(value);
+    if(!text) return null;
+    var match=text.match(/(20\d{2})[^0-9]?(\d{1,2})[^0-9]?(\d{1,2})/);
+    if(!match) return null;
+    var date=new Date(Number(match[1]),Number(match[2])-1,Number(match[3]));
+    return Number.isNaN(date.getTime())?null:date;
+  }
+
+  function wmCommentWeekOfMonth(date){
+    return Math.min(5,Math.max(1,Math.ceil(date.getDate()/7)));
+  }
+
+  function wmCommentWordCount(setId){
+    var match=wmCommentText(setId).match(/(?:WM)?\s*(\d{1,2})\s*[-_]/i);
+    var level=match?Number(match[1]):0;
+    if(level>=3&&level<=6) return 10;
+    if(level>=7&&level<=13) return 20;
+    return 0;
+  }
+
+  function wmCommentPercent(actual,promise){
+    if(!promise) return 0;
+    return Math.round((actual/promise)*1000)/10;
+  }
+
+  function wmCommentAverage(values){
+    var nums=(values||[]).filter(function(n){return Number.isFinite(n);});
+    if(!nums.length) return 0;
+    return Math.round((nums.reduce(function(sum,n){return sum+n;},0)/nums.length)*10)/10;
+  }
 
   function wmCommentSetMessage(text,isError){
     var message=document.getElementById('wmCommentAnalyzeMessage');
@@ -8753,9 +8805,7 @@ document.addEventListener('keydown',function(e){
     var classSelect=document.getElementById('wmCommentClassSelect');
     if(!select) return;
     var className=classSelect?wmCommentText(classSelect.value):'';
-    var rows=wmCommentActiveStudentRows().filter(function(row){
-      return !className||wmCommentClassName(row)===className;
-    });
+    var rows=wmCommentActiveStudentRows().filter(function(row){return !className||wmCommentClassName(row)===className;});
     rows.sort(function(a,b){
       var classDiff=wmCommentClassName(a).localeCompare(wmCommentClassName(b),'ko');
       if(classDiff) return classDiff;
@@ -8763,67 +8813,133 @@ document.addEventListener('keydown',function(e){
       return nameDiff||wmCommentStudentId(a).localeCompare(wmCommentStudentId(b),'ko');
     });
     select.innerHTML='<option value="">학생 선택</option>'+rows.map(function(row){
-      var id=wmCommentStudentId(row);
-      var name=wmCommentStudentName(row)||'-';
-      var classLabel=wmCommentClassName(row);
-      var label=name+' · '+id+(classLabel?' · '+classLabel:'');
-      return '<option value="'+escapeHtml(id)+'">'+escapeHtml(label)+'</option>';
+      var id=wmCommentStudentId(row), name=wmCommentStudentName(row)||'-', classLabel=wmCommentClassName(row);
+      return '<option value="'+escapeHtml(id)+'">'+escapeHtml(name+' · '+id+(classLabel?' · '+classLabel:''))+'</option>';
     }).join('');
     if(selectedId&&rows.some(function(row){return wmCommentStudentId(row)===selectedId;})) select.value=selectedId;
   }
 
   function wmClearCommentStudentInfo(){
-    ['wmCommentStudentIdView','wmCommentStudentNameView','wmCommentStudentClassView','wmCommentStudentTeacherView','wmCommentAttendancePromiseView','wmCommentSetPromiseView'].forEach(function(id){
-      var el=document.getElementById(id);
-      if(el) el.value='-';
-    });
+    ['wmCommentStudentIdView','wmCommentStudentNameView','wmCommentStudentClassView','wmCommentStudentTeacherView','wmCommentAttendancePromiseView','wmCommentSetPromiseView'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='-';});
   }
 
   function wmApplyCommentStudentInfo(studentId){
     var id=wmCommentText(studentId);
     var row=WM_COMMENT_STUDENT_ROWS.find(function(item){return wmCommentStudentId(item)===id;});
-    if(!row){
-      wmClearCommentStudentInfo();
-      wmCommentSetMessage(id?'선택한 학생 정보를 학생관리_DB에서 찾지 못했습니다.':'학생을 선택해 주세요.',!!id);
-      return false;
-    }
-    var values={
-      wmCommentStudentIdView:wmCommentStudentId(row)||'-',
-      wmCommentStudentNameView:wmCommentStudentName(row)||'-',
-      wmCommentStudentClassView:wmCommentClassName(row)||'-',
-      wmCommentStudentTeacherView:wmCommentTeacherName(row)||'-',
-      wmCommentAttendancePromiseView:wmCommentAttendancePromise(row)||'-',
-      wmCommentSetPromiseView:wmCommentSetPromise(row)||'-'
-    };
-    Object.keys(values).forEach(function(idKey){var el=document.getElementById(idKey);if(el)el.value=values[idKey];});
-    wmCommentSetMessage('학생관리_DB 연결 완료 · 학생정보와 출석약속·세트약속을 불러왔습니다.',false);
+    if(!row){wmClearCommentStudentInfo();return false;}
+    var values={wmCommentStudentIdView:wmCommentStudentId(row)||'-',wmCommentStudentNameView:wmCommentStudentName(row)||'-',wmCommentStudentClassView:wmCommentClassName(row)||'-',wmCommentStudentTeacherView:wmCommentTeacherName(row)||'-',wmCommentAttendancePromiseView:wmCommentAttendancePromise(row)||'-',wmCommentSetPromiseView:wmCommentSetPromise(row)||'-'};
+    Object.keys(values).forEach(function(key){var el=document.getElementById(key);if(el)el.value=values[key];});
     return true;
   }
 
-  async function wmLoadCommentStudents(){
-    var classValue=document.getElementById('wmCommentClassSelect')?document.getElementById('wmCommentClassSelect').value:'';
-    var studentValue=document.getElementById('wmCommentStudentSelect')?document.getElementById('wmCommentStudentSelect').value:'';
-    wmCommentSetMessage('학생관리_DB 조회 중입니다.',false);
+  function wmBuildCommentMasterRows(){
+    var studentMap=new Map();
+    wmCommentActiveStudentRows().forEach(function(student){
+      var id=wmCommentStudentId(student).toUpperCase();
+      var attendancePromise=wmCommentNumber(wmCommentAttendancePromise(student));
+      var setPromise=wmCommentNumber(wmCommentSetPromise(student));
+      if(id&&attendancePromise>0&&setPromise>0) studentMap.set(id,student);
+    });
+
+    var groups=new Map();
+    WM_COMMENT_RECORD_ROWS.forEach(function(record){
+      if(!wmCommentRecordComplete(record)) return;
+      var id=wmCommentStudentId(record).toUpperCase();
+      var student=studentMap.get(id);
+      var date=wmCommentParseDate(wmCommentRecordDate(record));
+      if(!student||!date) return;
+      var year=date.getFullYear(), month=date.getMonth()+1, week=wmCommentWeekOfMonth(date);
+      var key=[id,year,month,week].join('|');
+      if(!groups.has(key)) groups.set(key,{student:student,year:year,month:month,week:week,records:[]});
+      groups.get(key).records.push(record);
+    });
+
+    WM_COMMENT_MASTER_ROWS=Array.from(groups.values()).map(function(group){
+      var records=group.records;
+      var dates=[];
+      var sets=[];
+      records.forEach(function(record){
+        var date=wmCommentParseDate(wmCommentRecordDate(record));
+        var dateKey=date?[date.getFullYear(),String(date.getMonth()+1).padStart(2,'0'),String(date.getDate()).padStart(2,'0')].join('-'):'';
+        if(dateKey&&dates.indexOf(dateKey)===-1) dates.push(dateKey);
+        var setId=wmCommentRecordSet(record);
+        if(setId&&sets.indexOf(setId)===-1) sets.push(setId);
+      });
+      var attendancePromise=wmCommentNumber(wmCommentAttendancePromise(group.student));
+      var setPromise=wmCommentNumber(wmCommentSetPromise(group.student));
+      var raw=wmCommentAverage(records.map(wmCommentRecordScore));
+      var standard=wmCommentAverage(records.map(wmCommentRecordStandardScore));
+      var attendanceRate=wmCommentPercent(dates.length,attendancePromise);
+      var setRate=wmCommentPercent(sets.length,setPromise);
+      var total=Math.round((Math.min(setRate,100)*0.45+Math.min(attendanceRate,100)*0.25+raw*0.15+standard*0.15)*10)/10;
+      return {
+        학생ID:wmCommentStudentId(group.student),학생이름:wmCommentStudentName(group.student),반명:wmCommentClassName(group.student),교사명:wmCommentTeacherName(group.student),
+        연도:group.year,월:group.month,주차:group.week,리포트유형:'주간',출석약속:attendancePromise,세트약속:setPromise,
+        실제출석일수:dates.length,출석률:attendanceRate,완료세트수:sets.length,세트진행률:setRate,
+        학습단어수:records.reduce(function(sum,record){return sum+wmCommentWordCount(wmCommentRecordSet(record));},0),
+        평균세트시간:wmCommentAverage(records.map(wmCommentRecordTime)),평균원점수:raw,평균표준점수:standard,종합점수:total,
+        '1차등급':'-',세부분류:'-',자동코멘트코드:'-',자동코멘트:'-',최종코멘트코드:'-',최종코멘트:'-',성적표반영상태:'대기',등록일:'-',수정일:'-'
+      };
+    }).sort(function(a,b){return b.연도-a.연도||b.월-a.월||b.주차-a.주차||a.학생이름.localeCompare(b.학생이름,'ko');});
+    return WM_COMMENT_MASTER_ROWS;
+  }
+
+  function wmRenderCommentMasterRows(){
+    var tbody=document.getElementById('wmCommentMasterTbody');
+    if(!tbody) return;
+    var headers=['학생ID','학생이름','반명','교사명','연도','월','주차','리포트유형','출석약속','세트약속','실제출석일수','출석률','완료세트수','세트진행률','학습단어수','평균세트시간','평균원점수','평균표준점수','종합점수','1차등급','세부분류','자동코멘트코드','자동코멘트','최종코멘트코드','최종코멘트','성적표반영상태','등록일','수정일'];
+    var rows=WM_COMMENT_MASTER_ROWS||[];
+    var html=rows.map(function(row,index){
+      return '<tr data-comment-row="'+index+'"><td>'+(index+1)+'</td>'+headers.map(function(header){
+        var value=row[header];
+        if(header==='출석률'||header==='세트진행률') value=value+'%';
+        if(header==='평균세트시간') value=value+'분';
+        if(header==='평균원점수'||header==='평균표준점수'||header==='종합점수') value=value+'점';
+        return '<td>'+escapeHtml(value===null||value===undefined||value===''?'-':String(value))+'</td>';
+      }).join('')+'</tr>';
+    }).join('');
+    var pad=Math.max(0,25-rows.length);
+    for(var i=0;i<pad;i++) html+='<tr><td>'+(rows.length+i+1)+'</td>'+new Array(29).join('<td></td>')+'</tr>';
+    tbody.innerHTML=html||'<tr><td colspan="29">약속데이터와 완료 학습데이터가 함께 있는 학생이 없습니다.</td></tr>';
+    var table=document.getElementById('wmCommentMasterTable');
+    var inner=document.getElementById('wmCommentMasterTopScrollInner');
+    if(table&&inner) inner.style.width=table.scrollWidth+'px';
+  }
+
+  async function wmLoadCommentSourceRows(){
+    wmCommentSetMessage('학생관리_DB 약속데이터와 학습기록_DB 학습데이터를 연결하는 중입니다.',false);
     try{
-      var response=await fetch(WM_APPS_SCRIPT_URL+'?mode=students&ts='+Date.now(),{method:'GET',cache:'no-store'});
-      if(!response.ok) throw new Error('HTTP '+response.status);
-      var data=await response.json();
-      var rows=data&&Array.isArray(data.students)?data.students:(Array.isArray(data)?data:[]);
-      WM_COMMENT_STUDENT_ROWS=rows.filter(function(row){return row&&typeof row==='object';});
-      wmRenderCommentClassOptions(classValue);
-      wmRenderCommentStudentOptions(studentValue);
-      if(studentValue) wmApplyCommentStudentInfo(studentValue);
-      else wmCommentSetMessage('학생관리_DB 연결 완료 · 학생 '+WM_COMMENT_STUDENT_ROWS.length+'명 조회',false);
-      return WM_COMMENT_STUDENT_ROWS;
-    }catch(error){
-      WM_COMMENT_STUDENT_ROWS=[];
+      var students=(typeof WM_STUDENT_MANAGE_ROWS!=='undefined'&&Array.isArray(WM_STUDENT_MANAGE_ROWS)&&WM_STUDENT_MANAGE_ROWS.length)?WM_STUDENT_MANAGE_ROWS:[];
+      var records=(typeof WM_RECORD_MANAGE_ROWS!=='undefined'&&Array.isArray(WM_RECORD_MANAGE_ROWS)&&WM_RECORD_MANAGE_ROWS.length)?WM_RECORD_MANAGE_ROWS:[];
+      if(!students.length&&typeof loadStudents==='function') students=await loadStudents();
+      if(!records.length&&typeof loadRecords==='function') records=await loadRecords();
+      if(!students.length){
+        var sRes=await fetch(WM_APPS_SCRIPT_URL+'?mode=students&ts='+Date.now()+wmLmsActorQuery(),{method:'GET',cache:'no-store'});
+        var sData=await sRes.json();
+        students=sData&&Array.isArray(sData.students)?sData.students:(Array.isArray(sData)?sData:[]);
+      }
+      if(!records.length){
+        var rRes=await fetch(WM_APPS_SCRIPT_URL+'?mode=records&ts='+Date.now()+wmLmsActorQuery(),{method:'GET',cache:'no-store'});
+        var rData=await rRes.json();
+        records=typeof extractRecordRowsFromResponse==='function'?extractRecordRowsFromResponse(rData):(rData&&Array.isArray(rData.records)?rData.records:(Array.isArray(rData)?rData:[]));
+      }
+      WM_COMMENT_STUDENT_ROWS=(students||[]).filter(function(row){return row&&typeof row==='object';});
+      WM_COMMENT_RECORD_ROWS=(records||[]).filter(function(row){return row&&typeof row==='object';});
       wmRenderCommentClassOptions('');
       wmRenderCommentStudentOptions('');
-      wmClearCommentStudentInfo();
-      wmCommentSetMessage('학생관리_DB 조회 실패: '+wmCommentText(error&&error.message?error.message:error),true);
+      wmBuildCommentMasterRows();
+      wmRenderCommentMasterRows();
+      wmCommentSetMessage('실제 DB 연결 완료 · 약속+완료학습 조건 '+WM_COMMENT_MASTER_ROWS.length+'건 집계',false);
+      return WM_COMMENT_MASTER_ROWS;
+    }catch(error){
+      WM_COMMENT_STUDENT_ROWS=[];WM_COMMENT_RECORD_ROWS=[];WM_COMMENT_MASTER_ROWS=[];
+      wmRenderCommentMasterRows();
+      wmCommentSetMessage('실제 DB 연결 실패: '+wmCommentText(error&&error.message?error.message:error),true);
       return [];
     }
   }
+
+  async function wmLoadCommentStudents(){return wmLoadCommentSourceRows();}
 
   function boot(){
     wmFillCommentBlankRows('wmCommentMasterTbody',29);
@@ -8848,7 +8964,7 @@ document.addEventListener('keydown',function(e){
         return;
       }
       wmApplyCommentStudentInfo(studentId.value);
-      wmCommentSetMessage('학생정보 확인 완료 · 학습기록_DB 자동분석은 다음 단계입니다.',false);
+      wmCommentSetMessage('학생정보 확인 완료 · 하단 실제 집계데이터 연결 상태입니다.',false);
     });
     var analyzeReset=document.getElementById('wmCommentAnalyzeResetBtn');
     if(analyzeReset) analyzeReset.addEventListener('click',function(){
