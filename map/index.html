@@ -259,6 +259,63 @@ const WM_LMS_URL = WM_CONFIG.LMS_URL;
 });
 </script>
 
+<!-- WM_TEST_BOOTH_FLOATING_BANNER_V1 -->
+<div id="wm-test-booth-banner" role="status" aria-label="TEST 부스">🧪 TEST 부스</div>
+<style>
+  :root{--wm-test-booth-height:64px;}
+  #wm-test-booth-banner{
+    display:none;
+    position:fixed;
+    top:0;
+    left:0;
+    right:0;
+    width:100%;
+    height:var(--wm-test-booth-height);
+    box-sizing:border-box;
+    align-items:center;
+    justify-content:center;
+    background:#dc2626;
+    color:#fff;
+    text-align:center;
+    font-size:28px;
+    font-weight:900;
+    line-height:1;
+    padding:0 10px;
+    letter-spacing:-0.02em;
+    font-family:Pretendard, "Noto Sans KR", Arial, sans-serif;
+    z-index:2147483000;
+  }
+  body.wm-test-booth-active{
+    margin-top:var(--wm-test-booth-height) !important;
+  }
+  @media (max-width:640px){
+    :root{--wm-test-booth-height:54px;}
+    #wm-test-booth-banner{font-size:22px;}
+  }
+</style>
+<script>
+(function(){
+  function wmApplyTestBoothFloatingBanner(){
+    var isTest = String(
+      typeof WM_ENV !== 'undefined' ? WM_ENV : ''
+    ).toUpperCase() === 'TEST';
+    var banner = document.getElementById('wm-test-booth-banner');
+    if(!banner) return;
+    banner.style.display = isTest ? 'flex' : 'none';
+    if(document.body){
+      document.body.classList.toggle('wm-test-booth-active', isTest);
+    }
+  }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', wmApplyTestBoothFloatingBanner, {once:true});
+  }else{
+    wmApplyTestBoothFloatingBanner();
+  }
+})();
+</script>
+<!-- WM_TEST_BOOTH_FLOATING_BANNER_V1 END -->
+
+
 <!-- ==========================================================
      🔒 WM SPEED LOCK V1.0 - F12 INDEPENDENT BOOT LOCK
      기존 MAP LOCK 및 학습맵 기능과 완전 분리

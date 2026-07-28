@@ -2892,7 +2892,7 @@ function returnToLmsIfReady(){
 }
 
 function requestLearningFullscreen(){
-  const el=document.getElementById("wordmate-app") || document.documentElement;
+  const el=document.documentElement;
   if(document.fullscreenElement) return;
   if(el.requestFullscreen){
     el.requestFullscreen().catch(()=>{});
