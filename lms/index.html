@@ -814,7 +814,7 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
       <button type="button" class="wm-lms-logout-btn" id="wmLmsLogoutBtn">LMS 로그아웃</button>
     </section>
     <nav class="wm-menu-grid">
-      <button class="wm-menu-btn active" data-panel="dashboard">대시보드</button><button class="wm-menu-btn" data-panel="students">1. 학생관리</button><button class="wm-menu-btn" data-panel="records">2. 학습기록</button><button class="wm-menu-btn" data-panel="profile">3. 프로필센터</button><button class="wm-menu-btn" data-panel="reports">4. 성적표생성</button><button class="wm-menu-btn" data-panel="sendLog">5. 발송기록</button><button class="wm-menu-btn" data-panel="counsel">6. 상담카페</button><button class="wm-menu-btn" data-panel="classes">7. 설정센터</button><button class="wm-menu-btn" data-panel="currentProgress">8. 현재진행</button><button class="wm-menu-btn" data-panel="deployManage">9. 배포관리</button><button class="wm-menu-btn wm-learning-btn" data-panel="learning">학습화면</button>
+      <button class="wm-menu-btn active" data-panel="dashboard">대시보드</button><button class="wm-menu-btn" data-panel="students">1. 학생관리</button><button class="wm-menu-btn" data-panel="records">2. 학습기록</button><button class="wm-menu-btn" data-panel="profile">3. 프로필센터</button><button class="wm-menu-btn" data-panel="reports">4. 성적표생성</button><button class="wm-menu-btn" data-panel="sendLog">5. 발송기록</button><button class="wm-menu-btn" data-panel="comment">6. 코멘트센터</button><button class="wm-menu-btn" data-panel="classes">7. 설정센터</button><button class="wm-menu-btn" data-panel="currentProgress">8. 현재진행</button><button class="wm-menu-btn" data-panel="counsel">9. 상담카페</button><button class="wm-menu-btn wm-learning-btn" data-panel="learning">학습화면</button>
       <button class="wm-menu-btn wm-dev-btn" id="devCenterBtn" data-panel="dev">DEV CENTER</button>
     </nav>
     <section class="wm-panel active" id="panel-dashboard">
@@ -1983,10 +1983,25 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
         </div>
       </div>
     </section>
+    <section class="wm-panel" id="panel-comment">
+      <div class="wm-panel-title-row"><h2 class="wm-panel-title">코멘트센터</h2><p class="wm-panel-desc">연결 DB: 6-1.코멘트마스터_DB / 6-2.코멘트이력_DB</p></div>
+      <div class="wm-filter-box" data-filter-scope="comment">
+        <div class="wm-filter-title">학생·리포트 기본정보</div>
+        <div class="wm-filter-grid">
+          <label>학생이름<input type="text" placeholder="학생이름" data-comment-field="studentName" /></label>
+          <label>Class<input type="text" placeholder="Class" data-comment-field="className" /></label>
+          <label>담당교사<input type="text" placeholder="담당교사" data-comment-field="teacherName" /></label>
+          <label>리포트연월<input type="month" data-comment-field="reportMonth" /></label>
+          <label>주차<select data-comment-field="reportWeek"><option value="">주차 선택</option><option value="1">1주차</option><option value="2">2주차</option><option value="3">3주차</option><option value="4">4주차</option><option value="5">5주차</option></select></label>
+          <label>리포트유형<select data-comment-field="reportType"><option value="WEEKLY">WEEKLY</option><option value="MONTHLY">MONTHLY</option></select></label>
+        </div>
+      </div>
+      <div class="wm-note">다음 단계에서 학생 선택 시 출석·학습참여도·학습성과를 자동 계산하고 추천 코멘트를 연결합니다.</div>
+    </section>
     <section class="wm-panel" id="panel-counsel">
       <h2 class="wm-panel-title">상담카페</h2>
-      <p class="wm-panel-desc">연결 DB: 6.상담카페_DB / 학생별 상담 데이터를 관리하는 영역입니다.</p>
-      <div class="wm-table-wrap"><table><thead><tr><th>상담ID</th><th>학생ID</th><th>학생이름</th><th>상담일</th><th>상담자</th><th>상담대상</th><th>상담유형</th><th>상담방식</th><th>상담목적</th><th>학부모관심사항</th><th>학습특이사항</th><th>상담요약</th><th>특이사항</th><th>다음상담예정일</th><th>수정일</th></tr></thead><tbody><tr><td>CNS001</td><td>TEST001</td><td>테스트학생</td><td>2026-06-01</td><td>해나샘</td><td>학부모</td><td>정기상담</td><td>전화</td><td>학습점검</td><td>단어암기상태</td><td>복습부족</td><td>주 3회 복습 권장 및 학습습관 점검</td><td>특이사항 없음</td><td>2026-06-15</td><td>2026-06-01</td></tr></tbody></table></div>
+      <p class="wm-panel-desc">연결 DB: 9.상담카페_DB / 학생별 상담 데이터를 관리하는 영역입니다.</p>
+      <div class="wm-table-wrap"><table><thead><tr><th>상담ID</th><th>학생ID</th><th>학생이름</th><th>상담일</th><th>상담자</th><th>상담대상</th><th>상담유형</th><th>상담방식</th><th>상담목적</th><th>학부모관심사항</th><th>학습특이사항</th><th>상담요약</th><th>특이사항</th><th>다음상담예정일</th><th>수정일</th></tr></thead><tbody><tr><td colspan="15">9.상담카페_DB 연결 준비 중입니다.</td></tr></tbody></table></div>
     </section>
     <section class="wm-panel" id="panel-currentProgress">
       <div class="wm-panel-title-row"><h2 class="wm-panel-title">현재진행 센터</h2><p class="wm-panel-desc">연결 DB: 8.현재진행_DB / 학생별 최신 학습 진행 캐시를 그대로 표시합니다.</p></div>
@@ -2005,24 +2020,6 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
         <div class="wm-filter-actions"><button class="wm-action-btn" onclick="runFilter('currentProgress')">검색</button><span id="wmCurrentProgressLoading" class="wm-manage-loading"><span class="wm-loading-spinner"></span>조회 중</span><button class="wm-action-btn sub" onclick="resetFilter('currentProgress')">초기화</button></div>
       </div>
       <div class="wm-record-scroll-top" id="currentProgressTopScroll"><div class="wm-record-scroll-inner" id="currentProgressTopScrollInner"></div></div><div class="wm-table-wrap" id="currentProgressTableWrap"><table id="currentProgressManageTable"><thead><tr><th>일련번호</th><th>학생ID</th><th>학생이름</th><th>학교</th><th>학년</th><th>Class</th><th>교사명</th><th>Set_ID</th><th>완료Step</th><th>현재Step</th><th>기록Set_ID</th><th>최종수정일</th><th>학습기록ID</th><th>최근점수</th><th>S4실루엣단계</th><th>S6테스트모드</th><th>현재레벨</th><th>레벨완료조건</th><th>레벨완료횟수</th><th>순차완주세트</th><th>순차완주회차</th><th>완료세트수</th><th>전체세트수</th><th>세트진행률</th><th>레벨진행률</th><th>히스토리레벨</th><th>히스토리횟수</th><th>레벨완료여부</th><th>캐시버전</th><th>최근30건JSON</th><th>비고</th></tr></thead><tbody id="currentProgressTbody"><tr><td colspan="31">8.현재진행_DB 조회 준비 중입니다.</td></tr></tbody></table></div><div class="wm-current-progress-pager" id="currentProgressPager" style="display:none;"><button type="button" id="currentProgressPrevBtn" onclick="moveCurrentProgressPage(-1)">이전</button><span class="wm-current-progress-page-info" id="currentProgressPageInfo">1 / 1</span><button type="button" id="currentProgressNextBtn" onclick="moveCurrentProgressPage(1)">다음</button></div>
-    </section>
-    <section class="wm-panel" id="panel-deployManage">
-      <div class="wm-panel-title-row"><h2 class="wm-panel-title">배포관리 센터</h2><p class="wm-panel-desc">연결 DB: 9.배포관리_DB / TEST·REAL 배포 변경 이력을 그대로 표시합니다.</p></div>
-      <div class="wm-filter-box" data-filter-scope="deployManage">
-        <div class="wm-filter-title">검색조건</div>
-        <div class="wm-filter-grid">
-          <label>변경ID<input type="text" placeholder="변경ID" data-filter="changeId" /></label>
-          <label>버전ID<input type="text" placeholder="버전ID" data-filter="versionId" /></label>
-          <label>구분<input type="text" placeholder="REAL / TEST" data-filter="boothMode" /></label>
-          <label>대상파일<input type="text" placeholder="대상파일" data-filter="targetFile" /></label>
-          <label>성공/실패<input type="text" placeholder="성공 / 실패" data-filter="result" /></label>
-          <label>작업자<input type="text" placeholder="작업자" data-filter="worker" /></label>
-          <label>기간 시작<input type="date" data-filter="dateStart" /></label>
-          <label>기간 종료<input type="date" data-filter="dateEnd" /></label>
-        </div>
-        <div class="wm-filter-actions"><button class="wm-action-btn" onclick="runFilter('deployManage')">검색</button><span id="wmDeployManageLoading" class="wm-manage-loading"><span class="wm-loading-spinner"></span>조회 중</span><button class="wm-action-btn sub" onclick="resetFilter('deployManage')">초기화</button></div>
-      </div>
-      <div class="wm-table-wrap"><table><thead><tr><th>변경ID</th><th>버전ID</th><th>구분(REAL/TEST)</th><th>배포일시</th><th>문제발생</th><th>원인분석</th><th>수정방향</th><th>핵심수정</th><th>대상파일</th><th>연동파일</th><th>수정위치/함수</th><th>검색어(다수가능)</th><th>변경전코드</th><th>변경후코드</th><th>변경전줄수</th><th>변경후줄수</th><th>줄수변화</th><th>REAL 고정</th><th>TEST 고정</th><th>REAL 변수</th><th>TEST 변수</th><th>REAL 고정 수정</th><th>TEST 고정 수정</th><th>REAL 변수 수정</th><th>TEST 변수 수정</th><th>TEST적용상태</th><th>TEST검증상태</th><th>REAL적용상태</th><th>REAL검증상태</th><th>현재/직전버전</th><th>기타버전</th><th>파일동일성%</th><th>상이확인</th><th>성공/실패</th><th>실패원인</th><th>롤백여부</th><th>롤백버전</th><th>작업자</th><th>작업구분</th><th>비고</th></tr></thead><tbody id="deployManageTbody"><tr><td colspan="40">9.배포관리_DB 연결 대기 중입니다.</td></tr></tbody></table></div>
     </section>
     <section class="wm-panel" id="panel-learning">
       <h2 class="wm-panel-title">학습화면</h2>
@@ -3407,14 +3404,6 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
         }
         return;
       }
-      if(scope==='deployManage'){
-        if(WM_DEPLOY_MANAGE_ROWS && WM_DEPLOY_MANAGE_ROWS.length){
-          renderDeployManageRows();
-        }else{
-          loadDeployManageRows();
-        }
-        return;
-      }
       if(scope==='reports'){
         WM_REPORT_MANAGE_PAGE = 1;
         if(WM_REPORT_MANAGE_ROWS && WM_REPORT_MANAGE_ROWS.length){
@@ -4013,7 +4002,6 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
     const WM_MANAGE_PAGE_SIZE = 25;
     const WM_REPORT_PAGE_SIZE = 15;
     const WM_CURRENT_PROGRESS_PAGE_SIZE = 25;
-    let WM_DEPLOY_MANAGE_ROWS = [];
     let WM_DASHBOARD_STATE = null;
 
 
@@ -7206,7 +7194,6 @@ function wmRenderGenericDbRows(tbodyId, rows, columns, colspan){
  * 실행 연결: 조회/렌더/페이지 이동 시 CurrentProgressDB_V2_LOCK 상태를 콘솔에 표시합니다.
  */
 const WM_CURRENT_PROGRESS_HEADERS = ["학생ID", "학생이름", "학교", "학년", "Class", "교사명", "Set_ID", "완료Step", "현재Step", "기록Set_ID", "최종수정일", "학습기록ID", "최근점수", "S4실루엣단계", "S6테스트모드", "현재레벨", "레벨완료조건", "레벨완료횟수", "순차완주세트", "순차완주회차", "완료세트수", "전체세트수", "세트진행률", "레벨진행률", "히스토리레벨", "히스토리횟수", "레벨완료여부", "캐시버전", "최근30건JSON", "비고"];
-const WM_DEPLOY_MANAGE_HEADERS = ["변경ID", "버전ID", "구분(REAL/TEST)", "배포일시", "문제발생", "원인분석", "수정방향", "핵심수정", "대상파일", "연동파일", "수정위치/함수", "검색어(다수가능)", "변경전코드", "변경후코드", "변경전줄수", "변경후줄수", "줄수변화", "REAL 고정", "TEST 고정", "REAL 변수", "TEST 변수", "REAL 고정 수정", "TEST 고정 수정", "REAL 변수 수정", "TEST 변수 수정", "TEST적용상태", "TEST검증상태", "REAL적용상태", "REAL검증상태", "현재/직전버전", "기타버전", "파일동일성%", "상이확인", "성공/실패", "실패원인", "롤백여부", "롤백버전", "작업자", "작업구분", "비고"];
 
 function getCurrentProgressFilteredRows(rows){
   const studentId = getFilterValue('currentProgress','studentId').toLowerCase();
@@ -7225,27 +7212,6 @@ function getCurrentProgressFilteredRows(rows){
     if(className && !String(row['Class'] || row['반'] || '').toLowerCase().includes(className)) return false;
     if(school && !String(row['학교'] || '').toLowerCase().includes(school)) return false;
     if(level && !String(row['현재레벨'] || '').toLowerCase().includes(level)) return false;
-    return true;
-  });
-}
-
-function getDeployManageFilteredRows(rows){
-  const changeId = getFilterValue('deployManage','changeId').toLowerCase();
-  const versionId = getFilterValue('deployManage','versionId').toLowerCase();
-  const boothMode = getFilterValue('deployManage','boothMode').toLowerCase();
-  const targetFile = getFilterValue('deployManage','targetFile').toLowerCase();
-  const result = getFilterValue('deployManage','result').toLowerCase();
-  const worker = getFilterValue('deployManage','worker').toLowerCase();
-  const dateStart = getFilterValue('deployManage','dateStart');
-  const dateEnd = getFilterValue('deployManage','dateEnd');
-  return (rows || []).filter(row=>{
-    if(!isWithinManageDateRange(row['배포일시'], dateStart, dateEnd)) return false;
-    if(changeId && !String(row['변경ID'] || '').toLowerCase().includes(changeId)) return false;
-    if(versionId && !String(row['버전ID'] || '').toLowerCase().includes(versionId)) return false;
-    if(boothMode && !String(row['구분(REAL/TEST)'] || '').toLowerCase().includes(boothMode)) return false;
-    if(targetFile && !String(row['대상파일'] || '').toLowerCase().includes(targetFile)) return false;
-    if(result && !String(row['성공/실패'] || '').toLowerCase().includes(result)) return false;
-    if(worker && !String(row['작업자'] || '').toLowerCase().includes(worker)) return false;
     return true;
   });
 }
@@ -7278,24 +7244,6 @@ async function loadCurrentProgressRows(){
   }catch(err){
     if(tbody) tbody.innerHTML = '<tr><td colspan="31">8.현재진행_DB 조회 실패: '+escapeHtml(err && err.message ? err.message : err)+'</td></tr>';
     setManageLoading('currentProgress', false);
-    return [];
-  }
-}
-
-async function loadDeployManageRows(){
-  const tbody = document.getElementById('deployManageTbody');
-  setManageLoading('deployManage', true);
-  if(tbody) tbody.innerHTML = '<tr><td colspan="40">9.배포관리_DB 조회 중입니다.</td></tr>';
-  try{
-    const res = await fetch(WM_APPS_SCRIPT_URL + '?mode=deployManage&ts=' + Date.now(), {method:'GET', cache:'no-store'});
-    const data = await res.json();
-    WM_DEPLOY_MANAGE_ROWS = normalizeRows(data && data.deployManage ? data.deployManage : []);
-    renderDeployManageRows();
-    setManageLoading('deployManage', false);
-    return WM_DEPLOY_MANAGE_ROWS;
-  }catch(err){
-    if(tbody) tbody.innerHTML = '<tr><td colspan="40">9.배포관리_DB 조회 실패: '+escapeHtml(err && err.message ? err.message : err)+'</td></tr>';
-    setManageLoading('deployManage', false);
     return [];
   }
 }
@@ -7352,11 +7300,6 @@ function syncCurrentProgressTableScroll(){
   top.dataset.synced = '1';
   top.addEventListener('scroll', ()=>{ wrap.scrollLeft = top.scrollLeft; });
   wrap.addEventListener('scroll', ()=>{ top.scrollLeft = wrap.scrollLeft; });
-}
-
-function renderDeployManageRows(){
-  wmRenderGenericDbRows('deployManageTbody', getDeployManageFilteredRows(WM_DEPLOY_MANAGE_ROWS || []), WM_DEPLOY_MANAGE_HEADERS, 40);
-  setManageLoading('deployManage', false);
 }
 
 
