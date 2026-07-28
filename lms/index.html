@@ -790,12 +790,29 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
 .wm-comment-table-wrap tbody td{height:43px;background-color:inherit;}
 #wmCommentMasterTable th:first-child,#wmCommentMasterTable td:first-child,
 #wmCommentHistoryTable th:first-child,#wmCommentHistoryTable td:first-child{width:72px;min-width:72px;max-width:72px;text-align:center;}
+#wmCommentHistoryTable th:nth-child(2),#wmCommentHistoryTable td:nth-child(2){display:none !important;}
 #wmCommentHistoryTable th:nth-child(1),#wmCommentHistoryTable td:nth-child(1){position:sticky;left:0;z-index:25;background:inherit;}
-#wmCommentHistoryTable th:nth-child(2),#wmCommentHistoryTable td:nth-child(2){position:sticky;left:72px;z-index:25;min-width:130px;background:inherit;}
-#wmCommentHistoryTable th:nth-child(3),#wmCommentHistoryTable td:nth-child(3){position:sticky;left:202px;z-index:25;min-width:110px;background:inherit;}
-#wmCommentHistoryTable th:nth-child(4),#wmCommentHistoryTable td:nth-child(4){position:sticky;left:312px;z-index:25;min-width:110px;background:inherit;}
-#wmCommentHistoryTable thead th:nth-child(1),#wmCommentHistoryTable thead th:nth-child(2),
-#wmCommentHistoryTable thead th:nth-child(3),#wmCommentHistoryTable thead th:nth-child(4){z-index:40;background:#f9fafb;}
+#wmCommentHistoryTable th:nth-child(3),#wmCommentHistoryTable td:nth-child(3){position:sticky;left:72px;z-index:25;min-width:110px;background:inherit;}
+#wmCommentHistoryTable th:nth-child(4),#wmCommentHistoryTable td:nth-child(4){position:sticky;left:182px;z-index:25;min-width:110px;background:inherit;}
+#wmCommentHistoryTable thead th:nth-child(1),#wmCommentHistoryTable thead th:nth-child(3),#wmCommentHistoryTable thead th:nth-child(4){z-index:40;background:#f9fafb;}
+.wm-comment-form-box{border:1px solid #9fbce8;background:linear-gradient(180deg,#f4f8ff 0%,#eaf2ff 100%);border-radius:16px;padding:14px;margin:0 0 16px;box-shadow:0 8px 22px rgba(7,59,143,.08);}
+.wm-comment-form-head{margin:-14px -14px 14px;padding:12px 14px;border-radius:15px 15px 0 0;background:linear-gradient(135deg,#073b8f 0%,#0d55c8 100%);color:#fff;font-size:16px;font-weight:950;}
+.wm-comment-form-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;}
+.wm-comment-form-grid label{font-size:12px;font-weight:900;color:#173b75;}
+.wm-comment-form-grid input,.wm-comment-form-grid select,.wm-comment-form-grid textarea{width:100%;margin-top:5px;border:1px solid #b9cbea;border-radius:10px;padding:10px;font-size:13px;background:#fff;}
+.wm-comment-form-grid textarea{min-height:88px;resize:vertical;line-height:1.55;}
+.wm-comment-form-grid .wm-comment-wide{grid-column:span 4;}
+.wm-comment-char-row{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-top:7px;font-size:12px;font-weight:900;}
+#wmCommentMasterCharStatus{color:var(--wm-gray);}
+#wmCommentMasterCharStatus.ok{color:var(--wm-green);}
+#wmCommentMasterCharStatus.warn{color:#b45309;}
+#wmCommentMasterCharStatus.err{color:var(--wm-red);}
+.wm-comment-form-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
+.wm-comment-search-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:9px;}
+.wm-comment-search-grid label{font-size:12px;font-weight:900;color:#173b75;}
+.wm-comment-search-grid input,.wm-comment-search-grid select{width:100%;margin-top:5px;border:1px solid #b9cbea;border-radius:10px;padding:9px;background:#fff;font-size:13px;}
+@media(max-width:1100px){.wm-comment-form-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.wm-comment-form-grid .wm-comment-wide{grid-column:span 2;}.wm-comment-search-grid{grid-template-columns:repeat(3,minmax(0,1fr));}}
+@media(max-width:720px){.wm-comment-form-grid,.wm-comment-search-grid{grid-template-columns:1fr;}.wm-comment-form-grid .wm-comment-wide{grid-column:span 1;}}
 .wm-comment-pager{display:flex;justify-content:center;align-items:center;gap:10px;margin:12px 0 0;flex-wrap:wrap;}
 .wm-comment-pager button{border:1px solid var(--wm-line);background:#fff;color:var(--wm-dark);border-radius:10px;padding:8px 13px;font-size:13px;font-weight:900;cursor:pointer;}
 .wm-comment-pager button:disabled{opacity:.45;cursor:not-allowed;}
@@ -2030,6 +2047,38 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
           <h3>6-1. 코멘트마스터_DB</h3>
           <span>확정 컬럼 16개 · 빈 표 25행</span>
         </div>
+        <div class="wm-comment-form-box" id="wmCommentMasterRegisterBox">
+          <div class="wm-comment-form-head">신규 코멘트 등록</div>
+          <div class="wm-comment-form-grid">
+            <label>코멘트코드<input type="text" id="wmCommentMasterCode" placeholder="예: 1.1-A" /></label>
+            <label>1차등급<select id="wmCommentMasterGrade"><option value="">선택</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></label>
+            <label>세부분류<input type="text" id="wmCommentMasterDetail" placeholder="예: 1.1" /></label>
+            <label>추천유형<select id="wmCommentMasterType"><option value="">선택</option><option>출석형</option><option>집중형</option><option>점수형</option><option>성장형</option><option>종합형</option></select></label>
+            <label>리포트유형<select id="wmCommentMasterReportType"><option value="공통">공통</option><option>WEEKLY</option><option>MONTHLY</option></select></label>
+            <label>출석등급<select id="wmCommentMasterAttendance"><option value="공통">공통</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></label>
+            <label>참여등급<select id="wmCommentMasterEngagement"><option value="공통">공통</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></label>
+            <label>성과등급<select id="wmCommentMasterPerformance"><option value="공통">공통</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></label>
+            <label>성장방향<select id="wmCommentMasterGrowth"><option value="공통">공통</option><option>상승</option><option>유지</option><option>하락</option><option>데이터부족</option></select></label>
+            <label>우선순위<select id="wmCommentMasterPriority"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></label>
+            <label>사용여부<select id="wmCommentMasterUse"><option>사용</option><option>중지</option></select></label>
+            <label class="wm-comment-wide">코멘트<textarea id="wmCommentMasterText" maxlength="110" placeholder="공백 포함 80~100자 권장 · 최대 110자"></textarea><span class="wm-comment-char-row"><span id="wmCommentMasterCharStatus">80~100자 권장</span><span id="wmCommentMasterCharCount">0 / 110자</span></span></label>
+          </div>
+          <div class="wm-comment-form-actions"><button type="button" class="wm-action-btn" id="wmCommentMasterValidateBtn">입력 확인</button><button type="button" class="wm-action-btn sub" id="wmCommentMasterResetBtn">초기화</button><span class="wm-panel-desc" id="wmCommentMasterFormMessage" style="margin:9px 0 0;"></span></div>
+        </div>
+
+        <div class="wm-comment-form-box">
+          <div class="wm-comment-form-head">검색조건</div>
+          <div class="wm-comment-search-grid">
+            <label>코멘트코드<input type="text" id="wmCommentSearchCode" placeholder="코드" /></label>
+            <label>1차등급<select id="wmCommentSearchGrade"><option value="">전체</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></label>
+            <label>세부분류<input type="text" id="wmCommentSearchDetail" placeholder="예: 2.4" /></label>
+            <label>추천유형<select id="wmCommentSearchType"><option value="">전체</option><option>출석형</option><option>집중형</option><option>점수형</option><option>성장형</option><option>종합형</option></select></label>
+            <label>리포트유형<select id="wmCommentSearchReport"><option value="">전체</option><option>WEEKLY</option><option>MONTHLY</option><option>공통</option></select></label>
+            <label>사용여부<select id="wmCommentSearchUse"><option value="">전체</option><option>사용</option><option>중지</option></select></label>
+          </div>
+          <div class="wm-comment-form-actions"><button type="button" class="wm-action-btn" id="wmCommentSearchBtn">검색</button><button type="button" class="wm-action-btn sub" id="wmCommentSearchResetBtn">초기화</button><span class="wm-panel-desc" id="wmCommentSearchMessage" style="margin:9px 0 0;">데이터 연결 전 UI 단계입니다.</span></div>
+        </div>
+
         <div class="wm-comment-scroll-top" id="wmCommentMasterTopScroll"><div class="wm-comment-scroll-inner" id="wmCommentMasterTopScrollInner"></div></div>
         <div class="wm-table-wrap wm-comment-table-wrap" id="wmCommentMasterTableWrap">
           <table id="wmCommentMasterTable">
@@ -8554,11 +8603,59 @@ document.addEventListener('keydown',function(e){
     },0);
   };
 
+  function wmUpdateCommentCharCount(){
+    var el=document.getElementById('wmCommentMasterText');
+    var count=document.getElementById('wmCommentMasterCharCount');
+    var status=document.getElementById('wmCommentMasterCharStatus');
+    if(!el||!count||!status) return;
+    var n=Array.from(el.value||'').length;
+    count.textContent=n+' / 110자';
+    status.className='';
+    if(n===0){ status.textContent='80~100자 권장'; }
+    else if(n<80){ status.textContent='권장 길이보다 짧습니다.'; status.classList.add('warn'); }
+    else if(n<=100){ status.textContent='권장 길이입니다.'; status.classList.add('ok'); }
+    else if(n<=110){ status.textContent='최대 범위 안이지만 100자 초과입니다.'; status.classList.add('warn'); }
+    else{ status.textContent='110자를 초과했습니다.'; status.classList.add('err'); }
+  }
+
+  function wmResetCommentMasterForm(){
+    ['wmCommentMasterCode','wmCommentMasterDetail','wmCommentMasterText'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});
+    ['wmCommentMasterGrade','wmCommentMasterType'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});
+    [['wmCommentMasterReportType','공통'],['wmCommentMasterAttendance','공통'],['wmCommentMasterEngagement','공통'],['wmCommentMasterPerformance','공통'],['wmCommentMasterGrowth','공통'],['wmCommentMasterPriority','1'],['wmCommentMasterUse','사용']].forEach(function(x){var e=document.getElementById(x[0]);if(e)e.value=x[1];});
+    var msg=document.getElementById('wmCommentMasterFormMessage');if(msg)msg.textContent='';
+    wmUpdateCommentCharCount();
+  }
+
+  function wmValidateCommentMasterForm(){
+    var required=[['wmCommentMasterCode','코멘트코드'],['wmCommentMasterGrade','1차등급'],['wmCommentMasterDetail','세부분류'],['wmCommentMasterType','추천유형'],['wmCommentMasterText','코멘트']];
+    var missing=[];
+    required.forEach(function(x){var e=document.getElementById(x[0]);if(!e||!String(e.value||'').trim())missing.push(x[1]);});
+    var text=document.getElementById('wmCommentMasterText');
+    var n=text?Array.from(text.value||'').length:0;
+    var msg=document.getElementById('wmCommentMasterFormMessage');
+    if(missing.length){if(msg){msg.style.color='var(--wm-red)';msg.textContent='필수항목 확인: '+missing.join(', ');}return false;}
+    if(n>110){if(msg){msg.style.color='var(--wm-red)';msg.textContent='코멘트는 최대 110자입니다.';}return false;}
+    if(msg){msg.style.color=n>=80&&n<=100?'var(--wm-green)':'#b45309';msg.textContent=n>=80&&n<=100?'입력 형식 확인 완료 · 저장 연결은 다음 단계입니다.':'입력 형식 확인 완료 · 코멘트는 80~100자를 권장합니다.';}
+    return true;
+  }
+
+  function wmResetCommentSearch(){
+    ['wmCommentSearchCode','wmCommentSearchDetail'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});
+    ['wmCommentSearchGrade','wmCommentSearchType','wmCommentSearchReport','wmCommentSearchUse'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});
+    var msg=document.getElementById('wmCommentSearchMessage');if(msg)msg.textContent='데이터 연결 전 UI 단계입니다.';
+  }
+
   function boot(){
     wmFillCommentBlankRows('wmCommentMasterTbody',16);
     wmFillCommentBlankRows('wmCommentHistoryTbody',46);
     wmSyncCommentScroll('wmCommentMasterTopScroll','wmCommentMasterTableWrap','wmCommentMasterTopScrollInner','wmCommentMasterTable');
     wmSyncCommentScroll('wmCommentHistoryTopScroll','wmCommentHistoryTableWrap','wmCommentHistoryTopScrollInner','wmCommentHistoryTable');
+    var text=document.getElementById('wmCommentMasterText');if(text)text.addEventListener('input',wmUpdateCommentCharCount);
+    var validate=document.getElementById('wmCommentMasterValidateBtn');if(validate)validate.addEventListener('click',wmValidateCommentMasterForm);
+    var reset=document.getElementById('wmCommentMasterResetBtn');if(reset)reset.addEventListener('click',wmResetCommentMasterForm);
+    var search=document.getElementById('wmCommentSearchBtn');if(search)search.addEventListener('click',function(){var m=document.getElementById('wmCommentSearchMessage');if(m)m.textContent='검색 UI 확인 완료 · 데이터 연결은 다음 단계입니다.';});
+    var searchReset=document.getElementById('wmCommentSearchResetBtn');if(searchReset)searchReset.addEventListener('click',wmResetCommentSearch);
+    wmUpdateCommentCharCount();
   }
 
   if(document.readyState==='loading'){
