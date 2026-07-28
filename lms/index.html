@@ -3519,8 +3519,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       }
     }
 
-    async function renderDashboard(options){
-      await ensureDashboardSourceRows(options || {allowFallback:true});
+    function wmApplyDashboardState(){
       const state = buildDashboardState();
       WM_DASHBOARD_STATE = state;
       const todayCount = state.todayStudyIds.size;
@@ -3541,6 +3540,22 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       setTextById('dashboardCounselCount', state.counselRows.length + '건');
       const dashboardSummaryWrap = document.getElementById('dashboardSummaryWrap');
       if(dashboardSummaryWrap) dashboardSummaryWrap.style.display = 'none';
+      return state;
+    }
+
+    async function renderDashboard(options){
+      /* 첫 화면은 보유 캐시/0값으로 즉시 그린 뒤 DB 결과가 도착하면 한 번만 갱신한다. */
+      wmApplyDashboardState();
+      if(WM_DASHBOARD_RENDER_LOADING) return WM_DASHBOARD_RENDER_LOADING;
+      WM_DASHBOARD_RENDER_LOADING=(async function(){
+        try{
+          await ensureDashboardSourceRows(options || {allowFallback:true});
+          return wmApplyDashboardState();
+        }finally{
+          WM_DASHBOARD_RENDER_LOADING=null;
+        }
+      })();
+      return WM_DASHBOARD_RENDER_LOADING;
     }
 
     function runFilter(scope){
@@ -4175,6 +4190,8 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
     const WM_REPORT_PAGE_SIZE = 15;
     const WM_CURRENT_PROGRESS_PAGE_SIZE = 25;
     let WM_DASHBOARD_STATE = null;
+    let WM_DASHBOARD_RENDER_LOADING = null;
+    let WM_RECORD_LOAD_PROMISE = null;
 
 
     const WM_RECORD_HEADERS = ['학습날짜','학생ID','학생이름','학교','학년','Class','교사명','Set_ID','점수','총소요시간','Step 1','Step 2','Step 3','Step 4','시험전학습','Test_총시간','영한객관식','한영객관식','영한주관식','한영주관식','완료상태','학습기록ID','기기정보','비고'];
@@ -4283,38 +4300,37 @@ function extractRecordRowsFromResponse(data){
     }
 
     async function loadRecords(){
-      const tbody = document.getElementById('recordManageTbody');
-      setManageLoading('records', true);
-      if(tbody) tbody.innerHTML = '<tr><td colspan="25">학습기록_DB 조회 중입니다.</td></tr>';
-
-      try{
-        let rows = [];
-        const urls = [
-          WM_APPS_SCRIPT_URL + '?mode=records&ts=' + Date.now() + wmLmsActorQuery(),
-          WM_APPS_SCRIPT_URL + '?mode=profile&ts=' + Date.now(),
-          WM_APPS_SCRIPT_URL + '?studentId=&studentName=&ts=' + Date.now()
-        ];
-
-        for(const url of urls){
-          rows = await fetchRecordRowsByUrl(url);
-          if(rows.length) break;
+      if(WM_RECORD_LOAD_PROMISE) return WM_RECORD_LOAD_PROMISE;
+      WM_RECORD_LOAD_PROMISE=(async function(){
+        const tbody = document.getElementById('recordManageTbody');
+        setManageLoading('records', true);
+        if(tbody && (!WM_RECORD_MANAGE_ROWS || !WM_RECORD_MANAGE_ROWS.length)) {
+          tbody.innerHTML = '<tr><td colspan="25">학습기록_DB 조회 중입니다.</td></tr>';
         }
 
-        if(!rows.length){
-          rows = await readSheetRows(['2.학습기록_DB','학습기록_DB','records']);
-        }
+        try{
+          /* 학습기록 느림 방지: 동일 목적의 profile/빈학생 재조회 2건을 제거하고 records 1회만 호출한다. */
+          let rows = await fetchRecordRowsByUrl(
+            WM_APPS_SCRIPT_URL + '?mode=records&ts=' + Date.now() + wmLmsActorQuery()
+          );
+          if(!rows.length){
+            rows = await readSheetRows(['2.학습기록_DB','학습기록_DB','records']);
+          }
 
-        WM_RECORD_MANAGE_ROWS = normalizeRows(rows);
-        renderRecordManageRows();
-        setManageLoading('records', false);
-        console.log('학습기록_DB 전체조회 성공:', WM_RECORD_MANAGE_ROWS);
-        return WM_RECORD_MANAGE_ROWS;
-      }catch(err){
-        console.error('학습기록_DB 로드 실패', err);
-        if(tbody) tbody.innerHTML = '<tr><td colspan="25">학습기록_DB 조회 실패: '+escapeHtml(err && err.message ? err.message : err)+'</td></tr>';
-        setManageLoading('records', false);
-        return [];
-      }
+          WM_RECORD_MANAGE_ROWS = normalizeRows(rows);
+          renderRecordManageRows();
+          console.log('학습기록_DB 전체조회 성공:', WM_RECORD_MANAGE_ROWS.length);
+          return WM_RECORD_MANAGE_ROWS;
+        }catch(err){
+          console.error('학습기록_DB 로드 실패', err);
+          if(tbody) tbody.innerHTML = '<tr><td colspan="25">학습기록_DB 조회 실패: '+escapeHtml(err && err.message ? err.message : err)+'</td></tr>';
+          return [];
+        }finally{
+          setManageLoading('records', false);
+          WM_RECORD_LOAD_PROMISE=null;
+        }
+      })();
+      return WM_RECORD_LOAD_PROMISE;
     }
 
     function renderRecordManageRows(){
@@ -8854,6 +8870,36 @@ document.addEventListener('keydown',function(e){
     return wmCommentRound1(nums.reduce(function(sum,n){return sum+n;},0)/nums.length);
   }
 
+  /* ==========================================================
+  [Word Mate 코멘트센터 점수 계산 운영규칙]
+
+  1. 출석점수(10점)
+  - 세트약속 달성을 절대 우선으로 평가한다.
+  - 세트진행률 100% 이상이면 출석률과 관계없이 10점.
+  - 100% 미만이면 세트진행률 80% + 출석률 20%를 합산한다.
+  - 결과는 소수점 첫째 자리까지 계산하고 최대 10점으로 제한한다.
+
+  2. 참여집중도(10점)
+  - 총학습시간 ÷ 완료세트수 = 1세트평균시간.
+  - 20분까지 10점, 30분까지 9점, 35분까지 8점,
+    40분까지 7점, 45분까지 6점, 45분 초과는 5점.
+  - 미로그아웃 등 환경요인을 고려하여 어떤 경우에도 최소 5점을 보장한다.
+
+  3. 점수추이(10점)
+  - 평균원점수를 100점 만점에서 10점 만점으로 환산한다.
+  - 표준점수는 1세트평균시간 기준으로 30분까지 10점,
+    40분까지 9점, 50분까지 8점, 50분 초과는 최소 7점.
+  - 점수추이 = 원점수환산 90% + 표준점수 10%.
+
+  4. 등급계산
+  - 최종점수 = 출석점수 + 참여집중도 + 점수추이.
+  - 합산 결과는 마지막 결산 시 소수점 첫째 자리까지만 계산한다.
+  - 등급판정은 정수 사사오입한다.
+  - 30점=1.1, 29점=1.2 … 21점=1.10,
+    20점=2.1 … 11점=2.10,
+    10점=3.1 … 1점=3.10의 총 30개 세부등급을 부여한다.
+  ========================================================== */
+
   function wmCommentAttendanceScore(setRate,attendanceRate){
     if(Number(setRate)>=100) return 10;
     return Math.min(10,wmCommentRound1((Math.min(Number(setRate)||0,100)/100*8)+(Math.min(Number(attendanceRate)||0,100)/100*2)));
@@ -8953,6 +8999,10 @@ document.addEventListener('keydown',function(e){
     return true;
   }
 
+  /* 하단 실제 DB 연결:
+     학생관리_DB의 출석약속·세트약속 보유 학생과
+     학습기록_DB의 완료 학습기록을 학생ID로 결합하여
+     학생별·연도별·월별·주차별 실제 집계행을 생성한다. */
   function wmBuildCommentMasterRows(){
     var studentMap=new Map();
     wmCommentActiveStudentRows().forEach(function(student){
