@@ -782,7 +782,7 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
 .wm-comment-scroll-top{width:100%;height:16px;overflow-x:auto;overflow-y:hidden;border:1px solid var(--wm-line);border-bottom:0;border-radius:14px 14px 0 0;background:#fff;}
 .wm-comment-scroll-inner{height:1px;min-width:1800px;}
 .wm-comment-table-wrap{border-radius:0 0 14px 14px;max-height:620px;overflow:auto;}
-.wm-comment-table-wrap table{min-width:1900px;}
+.wm-comment-table-wrap table{min-width:3600px;}
 #wmCommentHistoryTable{min-width:6100px;}
 .wm-comment-table-wrap thead th{position:sticky;top:0;z-index:30;background:#f9fafb;}
 .wm-comment-table-wrap tbody tr:nth-child(odd){background:#fff;}
@@ -795,6 +795,28 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
 #wmCommentHistoryTable th:nth-child(3),#wmCommentHistoryTable td:nth-child(3){position:sticky;left:72px;z-index:25;min-width:110px;background:inherit;}
 #wmCommentHistoryTable th:nth-child(4),#wmCommentHistoryTable td:nth-child(4){position:sticky;left:182px;z-index:25;min-width:110px;background:inherit;}
 #wmCommentHistoryTable thead th:nth-child(1),#wmCommentHistoryTable thead th:nth-child(3),#wmCommentHistoryTable thead th:nth-child(4){z-index:40;background:#f9fafb;}
+
+/* WM_COMMENT_STUDENT_ANALYSIS_UI_V1 */
+.wm-comment-analysis-box{border:1px solid #9fbce8;background:linear-gradient(180deg,#f4f8ff 0%,#eaf2ff 100%);border-radius:16px;padding:14px;margin:0 0 16px;box-shadow:0 8px 22px rgba(7,59,143,.08);}
+.wm-comment-analysis-head{margin:-14px -14px 14px;padding:12px 14px;border-radius:15px 15px 0 0;background:linear-gradient(135deg,#073b8f 0%,#0d55c8 100%);color:#fff;font-size:16px;font-weight:950;}
+.wm-comment-analysis-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:9px;}
+.wm-comment-analysis-grid label{font-size:12px;font-weight:900;color:#173b75;}
+.wm-comment-analysis-grid input,.wm-comment-analysis-grid select{width:100%;margin-top:5px;border:1px solid #b9cbea;border-radius:10px;padding:10px;font-size:13px;background:#fff;}
+.wm-comment-analysis-readonly{background:#f3f4f6!important;color:#374151!important;font-weight:850;}
+.wm-comment-analysis-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid #cbd9ed;}
+.wm-comment-result-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin:0 0 16px;}
+.wm-comment-result-card{border:1px solid #dbeafe;background:#fff;border-radius:14px;padding:13px;min-height:94px;}
+.wm-comment-result-label{font-size:12px;color:#6b7280;font-weight:900;}
+.wm-comment-result-value{margin-top:7px;font-size:22px;font-weight:950;color:#073b8f;}
+.wm-comment-result-sub{margin-top:4px;font-size:12px;color:#6b7280;font-weight:800;}
+.wm-comment-judgement-box{display:grid;grid-template-columns:150px 170px 210px 1fr;gap:10px;border:1px solid #b9cbea;background:#fff;border-radius:14px;padding:13px;margin:0 0 16px;}
+.wm-comment-judgement-item{min-width:0;}
+.wm-comment-judgement-label{font-size:12px;color:#6b7280;font-weight:900;}
+.wm-comment-judgement-value{margin-top:6px;font-size:18px;color:#111827;font-weight:950;min-height:25px;}
+.wm-comment-preview{white-space:normal;line-height:1.55;font-size:13px;}
+@media(max-width:1200px){.wm-comment-analysis-grid{grid-template-columns:repeat(3,minmax(0,1fr));}.wm-comment-result-grid{grid-template-columns:repeat(3,minmax(0,1fr));}.wm-comment-judgement-box{grid-template-columns:repeat(2,minmax(0,1fr));}}
+@media(max-width:720px){.wm-comment-analysis-grid,.wm-comment-result-grid,.wm-comment-judgement-box{grid-template-columns:1fr;}}
+
 .wm-comment-form-box{border:1px solid #9fbce8;background:linear-gradient(180deg,#f4f8ff 0%,#eaf2ff 100%);border-radius:16px;padding:14px;margin:0 0 16px;box-shadow:0 8px 22px rgba(7,59,143,.08);}
 .wm-comment-form-head{margin:-14px -14px 14px;padding:12px 14px;border-radius:15px 15px 0 0;background:linear-gradient(135deg,#073b8f 0%,#0d55c8 100%);color:#fff;font-size:16px;font-weight:950;}
 .wm-comment-form-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;}
@@ -2045,44 +2067,72 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       <div class="wm-comment-db-view active" data-comment-db-view="master">
         <div class="wm-profile-section-title">
           <h3>6-1. 코멘트마스터_DB</h3>
-          <span>확정 컬럼 16개 · 빈 표 25행</span>
-        </div>
-        <div class="wm-comment-form-box" id="wmCommentMasterRegisterBox">
-          <div class="wm-comment-form-head">신규 코멘트 등록</div>
-          <div class="wm-comment-form-grid">
-            <label>코멘트코드<input type="text" id="wmCommentMasterCode" placeholder="예: 1.1-A" /></label>
-            <label>1차등급<select id="wmCommentMasterGrade"><option value="">선택</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></label>
-            <label>세부분류<input type="text" id="wmCommentMasterDetail" placeholder="예: 1.1" /></label>
-            <label>추천유형<select id="wmCommentMasterType"><option value="">선택</option><option>출석형</option><option>집중형</option><option>점수형</option><option>성장형</option><option>종합형</option></select></label>
-            <label>리포트유형<select id="wmCommentMasterReportType"><option value="공통">공통</option><option>WEEKLY</option><option>MONTHLY</option></select></label>
-            <label>출석등급<select id="wmCommentMasterAttendance"><option value="공통">공통</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></label>
-            <label>참여등급<select id="wmCommentMasterEngagement"><option value="공통">공통</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></label>
-            <label>성과등급<select id="wmCommentMasterPerformance"><option value="공통">공통</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></label>
-            <label>성장방향<select id="wmCommentMasterGrowth"><option value="공통">공통</option><option>상승</option><option>유지</option><option>하락</option><option>데이터부족</option></select></label>
-            <label>우선순위<select id="wmCommentMasterPriority"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></label>
-            <label>사용여부<select id="wmCommentMasterUse"><option>사용</option><option>중지</option></select></label>
-            <label class="wm-comment-wide">코멘트<textarea id="wmCommentMasterText" maxlength="110" placeholder="공백 포함 80~100자 권장 · 최대 110자"></textarea><span class="wm-comment-char-row"><span id="wmCommentMasterCharStatus">80~100자 권장</span><span id="wmCommentMasterCharCount">0 / 110자</span></span></label>
-          </div>
-          <div class="wm-comment-form-actions"><button type="button" class="wm-action-btn" id="wmCommentMasterValidateBtn">입력 확인</button><button type="button" class="wm-action-btn sub" id="wmCommentMasterResetBtn">초기화</button><span class="wm-panel-desc" id="wmCommentMasterFormMessage" style="margin:9px 0 0;"></span></div>
+          <span>학생·주차 선택 → 약속값 확인 → 학습결과 자동분석 → 3단계 등급·코멘트 자동생성</span>
         </div>
 
-        <div class="wm-comment-form-box">
-          <div class="wm-comment-form-head">검색조건</div>
-          <div class="wm-comment-search-grid">
-            <label>코멘트코드<input type="text" id="wmCommentSearchCode" placeholder="코드" /></label>
-            <label>1차등급<select id="wmCommentSearchGrade"><option value="">전체</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></label>
-            <label>세부분류<input type="text" id="wmCommentSearchDetail" placeholder="예: 2.4" /></label>
-            <label>추천유형<select id="wmCommentSearchType"><option value="">전체</option><option>출석형</option><option>집중형</option><option>점수형</option><option>성장형</option><option>종합형</option></select></label>
-            <label>리포트유형<select id="wmCommentSearchReport"><option value="">전체</option><option>WEEKLY</option><option>MONTHLY</option><option>공통</option></select></label>
-            <label>사용여부<select id="wmCommentSearchUse"><option value="">전체</option><option>사용</option><option>중지</option></select></label>
+        <div class="wm-comment-analysis-box" id="wmCommentStudentAnalysisBox">
+          <div class="wm-comment-analysis-head">학생 분석 기준 선택</div>
+          <div class="wm-comment-analysis-grid">
+            <label>조회방식
+              <select id="wmCommentTargetMode">
+                <option value="individual">개인</option>
+                <option value="class">반</option>
+              </select>
+            </label>
+            <label>반
+              <select id="wmCommentClassSelect">
+                <option value="">전체 반</option>
+              </select>
+            </label>
+            <label>학생
+              <select id="wmCommentStudentSelect">
+                <option value="">학생 선택</option>
+              </select>
+            </label>
+            <label>연도
+              <select id="wmCommentYearSelect"><option>2026</option></select>
+            </label>
+            <label>월
+              <select id="wmCommentMonthSelect"><option value="">월 선택</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option></select>
+            </label>
+            <label>주차
+              <select id="wmCommentWeekSelect"><option value="">주차 선택</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select>
+            </label>
+            <label>학생ID<input class="wm-comment-analysis-readonly" id="wmCommentStudentIdView" value="-" readonly /></label>
+            <label>학생이름<input class="wm-comment-analysis-readonly" id="wmCommentStudentNameView" value="-" readonly /></label>
+            <label>반명<input class="wm-comment-analysis-readonly" id="wmCommentStudentClassView" value="-" readonly /></label>
+            <label>교사명<input class="wm-comment-analysis-readonly" id="wmCommentStudentTeacherView" value="-" readonly /></label>
+            <label>출석약속<input class="wm-comment-analysis-readonly" id="wmCommentAttendancePromiseView" value="-" readonly /></label>
+            <label>세트약속<input class="wm-comment-analysis-readonly" id="wmCommentSetPromiseView" value="-" readonly /></label>
           </div>
-          <div class="wm-comment-form-actions"><button type="button" class="wm-action-btn" id="wmCommentSearchBtn">검색</button><button type="button" class="wm-action-btn sub" id="wmCommentSearchResetBtn">초기화</button><span class="wm-panel-desc" id="wmCommentSearchMessage" style="margin:9px 0 0;">데이터 연결 전 UI 단계입니다.</span></div>
+          <div class="wm-comment-analysis-actions">
+            <button type="button" class="wm-action-btn" id="wmCommentAnalyzeBtn">학생 분석</button>
+            <button type="button" class="wm-action-btn sub" id="wmCommentAnalyzeResetBtn">초기화</button>
+            <span class="wm-panel-desc" id="wmCommentAnalyzeMessage" style="margin:9px 0 0;">학생관리_DB와 학습기록_DB 연결 전 화면 구조 단계입니다.</span>
+          </div>
+        </div>
+
+        <div class="wm-comment-result-grid" aria-label="학생 자동분석 결과">
+          <div class="wm-comment-result-card"><div class="wm-comment-result-label">출석</div><div class="wm-comment-result-value" id="wmCommentAttendanceResult">- / -회</div><div class="wm-comment-result-sub" id="wmCommentAttendanceRate">출석률 -%</div></div>
+          <div class="wm-comment-result-card"><div class="wm-comment-result-label">세트 진행</div><div class="wm-comment-result-value" id="wmCommentSetResult">- / -세트</div><div class="wm-comment-result-sub" id="wmCommentSetRate">세트진행률 -%</div></div>
+          <div class="wm-comment-result-card"><div class="wm-comment-result-label">학습단어</div><div class="wm-comment-result-value" id="wmCommentWordResult">-단어</div><div class="wm-comment-result-sub">완료세트 기준</div></div>
+          <div class="wm-comment-result-card"><div class="wm-comment-result-label">평균 세트시간</div><div class="wm-comment-result-value" id="wmCommentTimeResult">-분</div><div class="wm-comment-result-sub">학습참여도 기준</div></div>
+          <div class="wm-comment-result-card"><div class="wm-comment-result-label">평균 원점수</div><div class="wm-comment-result-value" id="wmCommentRawScoreResult">-점</div><div class="wm-comment-result-sub">시험 원래 점수</div></div>
+          <div class="wm-comment-result-card"><div class="wm-comment-result-label">평균 표준점수</div><div class="wm-comment-result-value" id="wmCommentStandardScoreResult">-점</div><div class="wm-comment-result-sub">학습시간 반영</div></div>
+          <div class="wm-comment-result-card"><div class="wm-comment-result-label">종합점수</div><div class="wm-comment-result-value" id="wmCommentTotalScoreResult">-점</div><div class="wm-comment-result-sub">세트진행 우선 평가</div></div>
+        </div>
+
+        <div class="wm-comment-judgement-box" aria-label="자동 코멘트 판정">
+          <div class="wm-comment-judgement-item"><div class="wm-comment-judgement-label">1차등급</div><div class="wm-comment-judgement-value" id="wmCommentPrimaryGrade">-</div></div>
+          <div class="wm-comment-judgement-item"><div class="wm-comment-judgement-label">세부분류</div><div class="wm-comment-judgement-value" id="wmCommentDetailGrade">-</div></div>
+          <div class="wm-comment-judgement-item"><div class="wm-comment-judgement-label">자동코멘트코드</div><div class="wm-comment-judgement-value" id="wmCommentAutoCode">-</div></div>
+          <div class="wm-comment-judgement-item"><div class="wm-comment-judgement-label">자동코멘트 미리보기</div><div class="wm-comment-judgement-value wm-comment-preview" id="wmCommentAutoPreview">학생과 주차를 선택하면 Factory 코멘트가 자동으로 표시됩니다.</div></div>
         </div>
 
         <div class="wm-comment-scroll-top" id="wmCommentMasterTopScroll"><div class="wm-comment-scroll-inner" id="wmCommentMasterTopScrollInner"></div></div>
         <div class="wm-table-wrap wm-comment-table-wrap" id="wmCommentMasterTableWrap">
           <table id="wmCommentMasterTable">
-            <thead><tr><th>일련번호</th><th>코멘트코드</th><th>1차등급</th><th>세부분류</th><th>추천유형</th><th>리포트유형</th><th>출석등급</th><th>참여등급</th><th>성과등급</th><th>성장방향</th><th>코멘트</th><th>글자수</th><th>우선순위</th><th>사용여부</th><th>등록일</th><th>수정일</th></tr></thead>
+            <thead><tr><th>일련번호</th><th>학생ID</th><th>학생이름</th><th>반명</th><th>교사명</th><th>연도</th><th>월</th><th>주차</th><th>리포트유형</th><th>출석약속</th><th>세트약속</th><th>실제출석일수</th><th>출석률</th><th>완료세트수</th><th>세트진행률</th><th>학습단어수</th><th>평균세트시간</th><th>평균원점수</th><th>평균표준점수</th><th>종합점수</th><th>1차등급</th><th>세부분류</th><th>자동코멘트코드</th><th>자동코멘트</th><th>최종코멘트코드</th><th>최종코멘트</th><th>성적표반영상태</th><th>등록일</th><th>수정일</th></tr></thead>
             <tbody id="wmCommentMasterTbody"></tbody>
           </table>
         </div>
@@ -8646,16 +8696,22 @@ document.addEventListener('keydown',function(e){
   }
 
   function boot(){
-    wmFillCommentBlankRows('wmCommentMasterTbody',16);
+    wmFillCommentBlankRows('wmCommentMasterTbody',29);
     wmFillCommentBlankRows('wmCommentHistoryTbody',46);
     wmSyncCommentScroll('wmCommentMasterTopScroll','wmCommentMasterTableWrap','wmCommentMasterTopScrollInner','wmCommentMasterTable');
     wmSyncCommentScroll('wmCommentHistoryTopScroll','wmCommentHistoryTableWrap','wmCommentHistoryTopScrollInner','wmCommentHistoryTable');
-    var text=document.getElementById('wmCommentMasterText');if(text)text.addEventListener('input',wmUpdateCommentCharCount);
-    var validate=document.getElementById('wmCommentMasterValidateBtn');if(validate)validate.addEventListener('click',wmValidateCommentMasterForm);
-    var reset=document.getElementById('wmCommentMasterResetBtn');if(reset)reset.addEventListener('click',wmResetCommentMasterForm);
-    var search=document.getElementById('wmCommentSearchBtn');if(search)search.addEventListener('click',function(){var m=document.getElementById('wmCommentSearchMessage');if(m)m.textContent='검색 UI 확인 완료 · 데이터 연결은 다음 단계입니다.';});
-    var searchReset=document.getElementById('wmCommentSearchResetBtn');if(searchReset)searchReset.addEventListener('click',wmResetCommentSearch);
-    wmUpdateCommentCharCount();
+    var analyze=document.getElementById('wmCommentAnalyzeBtn');
+    if(analyze) analyze.addEventListener('click',function(){
+      var m=document.getElementById('wmCommentAnalyzeMessage');
+      if(m)m.textContent='학생 분석 UI 확인 완료 · 실제 학생관리_DB/학습기록_DB 연결은 다음 단계입니다.';
+    });
+    var analyzeReset=document.getElementById('wmCommentAnalyzeResetBtn');
+    if(analyzeReset) analyzeReset.addEventListener('click',function(){
+      ['wmCommentClassSelect','wmCommentStudentSelect','wmCommentMonthSelect','wmCommentWeekSelect'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});
+      ['wmCommentStudentIdView','wmCommentStudentNameView','wmCommentStudentClassView','wmCommentStudentTeacherView','wmCommentAttendancePromiseView','wmCommentSetPromiseView'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='-';});
+      [['wmCommentAttendanceResult','- / -회'],['wmCommentAttendanceRate','출석률 -%'],['wmCommentSetResult','- / -세트'],['wmCommentSetRate','세트진행률 -%'],['wmCommentWordResult','-단어'],['wmCommentTimeResult','-분'],['wmCommentRawScoreResult','-점'],['wmCommentStandardScoreResult','-점'],['wmCommentTotalScoreResult','-점'],['wmCommentPrimaryGrade','-'],['wmCommentDetailGrade','-'],['wmCommentAutoCode','-'],['wmCommentAutoPreview','학생과 주차를 선택하면 Factory 코멘트가 자동으로 표시됩니다.']].forEach(function(x){var e=document.getElementById(x[0]);if(e)e.textContent=x[1];});
+      var m=document.getElementById('wmCommentAnalyzeMessage');if(m)m.textContent='학생관리_DB와 학습기록_DB 연결 전 화면 구조 단계입니다.';
+    });
   }
 
   if(document.readyState==='loading'){
