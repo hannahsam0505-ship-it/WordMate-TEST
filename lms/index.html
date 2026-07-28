@@ -771,6 +771,37 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
     @media (max-width:520px) { .wm-lms-login-card { padding:32px 22px 30px; border-radius:22px; } .wm-lms-login-title { font-size:24px !important; } }
 
   </style>
+
+<style>
+/* WM_COMMENT_CENTER_DB_TABS_V1 */
+.wm-comment-db-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 18px;}
+.wm-comment-db-tab{border:1px solid var(--wm-line);background:#fff;color:var(--wm-dark);border-radius:12px;padding:11px 16px;font-weight:900;cursor:pointer;}
+.wm-comment-db-tab.active{background:var(--wm-blue);color:#fff;border-color:var(--wm-blue);}
+.wm-comment-db-view{display:none;}
+.wm-comment-db-view.active{display:block;}
+.wm-comment-scroll-top{width:100%;height:16px;overflow-x:auto;overflow-y:hidden;border:1px solid var(--wm-line);border-bottom:0;border-radius:14px 14px 0 0;background:#fff;}
+.wm-comment-scroll-inner{height:1px;min-width:1800px;}
+.wm-comment-table-wrap{border-radius:0 0 14px 14px;max-height:620px;overflow:auto;}
+.wm-comment-table-wrap table{min-width:1900px;}
+#wmCommentHistoryTable{min-width:6100px;}
+.wm-comment-table-wrap thead th{position:sticky;top:0;z-index:30;background:#f9fafb;}
+.wm-comment-table-wrap tbody tr:nth-child(odd){background:#fff;}
+.wm-comment-table-wrap tbody tr:nth-child(even){background:#eef4ff;}
+.wm-comment-table-wrap tbody td{height:43px;background-color:inherit;}
+#wmCommentMasterTable th:first-child,#wmCommentMasterTable td:first-child,
+#wmCommentHistoryTable th:first-child,#wmCommentHistoryTable td:first-child{width:72px;min-width:72px;max-width:72px;text-align:center;}
+#wmCommentHistoryTable th:nth-child(1),#wmCommentHistoryTable td:nth-child(1){position:sticky;left:0;z-index:25;background:inherit;}
+#wmCommentHistoryTable th:nth-child(2),#wmCommentHistoryTable td:nth-child(2){position:sticky;left:72px;z-index:25;min-width:130px;background:inherit;}
+#wmCommentHistoryTable th:nth-child(3),#wmCommentHistoryTable td:nth-child(3){position:sticky;left:202px;z-index:25;min-width:110px;background:inherit;}
+#wmCommentHistoryTable th:nth-child(4),#wmCommentHistoryTable td:nth-child(4){position:sticky;left:312px;z-index:25;min-width:110px;background:inherit;}
+#wmCommentHistoryTable thead th:nth-child(1),#wmCommentHistoryTable thead th:nth-child(2),
+#wmCommentHistoryTable thead th:nth-child(3),#wmCommentHistoryTable thead th:nth-child(4){z-index:40;background:#f9fafb;}
+.wm-comment-pager{display:flex;justify-content:center;align-items:center;gap:10px;margin:12px 0 0;flex-wrap:wrap;}
+.wm-comment-pager button{border:1px solid var(--wm-line);background:#fff;color:var(--wm-dark);border-radius:10px;padding:8px 13px;font-size:13px;font-weight:900;cursor:pointer;}
+.wm-comment-pager button:disabled{opacity:.45;cursor:not-allowed;}
+.wm-comment-page-info{font-size:13px;font-weight:900;color:var(--wm-gray);}
+</style>
+
 </head>
 <body>
   <section class="wm-lms-login-gate" id="wmLmsLoginGate">
@@ -1984,19 +2015,53 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       </div>
     </section>
     <section class="wm-panel" id="panel-comment">
-      <div class="wm-panel-title-row"><h2 class="wm-panel-title">코멘트센터</h2><p class="wm-panel-desc">연결 DB: 6-1.코멘트마스터_DB / 6-2.코멘트이력_DB</p></div>
-      <div class="wm-filter-box" data-filter-scope="comment">
-        <div class="wm-filter-title">학생·리포트 기본정보</div>
-        <div class="wm-filter-grid">
-          <label>학생이름<input type="text" placeholder="학생이름" data-comment-field="studentName" /></label>
-          <label>Class<input type="text" placeholder="Class" data-comment-field="className" /></label>
-          <label>담당교사<input type="text" placeholder="담당교사" data-comment-field="teacherName" /></label>
-          <label>리포트연월<input type="month" data-comment-field="reportMonth" /></label>
-          <label>주차<select data-comment-field="reportWeek"><option value="">주차 선택</option><option value="1">1주차</option><option value="2">2주차</option><option value="3">3주차</option><option value="4">4주차</option><option value="5">5주차</option></select></label>
-          <label>리포트유형<select data-comment-field="reportType"><option value="WEEKLY">WEEKLY</option><option value="MONTHLY">MONTHLY</option></select></label>
+      <div class="wm-panel-title-row">
+        <h2 class="wm-panel-title">코멘트센터</h2>
+        <p class="wm-panel-desc">연결 DB: 6-1.코멘트마스터_DB / 6-2.코멘트이력_DB</p>
+      </div>
+
+      <div class="wm-comment-db-tabs" role="tablist" aria-label="코멘트센터 DB">
+        <button type="button" class="wm-comment-db-tab active" role="tab" aria-selected="true" data-comment-db-tab="master" onclick="wmSwitchCommentDbTab('master')">6-1. 코멘트마스터_DB</button>
+        <button type="button" class="wm-comment-db-tab" role="tab" aria-selected="false" data-comment-db-tab="history" onclick="wmSwitchCommentDbTab('history')">6-2. 코멘트이력_DB</button>
+      </div>
+
+      <div class="wm-comment-db-view active" data-comment-db-view="master">
+        <div class="wm-profile-section-title">
+          <h3>6-1. 코멘트마스터_DB</h3>
+          <span>확정 컬럼 16개 · 빈 표 25행</span>
+        </div>
+        <div class="wm-comment-scroll-top" id="wmCommentMasterTopScroll"><div class="wm-comment-scroll-inner" id="wmCommentMasterTopScrollInner"></div></div>
+        <div class="wm-table-wrap wm-comment-table-wrap" id="wmCommentMasterTableWrap">
+          <table id="wmCommentMasterTable">
+            <thead><tr><th>일련번호</th><th>코멘트코드</th><th>1차등급</th><th>세부분류</th><th>추천유형</th><th>리포트유형</th><th>출석등급</th><th>참여등급</th><th>성과등급</th><th>성장방향</th><th>코멘트</th><th>글자수</th><th>우선순위</th><th>사용여부</th><th>등록일</th><th>수정일</th></tr></thead>
+            <tbody id="wmCommentMasterTbody"></tbody>
+          </table>
+        </div>
+        <div class="wm-comment-pager">
+          <button type="button" disabled>이전</button>
+          <span class="wm-comment-page-info">1 / 1</span>
+          <button type="button" disabled>다음</button>
         </div>
       </div>
-      <div class="wm-note">다음 단계에서 학생 선택 시 출석·학습참여도·학습성과를 자동 계산하고 추천 코멘트를 연결합니다.</div>
+
+      <div class="wm-comment-db-view" data-comment-db-view="history">
+        <div class="wm-profile-section-title">
+          <h3>6-2. 코멘트이력_DB</h3>
+          <span>확정 컬럼 46개 · 빈 표 25행</span>
+        </div>
+        <div class="wm-comment-scroll-top" id="wmCommentHistoryTopScroll"><div class="wm-comment-scroll-inner" id="wmCommentHistoryTopScrollInner"></div></div>
+        <div class="wm-table-wrap wm-comment-table-wrap" id="wmCommentHistoryTableWrap">
+          <table id="wmCommentHistoryTable">
+            <thead><tr><th>일련번호</th><th>리포트ID</th><th>학생ID</th><th>학생이름</th><th>학교</th><th>학년</th><th>Class</th><th>담당교사</th><th>연도</th><th>월</th><th>주차</th><th>리포트유형</th><th>월마감</th><th>주간약정횟수</th><th>실제출석일수</th><th>출석률</th><th>출석등급</th><th>완료세트수</th><th>평균세트시간</th><th>참여등급</th><th>평균원점수</th><th>평균실질점수</th><th>성과등급</th><th>전주평균세트시간</th><th>전주실질점수</th><th>성장방향</th><th>성장지수</th><th>추천출석등급</th><th>추천참여등급</th><th>추천성과등급</th><th>추천근거</th><th>자동추천등급</th><th>자동추천코드</th><th>추천코드1</th><th>추천코드2</th><th>추천코드3</th><th>추천코드4</th><th>추천코드5</th><th>최종선택코드</th><th>최종코멘트</th><th>교사수정</th><th>확정여부</th><th>성적표반영</th><th>발송여부</th><th>등록일</th><th>수정일</th></tr></thead>
+            <tbody id="wmCommentHistoryTbody"></tbody>
+          </table>
+        </div>
+        <div class="wm-comment-pager">
+          <button type="button" disabled>이전</button>
+          <span class="wm-comment-page-info">1 / 1</span>
+          <button type="button" disabled>다음</button>
+        </div>
+      </div>
     </section>
     <section class="wm-panel" id="panel-counsel">
       <h2 class="wm-panel-title">상담카페</h2>
@@ -8430,6 +8495,78 @@ document.addEventListener('keydown',function(e){
   const scope=box.getAttribute('data-filter-scope');
   if(scope&&typeof runFilter==='function') runFilter(scope);
 });
+</script>
+
+
+<script>
+/* WM_COMMENT_CENTER_DB_TABS_V1 */
+(function(){
+  'use strict';
+  var PAGE_SIZE=25;
+
+  function wmFillCommentBlankRows(tbodyId,columnCount){
+    var tbody=document.getElementById(tbodyId);
+    if(!tbody) return;
+    var html='';
+    for(var row=1;row<=PAGE_SIZE;row++){
+      html+='<tr>';
+      for(var col=0;col<columnCount;col++){
+        html+='<td>'+(col===0?String(row):'')+'</td>';
+      }
+      html+='</tr>';
+    }
+    tbody.innerHTML=html;
+  }
+
+  function wmSyncCommentScroll(topId,wrapId,innerId,tableId){
+    var top=document.getElementById(topId);
+    var wrap=document.getElementById(wrapId);
+    var inner=document.getElementById(innerId);
+    var table=document.getElementById(tableId);
+    if(!top||!wrap||!inner||!table) return;
+    inner.style.width=Math.max(table.scrollWidth,wrap.clientWidth)+'px';
+    var syncing=false;
+    top.addEventListener('scroll',function(){
+      if(syncing) return;
+      syncing=true;
+      wrap.scrollLeft=top.scrollLeft;
+      syncing=false;
+    });
+    wrap.addEventListener('scroll',function(){
+      if(syncing) return;
+      syncing=true;
+      top.scrollLeft=wrap.scrollLeft;
+      syncing=false;
+    });
+  }
+
+  window.wmSwitchCommentDbTab=function(tabName){
+    document.querySelectorAll('[data-comment-db-tab]').forEach(function(btn){
+      var active=btn.getAttribute('data-comment-db-tab')===tabName;
+      btn.classList.toggle('active',active);
+      btn.setAttribute('aria-selected',active?'true':'false');
+    });
+    document.querySelectorAll('[data-comment-db-view]').forEach(function(view){
+      view.classList.toggle('active',view.getAttribute('data-comment-db-view')===tabName);
+    });
+    setTimeout(function(){
+      window.dispatchEvent(new Event('resize'));
+    },0);
+  };
+
+  function boot(){
+    wmFillCommentBlankRows('wmCommentMasterTbody',16);
+    wmFillCommentBlankRows('wmCommentHistoryTbody',46);
+    wmSyncCommentScroll('wmCommentMasterTopScroll','wmCommentMasterTableWrap','wmCommentMasterTopScrollInner','wmCommentMasterTable');
+    wmSyncCommentScroll('wmCommentHistoryTopScroll','wmCommentHistoryTableWrap','wmCommentHistoryTopScrollInner','wmCommentHistoryTable');
+  }
+
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',boot,{once:true});
+  }else{
+    boot();
+  }
+})();
 </script>
 
 </body>
