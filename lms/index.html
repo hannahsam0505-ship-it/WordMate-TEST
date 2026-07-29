@@ -2146,9 +2146,9 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
           </table>
         </div>
         <div class="wm-comment-pager">
-          <button type="button" disabled>이전</button>
-          <span class="wm-comment-page-info">1 / 1</span>
-          <button type="button" disabled>다음</button>
+          <button type="button" id="wmCommentMasterPrevBtn" onclick="wmMoveCommentMasterPage(-1)" disabled>이전</button>
+          <span class="wm-comment-page-info" id="wmCommentMasterPageInfo">1 / 1</span>
+          <button type="button" id="wmCommentMasterNextBtn" onclick="wmMoveCommentMasterPage(1)" disabled>다음</button>
         </div>
       </div>
 
@@ -2515,7 +2515,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       if(panelName === 'comment'){
         setTimeout(function(){
           if(typeof window.wmEnsureCommentDataLoaded === 'function'){
-            window.wmEnsureCommentDataLoaded();
+            window.wmEnsureCommentDataLoaded(true);
           }
         }, 0);
       }
@@ -8717,6 +8717,8 @@ document.addEventListener('keydown',function(e){
   var WM_COMMENT_STUDENT_ROWS=[];
   var WM_COMMENT_RECORD_ROWS=[];
   var WM_COMMENT_MASTER_ROWS=[];
+  var WM_COMMENT_MASTER_PAGE=1;
+  var WM_COMMENT_MASTER_PAGE_SIZE=25;
   var WM_COMMENT_DATA_LOADING=null;
   var WM_COMMENT_DATA_LOADED=false;
 
@@ -8997,32 +8999,55 @@ document.addEventListener('keydown',function(e){
     return true;
   }
 
+  function wmCommentMasterSerialNumber(row,index){
+    var serial=Number(wmCommentText(row&&row['일련번호']).replace(/[^0-9.-]/g,''));
+    return isFinite(serial)&&serial>0?serial:(index+1);
+  }
+
   function wmRenderCommentMasterRows(){
     var tbody=document.getElementById('wmCommentMasterTbody');
     if(!tbody) return;
-    var headers='학생ID\t학생이름\t반명\t교사명\t연도\t월\t주차\t리포트유형\t출석약속\t세트약속\t실제출석일수\t출석률\t완료세트수\t세트진행률\t출석점수\t학습단어수\t총학습시간\t1세트평균시간\t참여집중도\t평균원점수\t표준점수\t점수추이\t최종점수\tGrade\tClass\t자동코멘트코드\t자동코멘트\t최종코멘트코드\t최종코멘트\t성적표반영상태\t등록일\t수정일'.split('\t');
-    var rows=WM_COMMENT_MASTER_ROWS||[];
+    var headers='학생ID	학생이름	반명	교사명	연도	월	주차	리포트유형	출석약속	세트약속	실제출석일수	출석률	완료세트수	세트진행률	출석점수	학습단어수	총학습시간	1세트평균시간	참여집중도	평균원점수	표준점수	점수추이	최종점수	Grade	Class	자동코멘트코드	자동코멘트	최종코멘트코드	최종코멘트	성적표반영상태	등록일	수정일'.split('	');
+    var allRows=(WM_COMMENT_MASTER_ROWS||[]).slice().sort(function(a,b){
+      return wmCommentMasterSerialNumber(b,0)-wmCommentMasterSerialNumber(a,0);
+    });
+    var totalPages=Math.max(1,Math.ceil(allRows.length/WM_COMMENT_MASTER_PAGE_SIZE));
+    WM_COMMENT_MASTER_PAGE=Math.min(Math.max(1,WM_COMMENT_MASTER_PAGE),totalPages);
+    var start=(WM_COMMENT_MASTER_PAGE-1)*WM_COMMENT_MASTER_PAGE_SIZE;
+    var rows=allRows.slice(start,start+WM_COMMENT_MASTER_PAGE_SIZE);
     var html=rows.map(function(row,index){
-      return '<tr data-comment-row="'+index+'"><td>'+(index+1)+'</td>'+headers.map(function(header){
+      var serial=wmCommentText(row['일련번호'])||String(start+index+1);
+      return '<tr data-comment-row="'+(start+index)+'"><td>'+escapeHtml(serial)+'</td>'+headers.map(function(header){
         var value=row[header];
-        if(header==='출석률'||header==='세트진행률') value=value+'%';
-        if(header==='총학습시간'||header==='1세트평균시간') value=value+'분';
-        if(['출석점수','참여집중도','평균원점수','표준점수','점수추이','최종점수'].indexOf(header)!==-1) value=value+'점';
+        if((header==='출석률'||header==='세트진행률')&&wmCommentText(value)!=='') value=value+'%';
+        if((header==='총학습시간'||header==='1세트평균시간')&&wmCommentText(value)!=='') value=value+'분';
+        if(['출석점수','참여집중도','평균원점수','표준점수','점수추이','최종점수'].indexOf(header)!==-1&&wmCommentText(value)!=='') value=value+'점';
         return '<td>'+escapeHtml(value===null||value===undefined||value===''?'-':String(value))+'</td>';
       }).join('')+'</tr>';
     }).join('');
-    var pad=Math.max(0,25-rows.length);
-    for(var i=0;i<pad;i++) html+='<tr><td>'+(rows.length+i+1)+'</td>'+new Array(33).join('<td></td>')+'</tr>';
-    tbody.innerHTML=html||'<tr><td colspan="33">약속데이터와 완료 학습데이터가 함께 있는 학생이 없습니다.</td></tr>';
+    var pad=Math.max(0,WM_COMMENT_MASTER_PAGE_SIZE-rows.length);
+    for(var i=0;i<pad;i++) html+='<tr><td>'+(start+rows.length+i+1)+'</td>'+new Array(33).join('<td></td>')+'</tr>';
+    tbody.innerHTML=html||'<tr><td colspan="33">6-1.코멘트마스터_DB에 표시할 기록이 없습니다.</td></tr>';
+    var pageInfo=document.getElementById('wmCommentMasterPageInfo');
+    var prev=document.getElementById('wmCommentMasterPrevBtn');
+    var next=document.getElementById('wmCommentMasterNextBtn');
+    if(pageInfo) pageInfo.textContent=WM_COMMENT_MASTER_PAGE+' / '+totalPages+' · '+allRows.length+'건';
+    if(prev) prev.disabled=WM_COMMENT_MASTER_PAGE<=1;
+    if(next) next.disabled=WM_COMMENT_MASTER_PAGE>=totalPages;
     var table=document.getElementById('wmCommentMasterTable');
     var inner=document.getElementById('wmCommentMasterTopScrollInner');
     if(table&&inner) inner.style.width=table.scrollWidth+'px';
   }
 
+  function wmMoveCommentMasterPage(delta){
+    WM_COMMENT_MASTER_PAGE+=Number(delta)||0;
+    wmRenderCommentMasterRows();
+  }
+  window.wmMoveCommentMasterPage=wmMoveCommentMasterPage;
+
   async function wmLoadCommentMasterRowsFromSheet(){
     var url=WM_APPS_SCRIPT_URL
-      +'?mode=students'
-      +'&commentCenter=masterRows'
+      +'?mode=commentMasterRows'
       +'&ts='+Date.now()
       +wmLmsActorQuery();
     var response=await fetch(url,{method:'GET',cache:'no-store'});
@@ -9032,11 +9057,13 @@ document.addEventListener('keydown',function(e){
     }
     var rows=Array.isArray(data.rows)?data.rows:(Array.isArray(data.commentMasterRows)?data.commentMasterRows:(Array.isArray(data)?data:[]));
     WM_COMMENT_MASTER_ROWS=(rows||[]).filter(function(row){return row&&typeof row==='object';});
+    WM_COMMENT_MASTER_PAGE=1;
     wmRenderCommentMasterRows();
     return WM_COMMENT_MASTER_ROWS;
   }
 
-  async function wmLoadCommentSourceRows(){
+  async function wmLoadCommentSourceRows(forceReload){
+    if(forceReload) WM_COMMENT_DATA_LOADED=false;
     if(WM_COMMENT_DATA_LOADED) return WM_COMMENT_MASTER_ROWS;
     if(WM_COMMENT_DATA_LOADING) return WM_COMMENT_DATA_LOADING;
     WM_COMMENT_DATA_LOADING=(async function(){
