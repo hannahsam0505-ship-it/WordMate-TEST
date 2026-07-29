@@ -9125,60 +9125,37 @@ document.addEventListener('keydown',function(e){
     if(WM_COMMENT_DATA_LOADED) return WM_COMMENT_MASTER_ROWS;
     if(WM_COMMENT_DATA_LOADING) return WM_COMMENT_DATA_LOADING;
     WM_COMMENT_DATA_LOADING=(async function(){
-      wmCommentSetMessage('학생관리_DB 약속데이터와 학습기록_DB 학습데이터를 연결하는 중입니다.',false);
+      wmCommentSetMessage('Google Sheets에서 코멘트마스터를 직접 집계·저장하는 중입니다.',false);
       try{
-        /* 코멘트센터 진입 즉시 6-1 시트 생성·조회부터 실행합니다.
-         * 학생관리_DB 또는 학습기록_DB가 0건이어도 시트 생성 호출은 먼저 완료됩니다. */
-        await wmLoadCommentMasterRowsFromSheet();
-
-        /* 로그인·대시보드 초기화와 분리: 코멘트센터 진입 시에만 전용 API 2건을 병렬 조회한다. */
-        function wmCommentApiUrl(mode,ts){
-          return WM_APPS_SCRIPT_URL+'?mode='+encodeURIComponent(mode)+'&ts='+ts+wmLmsActorQuery();
+        /* 서버 우선 원칙:
+         * Code.gs가 학생관리_DB + 학습기록_DB를 직접 읽고,
+         * 6-1.코멘트마스터_DB에 일괄 저장한 뒤 실제 시트 행만 반환합니다. */
+        var url=WM_APPS_SCRIPT_URL
+          +'?mode=students'
+          +'&commentCenter=syncMasterRows'
+          +'&ts='+Date.now()
+          +wmLmsActorQuery();
+        var response=await fetch(url,{method:'GET',cache:'no-store'});
+        var data=await response.json();
+        if(!response.ok||!data||data.success===false){
+          throw new Error((data&&data.error)||(data&&data.message)||'6-1.코멘트마스터_DB 서버 직접 집계 실패');
         }
-        var urls=[
-          wmCommentApiUrl('students',Date.now()),
-          wmCommentApiUrl('records',Date.now()+1)
-        ];
-        var responses=await Promise.all(urls.map(function(url){return fetch(url,{method:'GET',cache:'no-store'});}));
-        var payloads=await Promise.all(responses.map(function(response){
-          if(!response.ok) throw new Error('DB 조회 HTTP '+response.status);
-          return response.json();
-        }));
-        var sData=payloads[0],rData=payloads[1];
-        var students=wmExtractCommentStudentRows(sData);
-        var records=typeof extractRecordRowsFromResponse==='function'
-          ?extractRecordRowsFromResponse(rData)
-          :(rData&&Array.isArray(rData.records)?rData.records:(Array.isArray(rData)?rData:[]));
-        WM_COMMENT_STUDENT_ROWS=(students||[]).filter(function(row){return row&&typeof row==='object';});
-        WM_COMMENT_RECORD_ROWS=(records||[]).filter(function(row){return row&&typeof row==='object';});
-        if(!WM_COMMENT_STUDENT_ROWS.length){
-          throw new Error('학생관리_DB 응답 0건 또는 응답키 불일치');
-        }
-        if(!WM_COMMENT_RECORD_ROWS.length){
-          throw new Error('학습기록_DB 응답 0건 또는 응답키 불일치');
-        }
+        var rows=Array.isArray(data.rows)?data.rows:(Array.isArray(data.commentMasterRows)?data.commentMasterRows:[]);
+        WM_COMMENT_MASTER_ROWS=(rows||[]).filter(function(row){return row&&typeof row==='object';});
+        WM_COMMENT_STUDENT_ROWS=WM_COMMENT_MASTER_ROWS.map(function(row){
+          return {
+            학생ID:row.학생ID||'',학생이름:row.학생이름||'',반명:row.반명||'',교사명:row.교사명||''
+          };
+        });
+        WM_COMMENT_RECORD_ROWS=[];
         wmRenderCommentClassOptions('');
         wmRenderCommentStudentOptions('');
-
-        /* Google Sheet를 원본으로 사용합니다.
-         * 집계 결과는 화면에 먼저 표시하지 않고 6-1 시트에 저장한 뒤,
-         * 동일 시트를 다시 조회한 행만 LMS 하단에 표시합니다. */
-        wmBuildCommentMasterRows();
-        var generatedRows=(WM_COMMENT_MASTER_ROWS||[]).slice();
-        WM_COMMENT_MASTER_ROWS=[];
-        try{
-          var syncResult=await wmSyncCommentMasterRowsToSheet(generatedRows);
-          var sheetRows=await wmLoadCommentMasterRowsFromSheet();
-          if(syncResult.saved>0&&!sheetRows.length){
-            throw new Error('6-1.코멘트마스터_DB 저장 후 실제 시트 조회 0건');
-          }
-          WM_COMMENT_DATA_LOADED=true;
-          wmCommentSetMessage('구글시트 원본 연결 완료 · 학생 '+WM_COMMENT_STUDENT_ROWS.length+'명 / 학습기록 '+WM_COMMENT_RECORD_ROWS.length+'건 / 시트저장 '+syncResult.saved+'건 / LMS표시 '+sheetRows.length+'건',false);
-        }catch(syncError){
-          WM_COMMENT_MASTER_ROWS=[];
-          wmRenderCommentMasterRows();
-          throw syncError;
+        wmRenderCommentMasterRows();
+        if(!WM_COMMENT_MASTER_ROWS.length){
+          throw new Error('6-1.코멘트마스터_DB 저장 후 실제 시트 조회 0건');
         }
+        WM_COMMENT_DATA_LOADED=true;
+        wmCommentSetMessage('구글시트 직접 연결 완료 · 원본학생 '+Number(data.sourceStudents||0)+'명 / 원본기록 '+Number(data.sourceRecords||0)+'건 / 집계·저장 '+Number(data.saved||0)+'건 / LMS표시 '+WM_COMMENT_MASTER_ROWS.length+'건',false);
         return WM_COMMENT_MASTER_ROWS;
       }catch(error){
         WM_COMMENT_STUDENT_ROWS=[];WM_COMMENT_RECORD_ROWS=[];WM_COMMENT_MASTER_ROWS=[];
