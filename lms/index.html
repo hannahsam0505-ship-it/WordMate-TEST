@@ -788,12 +788,6 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
 .wm-comment-table-wrap tbody tr:nth-child(odd){background:#fff;}
 .wm-comment-table-wrap tbody tr:nth-child(even){background:#eef4ff;}
 .wm-comment-table-wrap tbody td{height:43px;background-color:inherit;}
-/* WM_COMMENT_SCORE_COLUMN_COLORS_V1: 핵심 계산 컬럼 세로 전체 색상 */
-#wmCommentMasterTable th:nth-child(16),#wmCommentMasterTable td:nth-child(16),
-#wmCommentMasterTable th:nth-child(20),#wmCommentMasterTable td:nth-child(20),
-#wmCommentMasterTable th:nth-child(24),#wmCommentMasterTable td:nth-child(24){background:#fff7bf !important;}
-#wmCommentMasterTable th:nth-child(25),#wmCommentMasterTable td:nth-child(25),
-#wmCommentMasterTable th:nth-child(26),#wmCommentMasterTable td:nth-child(26){background:#fed7aa !important;}
 #wmCommentMasterTable th:first-child,#wmCommentMasterTable td:first-child,
 #wmCommentHistoryTable th:first-child,#wmCommentHistoryTable td:first-child{width:72px;min-width:72px;max-width:72px;text-align:center;}
 #wmCommentHistoryTable th:nth-child(2),#wmCommentHistoryTable td:nth-child(2){display:none !important;}
@@ -1781,7 +1775,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       </div>
 
       <div class="wm-factory-box">
-        <div class="wm-profile-section-title"><h3>9. 상담카페</h3><span>9.상담카페의 실제 상담 데이터를 학생ID 기준으로 표시합니다.</span></div>
+        <div class="wm-profile-section-title"><h3>7. 상담카페</h3><span>6.상담카페_DB의 실제 상담 데이터를 학생ID 기준으로 표시합니다.</span></div>
         <div class="wm-table-wrap"><table class="wm-profile-table"><thead><tr><th>상담ID</th><th>학생ID</th><th>학생이름</th><th>상담일</th><th>상담자</th><th>상담대상</th><th>상담유형</th><th>상담방식</th><th>상담목적</th><th>학부모관심사항</th><th>학습특이사항</th><th>상담요약</th><th>특이사항</th><th>다음상담예정일</th><th>수정일</th></tr></thead><tbody><tr><td>CS001</td><td>S001</td><td>김학생</td><td>2026-05-30</td><td>홍길동</td><td>김학부모</td><td>정기상담</td><td>전화</td><td>학습상태공유</td><td>숙제완료율</td><td>단어암기 속도</td><td>최근 학습 흐름은 안정적입니다.</td><td></td><td>2026-06-15</td><td>2026-05-30</td></tr></tbody></table></div>
       </div>
     </section>
@@ -2061,7 +2055,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
     </section>
     <section class="wm-panel" id="panel-comment">
       <div class="wm-panel-title-row">
-        <h2 class="wm-panel-title">6. 코멘트센터</h2>
+        <h2 class="wm-panel-title">코멘트센터</h2>
         <p class="wm-panel-desc">연결 DB: 6-1.코멘트마스터_DB / 6-2.코멘트이력_DB</p>
       </div>
 
@@ -2132,8 +2126,8 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
         </div>
 
         <div class="wm-comment-judgement-box" aria-label="자동 코멘트 판정">
-          <div class="wm-comment-judgement-item"><div class="wm-comment-judgement-label">Grade</div><div class="wm-comment-judgement-value" id="wmCommentPrimaryGrade">-</div></div>
-          <div class="wm-comment-judgement-item"><div class="wm-comment-judgement-label">Class</div><div class="wm-comment-judgement-value" id="wmCommentDetailGrade">-</div></div>
+          <div class="wm-comment-judgement-item"><div class="wm-comment-judgement-label">1차등급</div><div class="wm-comment-judgement-value" id="wmCommentPrimaryGrade">-</div></div>
+          <div class="wm-comment-judgement-item"><div class="wm-comment-judgement-label">세부분류</div><div class="wm-comment-judgement-value" id="wmCommentDetailGrade">-</div></div>
           <div class="wm-comment-judgement-item"><div class="wm-comment-judgement-label">자동코멘트코드</div><div class="wm-comment-judgement-value" id="wmCommentAutoCode">-</div></div>
           <div class="wm-comment-judgement-item"><div class="wm-comment-judgement-label">자동코멘트 미리보기</div><div class="wm-comment-judgement-value wm-comment-preview" id="wmCommentAutoPreview">학생과 주차를 선택하면 Factory 코멘트가 자동으로 표시됩니다.</div></div>
         </div>
@@ -2141,14 +2135,14 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
         <div class="wm-comment-scroll-top" id="wmCommentMasterTopScroll"><div class="wm-comment-scroll-inner" id="wmCommentMasterTopScrollInner"></div></div>
         <div class="wm-table-wrap wm-comment-table-wrap" id="wmCommentMasterTableWrap">
           <table id="wmCommentMasterTable">
-            <thead><tr><th>일련번호</th><th>학생ID</th><th>학생이름</th><th>반명</th><th>교사명</th><th>연도</th><th>월</th><th>주차</th><th>리포트유형</th><th>출석약속</th><th>세트약속</th><th>실제출석일수</th><th>출석률</th><th>완료세트수</th><th>세트진행률</th><th>출석점수</th><th>학습단어수</th><th>총학습시간</th><th>1세트평균시간</th><th>참여집중도</th><th>평균원점수</th><th>표준점수</th><th>점수추이</th><th>최종점수</th><th>Grade</th><th>Class</th><th>자동코멘트코드</th><th>자동코멘트</th><th>최종코멘트코드</th><th>최종코멘트</th><th>성적표반영상태</th><th>등록일</th><th>수정일</th></tr></thead>
+            <thead><tr><th>일련번호</th><th>학생ID</th><th>학생이름</th><th>반명</th><th>교사명</th><th>연도</th><th>월</th><th>주차</th><th>리포트유형</th><th>출석약속</th><th>세트약속</th><th>실제출석일수</th><th>출석률</th><th>완료세트수</th><th>세트진행률</th><th>출석점수</th><th>학습단어수</th><th>총학습시간</th><th>1세트평균시간</th><th>참여집중도</th><th>평균원점수</th><th>표준점수</th><th>점수추이</th><th>최종점수</th><th>1차등급</th><th>세부분류</th><th>자동코멘트코드</th><th>자동코멘트</th><th>최종코멘트코드</th><th>최종코멘트</th><th>성적표반영상태</th><th>등록일</th><th>수정일</th></tr></thead>
             <tbody id="wmCommentMasterTbody"></tbody>
           </table>
         </div>
         <div class="wm-comment-pager">
-          <button type="button" id="wmCommentMasterPrevBtn" onclick="wmMoveCommentMasterPage(-1)" disabled>이전</button>
-          <span class="wm-comment-page-info" id="wmCommentMasterPageInfo">1 / 1</span>
-          <button type="button" id="wmCommentMasterNextBtn" onclick="wmMoveCommentMasterPage(1)" disabled>다음</button>
+          <button type="button" disabled>이전</button>
+          <span class="wm-comment-page-info">1 / 1</span>
+          <button type="button" disabled>다음</button>
         </div>
       </div>
 
@@ -2172,9 +2166,9 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       </div>
     </section>
     <section class="wm-panel" id="panel-counsel">
-      <h2 class="wm-panel-title">9. 상담카페</h2>
-      <p class="wm-panel-desc">연결 DB: 9.상담카페 / 학생별 상담 데이터를 관리하는 영역입니다.</p>
-      <div class="wm-table-wrap"><table><thead><tr><th>상담ID</th><th>학생ID</th><th>학생이름</th><th>상담일</th><th>상담자</th><th>상담대상</th><th>상담유형</th><th>상담방식</th><th>상담목적</th><th>학부모관심사항</th><th>학습특이사항</th><th>상담요약</th><th>특이사항</th><th>다음상담예정일</th><th>수정일</th></tr></thead><tbody><tr><td colspan="15">9.상담카페 연결 준비 중입니다.</td></tr></tbody></table></div>
+      <h2 class="wm-panel-title">상담카페</h2>
+      <p class="wm-panel-desc">연결 DB: 9.상담카페_DB / 학생별 상담 데이터를 관리하는 영역입니다.</p>
+      <div class="wm-table-wrap"><table><thead><tr><th>상담ID</th><th>학생ID</th><th>학생이름</th><th>상담일</th><th>상담자</th><th>상담대상</th><th>상담유형</th><th>상담방식</th><th>상담목적</th><th>학부모관심사항</th><th>학습특이사항</th><th>상담요약</th><th>특이사항</th><th>다음상담예정일</th><th>수정일</th></tr></thead><tbody><tr><td colspan="15">9.상담카페_DB 연결 준비 중입니다.</td></tr></tbody></table></div>
     </section>
     <section class="wm-panel" id="panel-currentProgress">
       <div class="wm-panel-title-row"><h2 class="wm-panel-title">현재진행 센터</h2><p class="wm-panel-desc">연결 DB: 8.현재진행_DB / 학생별 최신 학습 진행 캐시를 그대로 표시합니다.</p></div>
@@ -2515,7 +2509,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       if(panelName === 'comment'){
         setTimeout(function(){
           if(typeof window.wmEnsureCommentDataLoaded === 'function'){
-            window.wmEnsureCommentDataLoaded(true);
+            window.wmEnsureCommentDataLoaded();
           }
         }, 0);
       }
@@ -3061,7 +3055,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
         let waitRows=filterProfileRows(normalizeRows(data.sendWait), studentId, studentName);
         let logRows=filterProfileRows(normalizeRows(data.sendLog), studentId, studentName);
         let classRows=filterProfileRows(normalizeRows(data.classes || data.classRows || data.classInfo || []), studentId, studentName);
-        let counselRows=filterProfileRows(normalizeRows(data.counsel || data.counselCafe || data.counselRows || data.consult || data.consultRows || data['9.상담카페'] || data['6.상담카페_DB'] || []), studentId, studentName);
+        let counselRows=filterProfileRows(normalizeRows(data.counsel || data.counselCafe || data.counselRows || data.consult || data.consultRows || data['6.상담카페_DB'] || []), studentId, studentName);
 
         let total=studentRows.length+studyRows.length+reportRows.length+waitRows.length+logRows.length+classRows.length+counselRows.length;
         if(total===0){
@@ -3071,7 +3065,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
           waitRows=filterProfileRows(await readSheetRows(['5.발송대기_DB','발송대기_DB','sendWait']), studentId, studentName);
           logRows=filterProfileRows(await readSheetRows(['6.발송기록_DB','발송기록_DB','sendLog']), studentId, studentName);
           classRows=filterProfileRows(await readSheetRows(['7-2.반관리_DB','반관리_DB','classes']), studentId, studentName);
-          counselRows=filterProfileRows(await readSheetRows(['9.상담카페','6.상담카페_DB','상담카페_DB','상담_DB','counsel']), studentId, studentName);
+          counselRows=filterProfileRows(await readSheetRows(['6.상담카페_DB','상담카페_DB','상담_DB','counsel']), studentId, studentName);
           total=studentRows.length+studyRows.length+reportRows.length+waitRows.length+logRows.length+classRows.length+counselRows.length;
         }
 
@@ -3321,7 +3315,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       tasks.push(loadDashboardSheetIfEmpty('WM_DASHBOARD_CLASS_ROWS', ['7-2.반관리_DB','반관리_DB','Class_DB','classes']));
       tasks.push(loadDashboardSheetIfEmpty('WM_DASHBOARD_TEACHER_ROWS', ['7-1.교사관리_DB','교사관리_DB','교사_DB','Teacher_DB']));
       tasks.push(loadDashboardSheetIfEmpty('WM_DASHBOARD_SEND_LOG_ROWS', ['5-1.발송기록_DB','6.발송기록_DB','발송기록_DB','sendLog','send_log']));
-      tasks.push(loadDashboardSheetIfEmpty('WM_DASHBOARD_COUNSEL_ROWS', ['9.상담카페','6.상담카페_DB','상담_DB','상담카페_DB','counsel','consult']));
+      tasks.push(loadDashboardSheetIfEmpty('WM_DASHBOARD_COUNSEL_ROWS', ['6.상담카페_DB','상담_DB','상담카페_DB','counsel','consult']));
       tasks.push(loadDashboardSheetIfEmpty('WM_DASHBOARD_PAYMENT_ROWS', ['결제_DB','결제DB','Payment_DB','payments','매출_DB']));
       if(!WM_CURRENT_PROGRESS_ROWS || !WM_CURRENT_PROGRESS_ROWS.length) tasks.push(loadDashboardSheetIfEmpty('WM_CURRENT_PROGRESS_ROWS', ['8.현재진행_DB','현재진행_DB','currentProgress','current_progress']));
       await Promise.all(tasks);
@@ -8696,7 +8690,7 @@ document.addEventListener('keydown',function(e){
   }
 
   function wmValidateCommentMasterForm(){
-    var required=[['wmCommentMasterCode','코멘트코드'],['wmCommentMasterGrade','Grade'],['wmCommentMasterDetail','Class'],['wmCommentMasterType','추천유형'],['wmCommentMasterText','코멘트']];
+    var required=[['wmCommentMasterCode','코멘트코드'],['wmCommentMasterGrade','1차등급'],['wmCommentMasterDetail','세부분류'],['wmCommentMasterType','추천유형'],['wmCommentMasterText','코멘트']];
     var missing=[];
     required.forEach(function(x){var e=document.getElementById(x[0]);if(!e||!String(e.value||'').trim())missing.push(x[1]);});
     var text=document.getElementById('wmCommentMasterText');
@@ -8717,8 +8711,6 @@ document.addEventListener('keydown',function(e){
   var WM_COMMENT_STUDENT_ROWS=[];
   var WM_COMMENT_RECORD_ROWS=[];
   var WM_COMMENT_MASTER_ROWS=[];
-  var WM_COMMENT_MASTER_PAGE=1;
-  var WM_COMMENT_MASTER_PAGE_SIZE=25;
   var WM_COMMENT_DATA_LOADING=null;
   var WM_COMMENT_DATA_LOADED=false;
 
@@ -8922,20 +8914,13 @@ document.addEventListener('keydown',function(e){
   }
 
   function wmCommentGrade(finalScore){
-    /* 최종점수를 먼저 소수점 첫째 자리까지 확정한 뒤 정수 사사오입한다. */
-    var score1=wmCommentRound1(finalScore);
-    var rounded=Math.max(1,Math.min(30,Math.floor(score1+0.5)));
-    var grade=rounded>=21?1:(rounded>=11?2:3);
-    var classNumber=grade===1?(31-rounded):(grade===2?(21-rounded):(11-rounded));
-    classNumber=Math.max(1,Math.min(10,classNumber));
-    return {
-      rounded:rounded,
-      primary:grade,
-      detail:classNumber,
-      grade:grade,
-      classNumber:classNumber,
-      code:String(grade)+'.'+String(classNumber)+'.A'
-    };
+    var rounded=Math.max(0,Math.min(30,Math.floor((Number(finalScore)||0)+0.5)));
+    var primary=rounded>=21?1:(rounded>=11?2:3);
+    var detail;
+    if(rounded>=21) detail='1.'+(31-rounded);
+    else if(rounded>=11) detail='2.'+(21-rounded);
+    else detail='3.'+(11-rounded);
+    return {rounded:rounded,primary:primary,detail:detail,code:detail+'.A'};
   }
 
   function wmCommentSetMessage(messageText,isError){
@@ -8999,162 +8984,131 @@ document.addEventListener('keydown',function(e){
     return true;
   }
 
-  function wmCommentMasterSerialNumber(row,index){
-    var serial=Number(wmCommentText(row&&row['일련번호']).replace(/[^0-9.-]/g,''));
-    return isFinite(serial)&&serial>0?serial:(index+1);
+  function wmBuildCommentMasterRows(){
+    var studentMap=new Map();
+    wmCommentActiveStudentRows().forEach(function(student){
+      var id=wmCommentStudentId(student).toUpperCase();
+      var attendancePromise=wmCommentNumber(wmCommentAttendancePromise(student));
+      var setPromise=wmCommentNumber(wmCommentSetPromise(student));
+      if(id&&attendancePromise>0&&setPromise>0) studentMap.set(id,student);
+    });
+
+    var groups=new Map();
+    WM_COMMENT_RECORD_ROWS.forEach(function(record){
+      if(!wmCommentRecordComplete(record)) return;
+      var id=wmCommentStudentId(record).toUpperCase();
+      var student=studentMap.get(id);
+      var date=wmCommentParseDate(wmCommentRecordDate(record));
+      if(!student||!date) return;
+      var year=date.getFullYear(), month=date.getMonth()+1, week=wmCommentWeekOfMonth(date);
+      var key=[id,year,month,week].join('|');
+      if(!groups.has(key)) groups.set(key,{student:student,year:year,month:month,week:week,records:[]});
+      groups.get(key).records.push(record);
+    });
+
+    WM_COMMENT_MASTER_ROWS=Array.from(groups.values()).map(function(group){
+      var records=group.records;
+      var dates=[];
+      var sets=[];
+      records.forEach(function(record){
+        var date=wmCommentParseDate(wmCommentRecordDate(record));
+        var dateKey=date?[date.getFullYear(),String(date.getMonth()+1).padStart(2,'0'),String(date.getDate()).padStart(2,'0')].join('-'):'';
+        if(dateKey&&dates.indexOf(dateKey)===-1) dates.push(dateKey);
+        var setId=wmCommentRecordSet(record);
+        if(setId&&sets.indexOf(setId)===-1) sets.push(setId);
+      });
+      var attendancePromise=wmCommentNumber(wmCommentAttendancePromise(group.student));
+      var setPromise=wmCommentNumber(wmCommentSetPromise(group.student));
+      var raw=wmCommentAverage(records.map(wmCommentRecordScore));
+      var attendanceRate=wmCommentPercent(dates.length,attendancePromise);
+      var setRate=wmCommentPercent(sets.length,setPromise);
+      var totalLearningTime=wmCommentRound1(records.reduce(function(sum,record){return sum+wmCommentRecordTime(record);},0));
+      var avgSetTime=sets.length?wmCommentRound1(totalLearningTime/sets.length):0;
+      var attendanceScore=wmCommentAttendanceScore(setRate,attendanceRate);
+      var engagementScore=wmCommentEngagementScore(avgSetTime);
+      var standardScore=wmCommentStandardScore(avgSetTime);
+      var scoreTrend=wmCommentScoreTrend(raw,standardScore);
+      var finalScore=wmCommentRound1(attendanceScore+engagementScore+scoreTrend);
+      var grade=wmCommentGrade(finalScore);
+      return {
+        학생ID:wmCommentStudentId(group.student),학생이름:wmCommentStudentName(group.student),반명:wmCommentClassName(group.student),교사명:wmCommentTeacherName(group.student),
+        연도:group.year,월:group.month,주차:group.week,리포트유형:wmCommentReportType(group.year,group.month,group.week),
+        출석약속:attendancePromise,세트약속:setPromise,실제출석일수:dates.length,출석률:attendanceRate,
+        완료세트수:sets.length,세트진행률:setRate,출석점수:attendanceScore,
+        학습단어수:records.reduce(function(sum,record){return sum+wmCommentWordCount(wmCommentRecordSet(record));},0),
+        총학습시간:totalLearningTime,'1세트평균시간':avgSetTime,참여집중도:engagementScore,
+        평균원점수:raw,표준점수:standardScore,점수추이:scoreTrend,최종점수:finalScore,
+        '1차등급':grade.primary,세부분류:grade.detail,자동코멘트코드:grade.code,
+        자동코멘트:'-',최종코멘트코드:'-',최종코멘트:'-',성적표반영상태:'대기',등록일:'-',수정일:'-'
+      };
+    }).sort(function(a,b){return b.연도-a.연도||b.월-a.월||b.주차-a.주차||a.학생이름.localeCompare(b.학생이름,'ko');});
+    return WM_COMMENT_MASTER_ROWS;
   }
 
   function wmRenderCommentMasterRows(){
     var tbody=document.getElementById('wmCommentMasterTbody');
     if(!tbody) return;
-    var headers='학생ID	학생이름	반명	교사명	연도	월	주차	리포트유형	출석약속	세트약속	실제출석일수	출석률	완료세트수	세트진행률	출석점수	학습단어수	총학습시간	1세트평균시간	참여집중도	평균원점수	표준점수	점수추이	최종점수	Grade	Class	자동코멘트코드	자동코멘트	최종코멘트코드	최종코멘트	성적표반영상태	등록일	수정일'.split('	');
-    var allRows=(WM_COMMENT_MASTER_ROWS||[]).slice().sort(function(a,b){
-      return wmCommentMasterSerialNumber(b,0)-wmCommentMasterSerialNumber(a,0);
-    });
-    var totalPages=Math.max(1,Math.ceil(allRows.length/WM_COMMENT_MASTER_PAGE_SIZE));
-    WM_COMMENT_MASTER_PAGE=Math.min(Math.max(1,WM_COMMENT_MASTER_PAGE),totalPages);
-    var start=(WM_COMMENT_MASTER_PAGE-1)*WM_COMMENT_MASTER_PAGE_SIZE;
-    var rows=allRows.slice(start,start+WM_COMMENT_MASTER_PAGE_SIZE);
+    var headers='학생ID\t학생이름\t반명\t교사명\t연도\t월\t주차\t리포트유형\t출석약속\t세트약속\t실제출석일수\t출석률\t완료세트수\t세트진행률\t출석점수\t학습단어수\t총학습시간\t1세트평균시간\t참여집중도\t평균원점수\t표준점수\t점수추이\t최종점수\t1차등급\t세부분류\t자동코멘트코드\t자동코멘트\t최종코멘트코드\t최종코멘트\t성적표반영상태\t등록일\t수정일'.split('\t');
+    var rows=WM_COMMENT_MASTER_ROWS||[];
     var html=rows.map(function(row,index){
-      var serial=wmCommentText(row['일련번호'])||String(start+index+1);
-      return '<tr data-comment-row="'+(start+index)+'"><td>'+escapeHtml(serial)+'</td>'+headers.map(function(header){
+      return '<tr data-comment-row="'+index+'"><td>'+(index+1)+'</td>'+headers.map(function(header){
         var value=row[header];
-        if((header==='출석률'||header==='세트진행률')&&wmCommentText(value)!=='') value=value+'%';
-        if((header==='총학습시간'||header==='1세트평균시간')&&wmCommentText(value)!=='') value=value+'분';
-        if(['출석점수','참여집중도','평균원점수','표준점수','점수추이','최종점수'].indexOf(header)!==-1&&wmCommentText(value)!=='') value=value+'점';
+        if(header==='출석률'||header==='세트진행률') value=value+'%';
+        if(header==='총학습시간'||header==='1세트평균시간') value=value+'분';
+        if(['출석점수','참여집중도','평균원점수','표준점수','점수추이','최종점수'].indexOf(header)!==-1) value=value+'점';
         return '<td>'+escapeHtml(value===null||value===undefined||value===''?'-':String(value))+'</td>';
       }).join('')+'</tr>';
     }).join('');
-    var pad=Math.max(0,WM_COMMENT_MASTER_PAGE_SIZE-rows.length);
-    for(var i=0;i<pad;i++) html+='<tr><td>'+(start+rows.length+i+1)+'</td>'+new Array(33).join('<td></td>')+'</tr>';
-    tbody.innerHTML=html||'<tr><td colspan="33">6-1.코멘트마스터_DB에 표시할 기록이 없습니다.</td></tr>';
-    var pageInfo=document.getElementById('wmCommentMasterPageInfo');
-    var prev=document.getElementById('wmCommentMasterPrevBtn');
-    var next=document.getElementById('wmCommentMasterNextBtn');
-    if(pageInfo) pageInfo.textContent=WM_COMMENT_MASTER_PAGE+' / '+totalPages+' · '+allRows.length+'건';
-    if(prev) prev.disabled=WM_COMMENT_MASTER_PAGE<=1;
-    if(next) next.disabled=WM_COMMENT_MASTER_PAGE>=totalPages;
+    var pad=Math.max(0,25-rows.length);
+    for(var i=0;i<pad;i++) html+='<tr><td>'+(rows.length+i+1)+'</td>'+new Array(33).join('<td></td>')+'</tr>';
+    tbody.innerHTML=html||'<tr><td colspan="33">약속데이터와 완료 학습데이터가 함께 있는 학생이 없습니다.</td></tr>';
     var table=document.getElementById('wmCommentMasterTable');
     var inner=document.getElementById('wmCommentMasterTopScrollInner');
     if(table&&inner) inner.style.width=table.scrollWidth+'px';
   }
 
-  function wmMoveCommentMasterPage(delta){
-    WM_COMMENT_MASTER_PAGE+=Number(delta)||0;
-    wmRenderCommentMasterRows();
-  }
-  window.wmMoveCommentMasterPage=wmMoveCommentMasterPage;
-
-  function wmExtractCommentMasterRows(data){
-    if(!data) return [];
-    if(Array.isArray(data)) return data;
-    var candidates=[
-      data.rows,
-      data.commentMasterRows,
-      data.masterRows,
-      data['6-1.코멘트마스터_DB'],
-      data['코멘트마스터_DB'],
-      data.data,
-      data.result,
-      data.payload
-    ];
-    for(var i=0;i<candidates.length;i++){
-      var candidate=candidates[i];
-      if(Array.isArray(candidate)) return candidate;
-      if(candidate&&typeof candidate==='object'){
-        var nested=wmExtractCommentMasterRows(candidate);
-        if(nested.length) return nested;
-      }
-    }
-    return [];
-  }
-
-  async function wmFetchCommentMasterRoute(url){
-    var response=await fetch(url,{method:'GET',cache:'no-store'});
-    var text=await response.text();
-    var data=null;
-    try{data=text?JSON.parse(text):null;}catch(parseError){
-      throw new Error('6-1 응답 JSON 오류: '+wmCommentText(text).slice(0,120));
-    }
-    return {
-      ok:response.ok&&!!data&&data.success!==false,
-      data:data,
-      rows:wmExtractCommentMasterRows(data),
-      message:data&&data.message?wmCommentText(data.message):''
-    };
-  }
-
-  async function wmLoadCommentMasterRowsFromSheet(){
-    /* 하단 기록표 전용 독립 조회.
-     * 첫 라우트가 success:true를 반환해도 rows가 비어 있으면 성공으로 확정하지 않고
-     * 실제 6-1 전용 라우트를 순서대로 계속 확인합니다. */
-    var actorQuery=wmLmsActorQuery();
-    var stamp='&ts='+Date.now()+actorQuery;
-    var urls=[
-      WM_APPS_SCRIPT_URL+'?mode=commentMasterRows&action=commentMasterRows'+stamp,
-      WM_APPS_SCRIPT_URL+'?mode=commentMaster&action=list'+stamp,
-      WM_APPS_SCRIPT_URL+'?mode=students&action=students&commentCenter=masterRows'+stamp
-    ];
-    var lastMessage='6-1.코멘트마스터_DB 조회 실패';
-    var rows=[];
-
-    for(var i=0;i<urls.length;i++){
-      try{
-        var result=await wmFetchCommentMasterRoute(urls[i]);
-        if(result.message) lastMessage=result.message;
-        if(result.ok&&result.rows.length){
-          rows=result.rows;
-          break;
-        }
-      }catch(error){
-        lastMessage=wmCommentText(error&&error.message?error.message:error)||lastMessage;
-      }
-    }
-
-    WM_COMMENT_MASTER_ROWS=(rows||[]).filter(function(row){
-      if(!row||typeof row!=='object'||Array.isArray(row)) return false;
-      return Object.keys(row).some(function(key){return wmCommentText(row[key])!=='';});
-    });
-    WM_COMMENT_MASTER_PAGE=1;
-    wmRenderCommentMasterRows();
-
-    if(!WM_COMMENT_MASTER_ROWS.length){
-      throw new Error(lastMessage+' · 6-1 전용 응답 행 0건');
-    }
-    return WM_COMMENT_MASTER_ROWS;
-  }
-
-  async function wmLoadCommentSourceRows(forceReload){
-    if(forceReload) WM_COMMENT_DATA_LOADED=false;
+  async function wmLoadCommentSourceRows(){
     if(WM_COMMENT_DATA_LOADED) return WM_COMMENT_MASTER_ROWS;
     if(WM_COMMENT_DATA_LOADING) return WM_COMMENT_DATA_LOADING;
     WM_COMMENT_DATA_LOADING=(async function(){
-      wmCommentSetMessage('6-1.코멘트마스터_DB 데이터를 불러오는 중입니다.',false);
+      wmCommentSetMessage('학생관리_DB 약속데이터와 학습기록_DB 학습데이터를 연결하는 중입니다.',false);
       try{
-        /* 구글시트 우선 원칙:
-         * Code.gs가 원본 DB 저장 직후 6-1 시트를 갱신합니다.
-         * LMS는 계산·저장하지 않고 6-1.코멘트마스터_DB만 조회·표시합니다. */
-        var rows=await wmLoadCommentMasterRowsFromSheet();
-        WM_COMMENT_STUDENT_ROWS=(rows||[]).map(function(row){
-          return {
-            학생ID:row.학생ID||'',학생이름:row.학생이름||'',반명:row.반명||'',교사명:row.교사명||''
-          };
-        });
-        WM_COMMENT_RECORD_ROWS=[];
+        /* 로그인·대시보드 초기화와 분리: 코멘트센터 진입 시에만 전용 API 2건을 병렬 조회한다. */
+        var actor=typeof wmLmsActorQuery==='function'?wmLmsActorQuery():'';
+        var urls=[
+          WM_APPS_SCRIPT_URL+'?mode=students&ts='+Date.now()+actor,
+          WM_APPS_SCRIPT_URL+'?mode=records&ts='+(Date.now()+1)+actor
+        ];
+        var responses=await Promise.all(urls.map(function(url){return fetch(url,{method:'GET',cache:'no-store'});}));
+        var payloads=await Promise.all(responses.map(function(response){
+          if(!response.ok) throw new Error('DB 조회 HTTP '+response.status);
+          return response.json();
+        }));
+        var sData=payloads[0],rData=payloads[1];
+        var students=wmExtractCommentStudentRows(sData);
+        var records=typeof extractRecordRowsFromResponse==='function'
+          ?extractRecordRowsFromResponse(rData)
+          :(rData&&Array.isArray(rData.records)?rData.records:(Array.isArray(rData)?rData:[]));
+        WM_COMMENT_STUDENT_ROWS=(students||[]).filter(function(row){return row&&typeof row==='object';});
+        WM_COMMENT_RECORD_ROWS=(records||[]).filter(function(row){return row&&typeof row==='object';});
+        if(!WM_COMMENT_STUDENT_ROWS.length){
+          throw new Error('학생관리_DB 응답 0건 또는 응답키 불일치');
+        }
+        if(!WM_COMMENT_RECORD_ROWS.length){
+          throw new Error('학습기록_DB 응답 0건 또는 응답키 불일치');
+        }
         wmRenderCommentClassOptions('');
         wmRenderCommentStudentOptions('');
-        if(!WM_COMMENT_MASTER_ROWS.length){
-          throw new Error('6-1.코멘트마스터_DB 조회 결과가 없습니다. 먼저 원본 DB 저장 결과를 확인하세요.');
-        }
+        wmBuildCommentMasterRows();
+        wmRenderCommentMasterRows();
         WM_COMMENT_DATA_LOADED=true;
-        wmCommentSetMessage('6-1.코멘트마스터_DB 조회 완료 · LMS 표시 '+WM_COMMENT_MASTER_ROWS.length+'건',false);
+        wmCommentSetMessage('실제 DB 연결 완료 · 학생 '+WM_COMMENT_STUDENT_ROWS.length+'명 / 학습기록 '+WM_COMMENT_RECORD_ROWS.length+'건 / 약속+완료학습 집계 '+WM_COMMENT_MASTER_ROWS.length+'건',false);
         return WM_COMMENT_MASTER_ROWS;
       }catch(error){
-        WM_COMMENT_STUDENT_ROWS=[];
-        WM_COMMENT_RECORD_ROWS=[];
+        WM_COMMENT_STUDENT_ROWS=[];WM_COMMENT_RECORD_ROWS=[];WM_COMMENT_MASTER_ROWS=[];
         wmRenderCommentMasterRows();
-        wmCommentSetMessage('6-1 하단 기록 조회 실패: '+wmCommentText(error&&error.message?error.message:error),true);
-        return WM_COMMENT_MASTER_ROWS;
+        wmCommentSetMessage('실제 DB 연결 실패: '+wmCommentText(error&&error.message?error.message:error),true);
+        return [];
       }finally{
         WM_COMMENT_DATA_LOADING=null;
       }
