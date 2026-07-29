@@ -9104,6 +9104,20 @@ document.addEventListener('keydown',function(e){
     return {success:true,saved:saved};
   }
 
+  async function wmLoadCommentMasterRowsFromSheet(){
+    var actor=typeof wmLmsActorQuery==='function'?wmLmsActorQuery():'';
+    var url=WM_APPS_SCRIPT_URL+'?mode=commentMasterRows&action=commentMasterRows&ts='+Date.now()+actor;
+    var response=await fetch(url,{method:'GET',cache:'no-store'});
+    var data=await response.json();
+    if(!response.ok||!data||data.success===false){
+      throw new Error(data&&data.message?data.message:'6-1.코멘트마스터_DB 조회 실패');
+    }
+    var rows=Array.isArray(data.rows)?data.rows:(Array.isArray(data.commentMasterRows)?data.commentMasterRows:(Array.isArray(data)?data:[]));
+    WM_COMMENT_MASTER_ROWS=(rows||[]).filter(function(row){return row&&typeof row==='object';});
+    wmRenderCommentMasterRows();
+    return WM_COMMENT_MASTER_ROWS;
+  }
+
   async function wmLoadCommentSourceRows(){
     if(WM_COMMENT_DATA_LOADED) return WM_COMMENT_MASTER_ROWS;
     if(WM_COMMENT_DATA_LOADING) return WM_COMMENT_DATA_LOADING;
@@ -9141,7 +9155,8 @@ document.addEventListener('keydown',function(e){
         WM_COMMENT_DATA_LOADED=true;
         try{
           var syncResult=await wmSyncCommentMasterRowsToSheet(WM_COMMENT_MASTER_ROWS);
-          wmCommentSetMessage('실제 DB 연결·구글시트 저장 완료 · 학생 '+WM_COMMENT_STUDENT_ROWS.length+'명 / 학습기록 '+WM_COMMENT_RECORD_ROWS.length+'건 / 집계 '+WM_COMMENT_MASTER_ROWS.length+'건 / 저장 '+syncResult.saved+'건',false);
+          var sheetRows=await wmLoadCommentMasterRowsFromSheet();
+          wmCommentSetMessage('실제 구글시트 DB 연결 완료 · 학생 '+WM_COMMENT_STUDENT_ROWS.length+'명 / 학습기록 '+WM_COMMENT_RECORD_ROWS.length+'건 / 저장 '+syncResult.saved+'건 / 시트조회 '+sheetRows.length+'건',false);
         }catch(syncError){
           wmCommentSetMessage('LMS 실제 집계 완료 · 구글시트 저장 실패: '+wmCommentText(syncError&&syncError.message?syncError.message:syncError),true);
         }
