@@ -9090,6 +9090,8 @@ document.addEventListener('keydown',function(e){
       var params=new URLSearchParams();
       params.set('mode','saveCommentMasterRow');
       params.set('action','saveCommentMasterRow');
+      params.set('route','saveCommentMasterRow');
+      params.set('m','saveCommentMasterRow');
       params.set('row',JSON.stringify(sourceRows[i]));
       params.set('replaceScope','studentYearMonthWeek');
       params.set('ts',String(Date.now()+i));
@@ -9108,6 +9110,8 @@ document.addEventListener('keydown',function(e){
     var params=new URLSearchParams();
     params.set('mode','commentMasterRows');
     params.set('action','commentMasterRows');
+    params.set('route','commentMasterRows');
+    params.set('m','commentMasterRows');
     params.set('ts',String(Date.now()));
     var actorId=typeof wmGetSettingActorTeacherId==='function'?wmGetSettingActorTeacherId():'';
     if(actorId) params.set('actorTeacherId',actorId);
@@ -9139,6 +9143,8 @@ document.addEventListener('keydown',function(e){
           var params=new URLSearchParams();
           params.set('mode',mode);
           params.set('action',mode);
+          params.set('route',mode);
+          params.set('m',mode);
           params.set('ts',String(ts));
           if(actorId) params.set('actorTeacherId',actorId);
           return WM_APPS_SCRIPT_URL+'?'+params.toString();
