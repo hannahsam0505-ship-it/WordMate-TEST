@@ -1781,7 +1781,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       </div>
 
       <div class="wm-factory-box">
-        <div class="wm-profile-section-title"><h3>7. 상담카페</h3><span>6.상담카페_DB의 실제 상담 데이터를 학생ID 기준으로 표시합니다.</span></div>
+        <div class="wm-profile-section-title"><h3>9. 상담카페</h3><span>9.상담카페의 실제 상담 데이터를 학생ID 기준으로 표시합니다.</span></div>
         <div class="wm-table-wrap"><table class="wm-profile-table"><thead><tr><th>상담ID</th><th>학생ID</th><th>학생이름</th><th>상담일</th><th>상담자</th><th>상담대상</th><th>상담유형</th><th>상담방식</th><th>상담목적</th><th>학부모관심사항</th><th>학습특이사항</th><th>상담요약</th><th>특이사항</th><th>다음상담예정일</th><th>수정일</th></tr></thead><tbody><tr><td>CS001</td><td>S001</td><td>김학생</td><td>2026-05-30</td><td>홍길동</td><td>김학부모</td><td>정기상담</td><td>전화</td><td>학습상태공유</td><td>숙제완료율</td><td>단어암기 속도</td><td>최근 학습 흐름은 안정적입니다.</td><td></td><td>2026-06-15</td><td>2026-05-30</td></tr></tbody></table></div>
       </div>
     </section>
@@ -2061,7 +2061,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
     </section>
     <section class="wm-panel" id="panel-comment">
       <div class="wm-panel-title-row">
-        <h2 class="wm-panel-title">코멘트센터</h2>
+        <h2 class="wm-panel-title">6. 코멘트센터</h2>
         <p class="wm-panel-desc">연결 DB: 6-1.코멘트마스터_DB / 6-2.코멘트이력_DB</p>
       </div>
 
@@ -2172,9 +2172,9 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       </div>
     </section>
     <section class="wm-panel" id="panel-counsel">
-      <h2 class="wm-panel-title">상담카페</h2>
-      <p class="wm-panel-desc">연결 DB: 9.상담카페_DB / 학생별 상담 데이터를 관리하는 영역입니다.</p>
-      <div class="wm-table-wrap"><table><thead><tr><th>상담ID</th><th>학생ID</th><th>학생이름</th><th>상담일</th><th>상담자</th><th>상담대상</th><th>상담유형</th><th>상담방식</th><th>상담목적</th><th>학부모관심사항</th><th>학습특이사항</th><th>상담요약</th><th>특이사항</th><th>다음상담예정일</th><th>수정일</th></tr></thead><tbody><tr><td colspan="15">9.상담카페_DB 연결 준비 중입니다.</td></tr></tbody></table></div>
+      <h2 class="wm-panel-title">9. 상담카페</h2>
+      <p class="wm-panel-desc">연결 DB: 9.상담카페 / 학생별 상담 데이터를 관리하는 영역입니다.</p>
+      <div class="wm-table-wrap"><table><thead><tr><th>상담ID</th><th>학생ID</th><th>학생이름</th><th>상담일</th><th>상담자</th><th>상담대상</th><th>상담유형</th><th>상담방식</th><th>상담목적</th><th>학부모관심사항</th><th>학습특이사항</th><th>상담요약</th><th>특이사항</th><th>다음상담예정일</th><th>수정일</th></tr></thead><tbody><tr><td colspan="15">9.상담카페 연결 준비 중입니다.</td></tr></tbody></table></div>
     </section>
     <section class="wm-panel" id="panel-currentProgress">
       <div class="wm-panel-title-row"><h2 class="wm-panel-title">현재진행 센터</h2><p class="wm-panel-desc">연결 DB: 8.현재진행_DB / 학생별 최신 학습 진행 캐시를 그대로 표시합니다.</p></div>
@@ -3061,7 +3061,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
         let waitRows=filterProfileRows(normalizeRows(data.sendWait), studentId, studentName);
         let logRows=filterProfileRows(normalizeRows(data.sendLog), studentId, studentName);
         let classRows=filterProfileRows(normalizeRows(data.classes || data.classRows || data.classInfo || []), studentId, studentName);
-        let counselRows=filterProfileRows(normalizeRows(data.counsel || data.counselCafe || data.counselRows || data.consult || data.consultRows || data['6.상담카페_DB'] || []), studentId, studentName);
+        let counselRows=filterProfileRows(normalizeRows(data.counsel || data.counselCafe || data.counselRows || data.consult || data.consultRows || data['9.상담카페'] || data['6.상담카페_DB'] || []), studentId, studentName);
 
         let total=studentRows.length+studyRows.length+reportRows.length+waitRows.length+logRows.length+classRows.length+counselRows.length;
         if(total===0){
@@ -3071,7 +3071,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
           waitRows=filterProfileRows(await readSheetRows(['5.발송대기_DB','발송대기_DB','sendWait']), studentId, studentName);
           logRows=filterProfileRows(await readSheetRows(['6.발송기록_DB','발송기록_DB','sendLog']), studentId, studentName);
           classRows=filterProfileRows(await readSheetRows(['7-2.반관리_DB','반관리_DB','classes']), studentId, studentName);
-          counselRows=filterProfileRows(await readSheetRows(['6.상담카페_DB','상담카페_DB','상담_DB','counsel']), studentId, studentName);
+          counselRows=filterProfileRows(await readSheetRows(['9.상담카페','6.상담카페_DB','상담카페_DB','상담_DB','counsel']), studentId, studentName);
           total=studentRows.length+studyRows.length+reportRows.length+waitRows.length+logRows.length+classRows.length+counselRows.length;
         }
 
@@ -3321,7 +3321,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       tasks.push(loadDashboardSheetIfEmpty('WM_DASHBOARD_CLASS_ROWS', ['7-2.반관리_DB','반관리_DB','Class_DB','classes']));
       tasks.push(loadDashboardSheetIfEmpty('WM_DASHBOARD_TEACHER_ROWS', ['7-1.교사관리_DB','교사관리_DB','교사_DB','Teacher_DB']));
       tasks.push(loadDashboardSheetIfEmpty('WM_DASHBOARD_SEND_LOG_ROWS', ['5-1.발송기록_DB','6.발송기록_DB','발송기록_DB','sendLog','send_log']));
-      tasks.push(loadDashboardSheetIfEmpty('WM_DASHBOARD_COUNSEL_ROWS', ['6.상담카페_DB','상담_DB','상담카페_DB','counsel','consult']));
+      tasks.push(loadDashboardSheetIfEmpty('WM_DASHBOARD_COUNSEL_ROWS', ['9.상담카페','6.상담카페_DB','상담_DB','상담카페_DB','counsel','consult']));
       tasks.push(loadDashboardSheetIfEmpty('WM_DASHBOARD_PAYMENT_ROWS', ['결제_DB','결제DB','Payment_DB','payments','매출_DB']));
       if(!WM_CURRENT_PROGRESS_ROWS || !WM_CURRENT_PROGRESS_ROWS.length) tasks.push(loadDashboardSheetIfEmpty('WM_CURRENT_PROGRESS_ROWS', ['8.현재진행_DB','현재진행_DB','currentProgress','current_progress']));
       await Promise.all(tasks);
@@ -9124,6 +9124,10 @@ document.addEventListener('keydown',function(e){
     WM_COMMENT_DATA_LOADING=(async function(){
       wmCommentSetMessage('학생관리_DB 약속데이터와 학습기록_DB 학습데이터를 연결하는 중입니다.',false);
       try{
+        /* 코멘트센터 진입 즉시 6-1 시트 생성·조회부터 실행합니다.
+         * 학생관리_DB 또는 학습기록_DB가 0건이어도 시트 생성 호출은 먼저 완료됩니다. */
+        await wmLoadCommentMasterRowsFromSheet();
+
         /* 로그인·대시보드 초기화와 분리: 코멘트센터 진입 시에만 전용 API 2건을 병렬 조회한다. */
         var actor=typeof wmLmsActorQuery==='function'?wmLmsActorQuery():'';
         var urls=[
