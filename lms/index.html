@@ -8997,67 +8997,6 @@ document.addEventListener('keydown',function(e){
     return true;
   }
 
-  function wmBuildCommentMasterRows(){
-    var studentMap=new Map();
-    wmCommentActiveStudentRows().forEach(function(student){
-      var id=wmCommentStudentId(student).toUpperCase();
-      var attendancePromise=wmCommentNumber(wmCommentAttendancePromise(student));
-      var setPromise=wmCommentNumber(wmCommentSetPromise(student));
-      if(id&&attendancePromise>0&&setPromise>0) studentMap.set(id,student);
-    });
-
-    var groups=new Map();
-    WM_COMMENT_RECORD_ROWS.forEach(function(record){
-      if(!wmCommentRecordComplete(record)) return;
-      var id=wmCommentStudentId(record).toUpperCase();
-      var student=studentMap.get(id);
-      var date=wmCommentParseDate(wmCommentRecordDate(record));
-      if(!student||!date) return;
-      var year=date.getFullYear(), month=date.getMonth()+1, week=wmCommentWeekOfMonth(date);
-      var key=[id,year,month,week].join('|');
-      if(!groups.has(key)) groups.set(key,{student:student,year:year,month:month,week:week,records:[]});
-      groups.get(key).records.push(record);
-    });
-
-    WM_COMMENT_MASTER_ROWS=Array.from(groups.values()).map(function(group){
-      var records=group.records;
-      var dates=[];
-      var sets=[];
-      records.forEach(function(record){
-        var date=wmCommentParseDate(wmCommentRecordDate(record));
-        var dateKey=date?[date.getFullYear(),String(date.getMonth()+1).padStart(2,'0'),String(date.getDate()).padStart(2,'0')].join('-'):'';
-        if(dateKey&&dates.indexOf(dateKey)===-1) dates.push(dateKey);
-        var setId=wmCommentRecordSet(record);
-        if(setId&&sets.indexOf(setId)===-1) sets.push(setId);
-      });
-      var attendancePromise=wmCommentNumber(wmCommentAttendancePromise(group.student));
-      var setPromise=wmCommentNumber(wmCommentSetPromise(group.student));
-      var raw=wmCommentAverage(records.map(wmCommentRecordScore));
-      var attendanceRate=wmCommentPercent(dates.length,attendancePromise);
-      var setRate=wmCommentPercent(sets.length,setPromise);
-      var totalLearningTime=wmCommentRound1(records.reduce(function(sum,record){return sum+wmCommentRecordTime(record);},0));
-      var avgSetTime=sets.length?wmCommentRound1(totalLearningTime/sets.length):0;
-      var attendanceScore=wmCommentAttendanceScore(setRate,attendanceRate);
-      var engagementScore=wmCommentEngagementScore(avgSetTime);
-      var standardScore=wmCommentStandardScore(avgSetTime);
-      var scoreTrend=wmCommentScoreTrend(raw,standardScore);
-      var finalScore=wmCommentRound1(attendanceScore+engagementScore+scoreTrend);
-      var grade=wmCommentGrade(finalScore);
-      return {
-        학생ID:wmCommentStudentId(group.student),학생이름:wmCommentStudentName(group.student),반명:wmCommentClassName(group.student),교사명:wmCommentTeacherName(group.student),
-        연도:group.year,월:group.month,주차:group.week,리포트유형:wmCommentReportType(group.year,group.month,group.week),
-        출석약속:attendancePromise,세트약속:setPromise,실제출석일수:dates.length,출석률:attendanceRate,
-        완료세트수:sets.length,세트진행률:setRate,출석점수:attendanceScore,
-        학습단어수:records.reduce(function(sum,record){return sum+wmCommentWordCount(wmCommentRecordSet(record));},0),
-        총학습시간:totalLearningTime,'1세트평균시간':avgSetTime,참여집중도:engagementScore,
-        평균원점수:raw,표준점수:standardScore,점수추이:scoreTrend,최종점수:finalScore,
-        Grade:grade.grade,Class:grade.classNumber,자동코멘트코드:grade.code,
-        자동코멘트:'-',최종코멘트코드:'-',최종코멘트:'-',성적표반영상태:'대기',등록일:'-',수정일:'-'
-      };
-    }).sort(function(a,b){return b.연도-a.연도||b.월-a.월||b.주차-a.주차||a.학생이름.localeCompare(b.학생이름,'ko');});
-    return WM_COMMENT_MASTER_ROWS;
-  }
-
   function wmRenderCommentMasterRows(){
     var tbody=document.getElementById('wmCommentMasterTbody');
     if(!tbody) return;
@@ -9078,30 +9017,6 @@ document.addEventListener('keydown',function(e){
     var table=document.getElementById('wmCommentMasterTable');
     var inner=document.getElementById('wmCommentMasterTopScrollInner');
     if(table&&inner) inner.style.width=table.scrollWidth+'px';
-  }
-
-  async function wmSyncCommentMasterRowsToSheet(rows){
-    var sourceRows=Array.isArray(rows)?rows:[];
-    if(!sourceRows.length) return {success:true,saved:0,message:'저장할 코멘트 집계행이 없습니다.'};
-    var actorId=typeof wmGetSettingActorTeacherId==='function'?wmGetSettingActorTeacherId():'';
-    var saved=0;
-    /* Apps Script GET 주소 길이 초과를 막기 위해 집계행을 1행씩 upsert한다. */
-    for(var i=0;i<sourceRows.length;i++){
-      var saveUrl=WM_APPS_SCRIPT_URL
-        +'?mode=students'
-        +'&commentCenter=saveMasterRow'
-        +'&row='+encodeURIComponent(JSON.stringify(sourceRows[i]))
-        +'&replaceScope=studentYearMonthWeek'
-        +'&ts='+(Date.now()+i)
-        +wmLmsActorQuery();
-      var response=await fetch(saveUrl,{method:'GET',cache:'no-store'});
-      var data=await response.json();
-      if(!response.ok||!data||data.success===false){
-        throw new Error(data&&data.message?data.message:'6-1.코멘트마스터_DB '+(i+1)+'행 저장 실패');
-      }
-      saved++;
-    }
-    return {success:true,saved:saved};
   }
 
   async function wmLoadCommentMasterRowsFromSheet(){
@@ -9125,24 +9040,13 @@ document.addEventListener('keydown',function(e){
     if(WM_COMMENT_DATA_LOADED) return WM_COMMENT_MASTER_ROWS;
     if(WM_COMMENT_DATA_LOADING) return WM_COMMENT_DATA_LOADING;
     WM_COMMENT_DATA_LOADING=(async function(){
-      wmCommentSetMessage('Google Sheets에서 코멘트마스터를 직접 집계·저장하는 중입니다.',false);
+      wmCommentSetMessage('6-1.코멘트마스터_DB 데이터를 불러오는 중입니다.',false);
       try{
-        /* 서버 우선 원칙:
-         * Code.gs가 학생관리_DB + 학습기록_DB를 직접 읽고,
-         * 6-1.코멘트마스터_DB에 일괄 저장한 뒤 실제 시트 행만 반환합니다. */
-        var url=WM_APPS_SCRIPT_URL
-          +'?mode=students'
-          +'&commentCenter=syncMasterRows'
-          +'&ts='+Date.now()
-          +wmLmsActorQuery();
-        var response=await fetch(url,{method:'GET',cache:'no-store'});
-        var data=await response.json();
-        if(!response.ok||!data||data.success===false){
-          throw new Error((data&&data.error)||(data&&data.message)||'6-1.코멘트마스터_DB 서버 직접 집계 실패');
-        }
-        var rows=Array.isArray(data.rows)?data.rows:(Array.isArray(data.commentMasterRows)?data.commentMasterRows:[]);
-        WM_COMMENT_MASTER_ROWS=(rows||[]).filter(function(row){return row&&typeof row==='object';});
-        WM_COMMENT_STUDENT_ROWS=WM_COMMENT_MASTER_ROWS.map(function(row){
+        /* 구글시트 우선 원칙:
+         * Code.gs가 원본 DB 저장 직후 6-1 시트를 갱신합니다.
+         * LMS는 계산·저장하지 않고 6-1.코멘트마스터_DB만 조회·표시합니다. */
+        var rows=await wmLoadCommentMasterRowsFromSheet();
+        WM_COMMENT_STUDENT_ROWS=(rows||[]).map(function(row){
           return {
             학생ID:row.학생ID||'',학생이름:row.학생이름||'',반명:row.반명||'',교사명:row.교사명||''
           };
@@ -9150,17 +9054,16 @@ document.addEventListener('keydown',function(e){
         WM_COMMENT_RECORD_ROWS=[];
         wmRenderCommentClassOptions('');
         wmRenderCommentStudentOptions('');
-        wmRenderCommentMasterRows();
         if(!WM_COMMENT_MASTER_ROWS.length){
-          throw new Error('6-1.코멘트마스터_DB 저장 후 실제 시트 조회 0건');
+          throw new Error('6-1.코멘트마스터_DB 조회 결과가 없습니다. 먼저 원본 DB 저장 결과를 확인하세요.');
         }
         WM_COMMENT_DATA_LOADED=true;
-        wmCommentSetMessage('구글시트 직접 연결 완료 · 원본학생 '+Number(data.sourceStudents||0)+'명 / 원본기록 '+Number(data.sourceRecords||0)+'건 / 집계·저장 '+Number(data.saved||0)+'건 / LMS표시 '+WM_COMMENT_MASTER_ROWS.length+'건',false);
+        wmCommentSetMessage('6-1.코멘트마스터_DB 조회 완료 · LMS 표시 '+WM_COMMENT_MASTER_ROWS.length+'건',false);
         return WM_COMMENT_MASTER_ROWS;
       }catch(error){
         WM_COMMENT_STUDENT_ROWS=[];WM_COMMENT_RECORD_ROWS=[];WM_COMMENT_MASTER_ROWS=[];
         wmRenderCommentMasterRows();
-        wmCommentSetMessage('실제 DB 연결 실패: '+wmCommentText(error&&error.message?error.message:error),true);
+        wmCommentSetMessage('6-1 시트 조회 실패: '+wmCommentText(error&&error.message?error.message:error),true);
         return [];
       }finally{
         WM_COMMENT_DATA_LOADING=null;
