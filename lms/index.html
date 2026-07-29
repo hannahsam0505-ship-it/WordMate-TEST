@@ -9046,17 +9046,35 @@ document.addEventListener('keydown',function(e){
   window.wmMoveCommentMasterPage=wmMoveCommentMasterPage;
 
   async function wmLoadCommentMasterRowsFromSheet(){
+    /* 기존 검증 완료된 students 라우트 안에서 6-1 조회를 실행합니다.
+     * 신규 mode 단독 호출에 의존하지 않아 배포본 라우터 차이로 인한 no mode를 방지합니다. */
+    var actorQuery=wmLmsActorQuery();
     var url=WM_APPS_SCRIPT_URL
-      +'?mode=commentMasterRows'
+      +'?mode=students&action=students&commentCenter=masterRows'
       +'&ts='+Date.now()
-      +wmLmsActorQuery();
+      +actorQuery;
     var response=await fetch(url,{method:'GET',cache:'no-store'});
     var data=await response.json();
+
+    /* 구버전 배포본 호환: students 분기에서 masterRows를 처리하지 못할 때만
+     * commentMasterRows 직접 라우트를 한 번 더 확인합니다. */
     if(!response.ok||!data||data.success===false){
-      throw new Error(data&&data.message?data.message:'6-1.코멘트마스터_DB 조회 실패');
+      var directUrl=WM_APPS_SCRIPT_URL
+        +'?mode=commentMasterRows&action=commentMasterRows'
+        +'&ts='+Date.now()
+        +actorQuery;
+      var directResponse=await fetch(directUrl,{method:'GET',cache:'no-store'});
+      var directData=await directResponse.json();
+      if(!directResponse.ok||!directData||directData.success===false){
+        throw new Error(directData&&directData.message?directData.message:(data&&data.message?data.message:'6-1.코멘트마스터_DB 조회 실패'));
+      }
+      data=directData;
     }
+
     var rows=Array.isArray(data.rows)?data.rows:(Array.isArray(data.commentMasterRows)?data.commentMasterRows:(Array.isArray(data)?data:[]));
-    WM_COMMENT_MASTER_ROWS=(rows||[]).filter(function(row){return row&&typeof row==='object';});
+    WM_COMMENT_MASTER_ROWS=(rows||[]).filter(function(row){
+      return row&&typeof row==='object'&&wmCommentText(row['학생ID'])!=='';
+    });
     WM_COMMENT_MASTER_PAGE=1;
     wmRenderCommentMasterRows();
     return WM_COMMENT_MASTER_ROWS;
