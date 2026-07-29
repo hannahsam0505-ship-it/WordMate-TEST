@@ -9105,8 +9105,13 @@ document.addEventListener('keydown',function(e){
   }
 
   async function wmLoadCommentMasterRowsFromSheet(){
-    var actor=typeof wmLmsActorQuery==='function'?wmLmsActorQuery():'';
-    var url=WM_APPS_SCRIPT_URL+'?mode=commentMasterRows&action=commentMasterRows&ts='+Date.now()+actor;
+    var params=new URLSearchParams();
+    params.set('mode','commentMasterRows');
+    params.set('action','commentMasterRows');
+    params.set('ts',String(Date.now()));
+    var actorId=typeof wmGetSettingActorTeacherId==='function'?wmGetSettingActorTeacherId():'';
+    if(actorId) params.set('actorTeacherId',actorId);
+    var url=WM_APPS_SCRIPT_URL+'?'+params.toString();
     var response=await fetch(url,{method:'GET',cache:'no-store'});
     var data=await response.json();
     if(!response.ok||!data||data.success===false){
@@ -9129,10 +9134,18 @@ document.addEventListener('keydown',function(e){
         await wmLoadCommentMasterRowsFromSheet();
 
         /* 로그인·대시보드 초기화와 분리: 코멘트센터 진입 시에만 전용 API 2건을 병렬 조회한다. */
-        var actor=typeof wmLmsActorQuery==='function'?wmLmsActorQuery():'';
+        var actorId=typeof wmGetSettingActorTeacherId==='function'?wmGetSettingActorTeacherId():'';
+        function wmCommentApiUrl(mode,ts){
+          var params=new URLSearchParams();
+          params.set('mode',mode);
+          params.set('action',mode);
+          params.set('ts',String(ts));
+          if(actorId) params.set('actorTeacherId',actorId);
+          return WM_APPS_SCRIPT_URL+'?'+params.toString();
+        }
         var urls=[
-          WM_APPS_SCRIPT_URL+'?mode=students&ts='+Date.now()+actor,
-          WM_APPS_SCRIPT_URL+'?mode=records&ts='+(Date.now()+1)+actor
+          wmCommentApiUrl('students',Date.now()),
+          wmCommentApiUrl('records',Date.now()+1)
         ];
         var responses=await Promise.all(urls.map(function(url){return fetch(url,{method:'GET',cache:'no-store'});}));
         var payloads=await Promise.all(responses.map(function(response){
