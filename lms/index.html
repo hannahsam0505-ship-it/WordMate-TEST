@@ -788,6 +788,12 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
 .wm-comment-table-wrap tbody tr:nth-child(odd){background:#fff;}
 .wm-comment-table-wrap tbody tr:nth-child(even){background:#eef4ff;}
 .wm-comment-table-wrap tbody td{height:43px;background-color:inherit;}
+/* WM_COMMENT_SCORE_COLUMN_COLORS_V1: 핵심 계산 컬럼 세로 전체 색상 */
+#wmCommentMasterTable th:nth-child(16),#wmCommentMasterTable td:nth-child(16),
+#wmCommentMasterTable th:nth-child(20),#wmCommentMasterTable td:nth-child(20),
+#wmCommentMasterTable th:nth-child(24),#wmCommentMasterTable td:nth-child(24){background:#fff7bf !important;}
+#wmCommentMasterTable th:nth-child(25),#wmCommentMasterTable td:nth-child(25),
+#wmCommentMasterTable th:nth-child(26),#wmCommentMasterTable td:nth-child(26){background:#fed7aa !important;}
 #wmCommentMasterTable th:first-child,#wmCommentMasterTable td:first-child,
 #wmCommentHistoryTable th:first-child,#wmCommentHistoryTable td:first-child{width:72px;min-width:72px;max-width:72px;text-align:center;}
 #wmCommentHistoryTable th:nth-child(2),#wmCommentHistoryTable td:nth-child(2){display:none !important;}
@@ -2126,8 +2132,8 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
         </div>
 
         <div class="wm-comment-judgement-box" aria-label="자동 코멘트 판정">
-          <div class="wm-comment-judgement-item"><div class="wm-comment-judgement-label">1차등급</div><div class="wm-comment-judgement-value" id="wmCommentPrimaryGrade">-</div></div>
-          <div class="wm-comment-judgement-item"><div class="wm-comment-judgement-label">세부분류</div><div class="wm-comment-judgement-value" id="wmCommentDetailGrade">-</div></div>
+          <div class="wm-comment-judgement-item"><div class="wm-comment-judgement-label">Grade</div><div class="wm-comment-judgement-value" id="wmCommentPrimaryGrade">-</div></div>
+          <div class="wm-comment-judgement-item"><div class="wm-comment-judgement-label">Class</div><div class="wm-comment-judgement-value" id="wmCommentDetailGrade">-</div></div>
           <div class="wm-comment-judgement-item"><div class="wm-comment-judgement-label">자동코멘트코드</div><div class="wm-comment-judgement-value" id="wmCommentAutoCode">-</div></div>
           <div class="wm-comment-judgement-item"><div class="wm-comment-judgement-label">자동코멘트 미리보기</div><div class="wm-comment-judgement-value wm-comment-preview" id="wmCommentAutoPreview">학생과 주차를 선택하면 Factory 코멘트가 자동으로 표시됩니다.</div></div>
         </div>
@@ -2135,7 +2141,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
         <div class="wm-comment-scroll-top" id="wmCommentMasterTopScroll"><div class="wm-comment-scroll-inner" id="wmCommentMasterTopScrollInner"></div></div>
         <div class="wm-table-wrap wm-comment-table-wrap" id="wmCommentMasterTableWrap">
           <table id="wmCommentMasterTable">
-            <thead><tr><th>일련번호</th><th>학생ID</th><th>학생이름</th><th>반명</th><th>교사명</th><th>연도</th><th>월</th><th>주차</th><th>리포트유형</th><th>출석약속</th><th>세트약속</th><th>실제출석일수</th><th>출석률</th><th>완료세트수</th><th>세트진행률</th><th>출석점수</th><th>학습단어수</th><th>총학습시간</th><th>1세트평균시간</th><th>참여집중도</th><th>평균원점수</th><th>표준점수</th><th>점수추이</th><th>최종점수</th><th>1차등급</th><th>세부분류</th><th>자동코멘트코드</th><th>자동코멘트</th><th>최종코멘트코드</th><th>최종코멘트</th><th>성적표반영상태</th><th>등록일</th><th>수정일</th></tr></thead>
+            <thead><tr><th>일련번호</th><th>학생ID</th><th>학생이름</th><th>반명</th><th>교사명</th><th>연도</th><th>월</th><th>주차</th><th>리포트유형</th><th>출석약속</th><th>세트약속</th><th>실제출석일수</th><th>출석률</th><th>완료세트수</th><th>세트진행률</th><th>출석점수</th><th>학습단어수</th><th>총학습시간</th><th>1세트평균시간</th><th>참여집중도</th><th>평균원점수</th><th>표준점수</th><th>점수추이</th><th>최종점수</th><th>Grade</th><th>Class</th><th>자동코멘트코드</th><th>자동코멘트</th><th>최종코멘트코드</th><th>최종코멘트</th><th>성적표반영상태</th><th>등록일</th><th>수정일</th></tr></thead>
             <tbody id="wmCommentMasterTbody"></tbody>
           </table>
         </div>
@@ -8690,7 +8696,7 @@ document.addEventListener('keydown',function(e){
   }
 
   function wmValidateCommentMasterForm(){
-    var required=[['wmCommentMasterCode','코멘트코드'],['wmCommentMasterGrade','1차등급'],['wmCommentMasterDetail','세부분류'],['wmCommentMasterType','추천유형'],['wmCommentMasterText','코멘트']];
+    var required=[['wmCommentMasterCode','코멘트코드'],['wmCommentMasterGrade','Grade'],['wmCommentMasterDetail','Class'],['wmCommentMasterType','추천유형'],['wmCommentMasterText','코멘트']];
     var missing=[];
     required.forEach(function(x){var e=document.getElementById(x[0]);if(!e||!String(e.value||'').trim())missing.push(x[1]);});
     var text=document.getElementById('wmCommentMasterText');
@@ -8914,13 +8920,20 @@ document.addEventListener('keydown',function(e){
   }
 
   function wmCommentGrade(finalScore){
-    var rounded=Math.max(0,Math.min(30,Math.floor((Number(finalScore)||0)+0.5)));
-    var primary=rounded>=21?1:(rounded>=11?2:3);
-    var detail;
-    if(rounded>=21) detail='1.'+(31-rounded);
-    else if(rounded>=11) detail='2.'+(21-rounded);
-    else detail='3.'+(11-rounded);
-    return {rounded:rounded,primary:primary,detail:detail,code:detail+'.A'};
+    /* 최종점수를 먼저 소수점 첫째 자리까지 확정한 뒤 정수 사사오입한다. */
+    var score1=wmCommentRound1(finalScore);
+    var rounded=Math.max(1,Math.min(30,Math.floor(score1+0.5)));
+    var grade=rounded>=21?1:(rounded>=11?2:3);
+    var classNumber=grade===1?(31-rounded):(grade===2?(21-rounded):(11-rounded));
+    classNumber=Math.max(1,Math.min(10,classNumber));
+    return {
+      rounded:rounded,
+      primary:grade,
+      detail:classNumber,
+      grade:grade,
+      classNumber:classNumber,
+      code:String(grade)+'.'+String(classNumber)+'.A'
+    };
   }
 
   function wmCommentSetMessage(messageText,isError){
@@ -9038,7 +9051,7 @@ document.addEventListener('keydown',function(e){
         학습단어수:records.reduce(function(sum,record){return sum+wmCommentWordCount(wmCommentRecordSet(record));},0),
         총학습시간:totalLearningTime,'1세트평균시간':avgSetTime,참여집중도:engagementScore,
         평균원점수:raw,표준점수:standardScore,점수추이:scoreTrend,최종점수:finalScore,
-        '1차등급':grade.primary,세부분류:grade.detail,자동코멘트코드:grade.code,
+        Grade:grade.grade,Class:grade.classNumber,자동코멘트코드:grade.code,
         자동코멘트:'-',최종코멘트코드:'-',최종코멘트:'-',성적표반영상태:'대기',등록일:'-',수정일:'-'
       };
     }).sort(function(a,b){return b.연도-a.연도||b.월-a.월||b.주차-a.주차||a.학생이름.localeCompare(b.학생이름,'ko');});
@@ -9048,7 +9061,7 @@ document.addEventListener('keydown',function(e){
   function wmRenderCommentMasterRows(){
     var tbody=document.getElementById('wmCommentMasterTbody');
     if(!tbody) return;
-    var headers='학생ID\t학생이름\t반명\t교사명\t연도\t월\t주차\t리포트유형\t출석약속\t세트약속\t실제출석일수\t출석률\t완료세트수\t세트진행률\t출석점수\t학습단어수\t총학습시간\t1세트평균시간\t참여집중도\t평균원점수\t표준점수\t점수추이\t최종점수\t1차등급\t세부분류\t자동코멘트코드\t자동코멘트\t최종코멘트코드\t최종코멘트\t성적표반영상태\t등록일\t수정일'.split('\t');
+    var headers='학생ID\t학생이름\t반명\t교사명\t연도\t월\t주차\t리포트유형\t출석약속\t세트약속\t실제출석일수\t출석률\t완료세트수\t세트진행률\t출석점수\t학습단어수\t총학습시간\t1세트평균시간\t참여집중도\t평균원점수\t표준점수\t점수추이\t최종점수\tGrade\tClass\t자동코멘트코드\t자동코멘트\t최종코멘트코드\t최종코멘트\t성적표반영상태\t등록일\t수정일'.split('\t');
     var rows=WM_COMMENT_MASTER_ROWS||[];
     var html=rows.map(function(row,index){
       return '<tr data-comment-row="'+index+'"><td>'+(index+1)+'</td>'+headers.map(function(header){
@@ -9065,6 +9078,30 @@ document.addEventListener('keydown',function(e){
     var table=document.getElementById('wmCommentMasterTable');
     var inner=document.getElementById('wmCommentMasterTopScrollInner');
     if(table&&inner) inner.style.width=table.scrollWidth+'px';
+  }
+
+  async function wmSyncCommentMasterRowsToSheet(rows){
+    var sourceRows=Array.isArray(rows)?rows:[];
+    if(!sourceRows.length) return {success:true,saved:0,message:'저장할 코멘트 집계행이 없습니다.'};
+    var actorId=typeof wmGetSettingActorTeacherId==='function'?wmGetSettingActorTeacherId():'';
+    var saved=0;
+    /* Apps Script GET 주소 길이 초과를 막기 위해 집계행을 1행씩 upsert한다. */
+    for(var i=0;i<sourceRows.length;i++){
+      var params=new URLSearchParams();
+      params.set('mode','saveCommentMasterRow');
+      params.set('action','saveCommentMasterRow');
+      params.set('row',JSON.stringify(sourceRows[i]));
+      params.set('replaceScope','studentYearMonthWeek');
+      params.set('ts',String(Date.now()+i));
+      if(actorId) params.set('actorTeacherId',actorId);
+      var response=await fetch(WM_APPS_SCRIPT_URL+'?'+params.toString(),{method:'GET',cache:'no-store'});
+      var data=await response.json();
+      if(!response.ok||!data||data.success===false){
+        throw new Error(data&&data.message?data.message:'6-1.코멘트마스터_DB '+(i+1)+'행 저장 실패');
+      }
+      saved++;
+    }
+    return {success:true,saved:saved};
   }
 
   async function wmLoadCommentSourceRows(){
@@ -9102,7 +9139,12 @@ document.addEventListener('keydown',function(e){
         wmBuildCommentMasterRows();
         wmRenderCommentMasterRows();
         WM_COMMENT_DATA_LOADED=true;
-        wmCommentSetMessage('실제 DB 연결 완료 · 학생 '+WM_COMMENT_STUDENT_ROWS.length+'명 / 학습기록 '+WM_COMMENT_RECORD_ROWS.length+'건 / 약속+완료학습 집계 '+WM_COMMENT_MASTER_ROWS.length+'건',false);
+        try{
+          var syncResult=await wmSyncCommentMasterRowsToSheet(WM_COMMENT_MASTER_ROWS);
+          wmCommentSetMessage('실제 DB 연결·구글시트 저장 완료 · 학생 '+WM_COMMENT_STUDENT_ROWS.length+'명 / 학습기록 '+WM_COMMENT_RECORD_ROWS.length+'건 / 집계 '+WM_COMMENT_MASTER_ROWS.length+'건 / 저장 '+syncResult.saved+'건',false);
+        }catch(syncError){
+          wmCommentSetMessage('LMS 실제 집계 완료 · 구글시트 저장 실패: '+wmCommentText(syncError&&syncError.message?syncError.message:syncError),true);
+        }
         return WM_COMMENT_MASTER_ROWS;
       }catch(error){
         WM_COMMENT_STUDENT_ROWS=[];WM_COMMENT_RECORD_ROWS=[];WM_COMMENT_MASTER_ROWS=[];
