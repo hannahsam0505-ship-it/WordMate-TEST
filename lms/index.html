@@ -9159,15 +9159,25 @@ document.addEventListener('keydown',function(e){
         }
         wmRenderCommentClassOptions('');
         wmRenderCommentStudentOptions('');
+
+        /* Google Sheet를 원본으로 사용합니다.
+         * 집계 결과는 화면에 먼저 표시하지 않고 6-1 시트에 저장한 뒤,
+         * 동일 시트를 다시 조회한 행만 LMS 하단에 표시합니다. */
         wmBuildCommentMasterRows();
-        wmRenderCommentMasterRows();
-        WM_COMMENT_DATA_LOADED=true;
+        var generatedRows=(WM_COMMENT_MASTER_ROWS||[]).slice();
+        WM_COMMENT_MASTER_ROWS=[];
         try{
-          var syncResult=await wmSyncCommentMasterRowsToSheet(WM_COMMENT_MASTER_ROWS);
+          var syncResult=await wmSyncCommentMasterRowsToSheet(generatedRows);
           var sheetRows=await wmLoadCommentMasterRowsFromSheet();
-          wmCommentSetMessage('실제 구글시트 DB 연결 완료 · 학생 '+WM_COMMENT_STUDENT_ROWS.length+'명 / 학습기록 '+WM_COMMENT_RECORD_ROWS.length+'건 / 저장 '+syncResult.saved+'건 / 시트조회 '+sheetRows.length+'건',false);
+          if(syncResult.saved>0&&!sheetRows.length){
+            throw new Error('6-1.코멘트마스터_DB 저장 후 실제 시트 조회 0건');
+          }
+          WM_COMMENT_DATA_LOADED=true;
+          wmCommentSetMessage('구글시트 원본 연결 완료 · 학생 '+WM_COMMENT_STUDENT_ROWS.length+'명 / 학습기록 '+WM_COMMENT_RECORD_ROWS.length+'건 / 시트저장 '+syncResult.saved+'건 / LMS표시 '+sheetRows.length+'건',false);
         }catch(syncError){
-          wmCommentSetMessage('LMS 실제 집계 완료 · 구글시트 저장 실패: '+wmCommentText(syncError&&syncError.message?syncError.message:syncError),true);
+          WM_COMMENT_MASTER_ROWS=[];
+          wmRenderCommentMasterRows();
+          throw syncError;
         }
         return WM_COMMENT_MASTER_ROWS;
       }catch(error){
