@@ -814,7 +814,7 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
       <button type="button" class="wm-lms-logout-btn" id="wmLmsLogoutBtn">LMS 로그아웃</button>
     </section>
     <nav class="wm-menu-grid">
-      <button class="wm-menu-btn active" data-panel="dashboard">대시보드</button><button class="wm-menu-btn" data-panel="students">1. 학생관리</button><button class="wm-menu-btn" data-panel="records">2. 학습기록</button><button class="wm-menu-btn" data-panel="profile">3. 프로필센터</button><button class="wm-menu-btn" data-panel="reports">4. 성적표생성</button><button class="wm-menu-btn" data-panel="sendLog">5. 발송기록</button><button class="wm-menu-btn" data-panel="counsel">6. 상담카페</button><button class="wm-menu-btn" data-panel="classes">7. 설정센터</button><button class="wm-menu-btn" data-panel="currentProgress">8. 현재진행</button><button class="wm-menu-btn" data-panel="deployManage">9. 배포관리</button><button class="wm-menu-btn wm-learning-btn" data-panel="learning">학습화면</button>
+      <button class="wm-menu-btn active" data-panel="dashboard">대시보드</button><button class="wm-menu-btn" data-panel="students">1. 학생관리</button><button class="wm-menu-btn" data-panel="records">2. 학습기록</button><button class="wm-menu-btn" data-panel="profile">3. 프로필센터</button><button class="wm-menu-btn" data-panel="reports">4. 성적표생성</button><button class="wm-menu-btn" data-panel="sendLog">5. 발송기록</button><button class="wm-menu-btn" data-panel="gradeLevel">6. 성적등급</button><button class="wm-menu-btn" data-panel="classes">7. 설정센터</button><button class="wm-menu-btn" data-panel="currentProgress">8. 현재진행</button><button class="wm-menu-btn" data-panel="counsel">9. 상담카페</button><button class="wm-menu-btn wm-learning-btn" data-panel="learning">학습화면</button>
       <button class="wm-menu-btn wm-dev-btn" id="devCenterBtn" data-panel="dev">DEV CENTER</button>
     </nav>
     <section class="wm-panel active" id="panel-dashboard">
@@ -1983,10 +1983,9 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
         </div>
       </div>
     </section>
-    <section class="wm-panel" id="panel-counsel">
-      <h2 class="wm-panel-title">상담카페</h2>
-      <p class="wm-panel-desc">연결 DB: 6.상담카페_DB / 학생별 상담 데이터를 관리하는 영역입니다.</p>
-      <div class="wm-table-wrap"><table><thead><tr><th>상담ID</th><th>학생ID</th><th>학생이름</th><th>상담일</th><th>상담자</th><th>상담대상</th><th>상담유형</th><th>상담방식</th><th>상담목적</th><th>학부모관심사항</th><th>학습특이사항</th><th>상담요약</th><th>특이사항</th><th>다음상담예정일</th><th>수정일</th></tr></thead><tbody><tr><td>CNS001</td><td>TEST001</td><td>테스트학생</td><td>2026-06-01</td><td>해나샘</td><td>학부모</td><td>정기상담</td><td>전화</td><td>학습점검</td><td>단어암기상태</td><td>복습부족</td><td>주 3회 복습 권장 및 학습습관 점검</td><td>특이사항 없음</td><td>2026-06-15</td><td>2026-06-01</td></tr></tbody></table></div>
+    <section class="wm-panel" id="panel-gradeLevel">
+      <h2 class="wm-panel-title">성적등급</h2>
+      <p class="wm-panel-desc">6.성적등급 관리 영역입니다.</p>
     </section>
     <section class="wm-panel" id="panel-currentProgress">
       <div class="wm-panel-title-row"><h2 class="wm-panel-title">현재진행 센터</h2><p class="wm-panel-desc">연결 DB: 8.현재진행_DB / 학생별 최신 학습 진행 캐시를 그대로 표시합니다.</p></div>
@@ -2006,23 +2005,10 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       </div>
       <div class="wm-record-scroll-top" id="currentProgressTopScroll"><div class="wm-record-scroll-inner" id="currentProgressTopScrollInner"></div></div><div class="wm-table-wrap" id="currentProgressTableWrap"><table id="currentProgressManageTable"><thead><tr><th>일련번호</th><th>학생ID</th><th>학생이름</th><th>학교</th><th>학년</th><th>Class</th><th>교사명</th><th>Set_ID</th><th>완료Step</th><th>현재Step</th><th>기록Set_ID</th><th>최종수정일</th><th>학습기록ID</th><th>최근점수</th><th>S4실루엣단계</th><th>S6테스트모드</th><th>현재레벨</th><th>레벨완료조건</th><th>레벨완료횟수</th><th>순차완주세트</th><th>순차완주회차</th><th>완료세트수</th><th>전체세트수</th><th>세트진행률</th><th>레벨진행률</th><th>히스토리레벨</th><th>히스토리횟수</th><th>레벨완료여부</th><th>캐시버전</th><th>최근30건JSON</th><th>비고</th></tr></thead><tbody id="currentProgressTbody"><tr><td colspan="31">8.현재진행_DB 조회 준비 중입니다.</td></tr></tbody></table></div><div class="wm-current-progress-pager" id="currentProgressPager" style="display:none;"><button type="button" id="currentProgressPrevBtn" onclick="moveCurrentProgressPage(-1)">이전</button><span class="wm-current-progress-page-info" id="currentProgressPageInfo">1 / 1</span><button type="button" id="currentProgressNextBtn" onclick="moveCurrentProgressPage(1)">다음</button></div>
     </section>
-    <section class="wm-panel" id="panel-deployManage">
-      <div class="wm-panel-title-row"><h2 class="wm-panel-title">배포관리 센터</h2><p class="wm-panel-desc">연결 DB: 9.배포관리_DB / TEST·REAL 배포 변경 이력을 그대로 표시합니다.</p></div>
-      <div class="wm-filter-box" data-filter-scope="deployManage">
-        <div class="wm-filter-title">검색조건</div>
-        <div class="wm-filter-grid">
-          <label>변경ID<input type="text" placeholder="변경ID" data-filter="changeId" /></label>
-          <label>버전ID<input type="text" placeholder="버전ID" data-filter="versionId" /></label>
-          <label>구분<input type="text" placeholder="REAL / TEST" data-filter="boothMode" /></label>
-          <label>대상파일<input type="text" placeholder="대상파일" data-filter="targetFile" /></label>
-          <label>성공/실패<input type="text" placeholder="성공 / 실패" data-filter="result" /></label>
-          <label>작업자<input type="text" placeholder="작업자" data-filter="worker" /></label>
-          <label>기간 시작<input type="date" data-filter="dateStart" /></label>
-          <label>기간 종료<input type="date" data-filter="dateEnd" /></label>
-        </div>
-        <div class="wm-filter-actions"><button class="wm-action-btn" onclick="runFilter('deployManage')">검색</button><span id="wmDeployManageLoading" class="wm-manage-loading"><span class="wm-loading-spinner"></span>조회 중</span><button class="wm-action-btn sub" onclick="resetFilter('deployManage')">초기화</button></div>
-      </div>
-      <div class="wm-table-wrap"><table><thead><tr><th>변경ID</th><th>버전ID</th><th>구분(REAL/TEST)</th><th>배포일시</th><th>문제발생</th><th>원인분석</th><th>수정방향</th><th>핵심수정</th><th>대상파일</th><th>연동파일</th><th>수정위치/함수</th><th>검색어(다수가능)</th><th>변경전코드</th><th>변경후코드</th><th>변경전줄수</th><th>변경후줄수</th><th>줄수변화</th><th>REAL 고정</th><th>TEST 고정</th><th>REAL 변수</th><th>TEST 변수</th><th>REAL 고정 수정</th><th>TEST 고정 수정</th><th>REAL 변수 수정</th><th>TEST 변수 수정</th><th>TEST적용상태</th><th>TEST검증상태</th><th>REAL적용상태</th><th>REAL검증상태</th><th>현재/직전버전</th><th>기타버전</th><th>파일동일성%</th><th>상이확인</th><th>성공/실패</th><th>실패원인</th><th>롤백여부</th><th>롤백버전</th><th>작업자</th><th>작업구분</th><th>비고</th></tr></thead><tbody id="deployManageTbody"><tr><td colspan="40">9.배포관리_DB 연결 대기 중입니다.</td></tr></tbody></table></div>
+    <section class="wm-panel" id="panel-counsel">
+      <h2 class="wm-panel-title">상담카페</h2>
+      <p class="wm-panel-desc">연결 DB: 6.상담카페_DB / 학생별 상담 데이터를 관리하는 영역입니다.</p>
+      <div class="wm-table-wrap"><table><thead><tr><th>상담ID</th><th>학생ID</th><th>학생이름</th><th>상담일</th><th>상담자</th><th>상담대상</th><th>상담유형</th><th>상담방식</th><th>상담목적</th><th>학부모관심사항</th><th>학습특이사항</th><th>상담요약</th><th>특이사항</th><th>다음상담예정일</th><th>수정일</th></tr></thead><tbody><tr><td>CNS001</td><td>TEST001</td><td>테스트학생</td><td>2026-06-01</td><td>해나샘</td><td>학부모</td><td>정기상담</td><td>전화</td><td>학습점검</td><td>단어암기상태</td><td>복습부족</td><td>주 3회 복습 권장 및 학습습관 점검</td><td>특이사항 없음</td><td>2026-06-15</td><td>2026-06-01</td></tr></tbody></table></div>
     </section>
     <section class="wm-panel" id="panel-learning">
       <h2 class="wm-panel-title">학습화면</h2>
