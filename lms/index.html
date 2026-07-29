@@ -9087,16 +9087,14 @@ document.addEventListener('keydown',function(e){
     var saved=0;
     /* Apps Script GET 주소 길이 초과를 막기 위해 집계행을 1행씩 upsert한다. */
     for(var i=0;i<sourceRows.length;i++){
-      var params=new URLSearchParams();
-      params.set('mode','saveCommentMasterRow');
-      params.set('action','saveCommentMasterRow');
-      params.set('route','saveCommentMasterRow');
-      params.set('m','saveCommentMasterRow');
-      params.set('row',JSON.stringify(sourceRows[i]));
-      params.set('replaceScope','studentYearMonthWeek');
-      params.set('ts',String(Date.now()+i));
-      if(actorId) params.set('actorTeacherId',actorId);
-      var response=await fetch(WM_APPS_SCRIPT_URL+'?'+params.toString(),{method:'GET',cache:'no-store'});
+      var saveUrl=WM_APPS_SCRIPT_URL
+        +'?mode=students'
+        +'&commentCenter=saveMasterRow'
+        +'&row='+encodeURIComponent(JSON.stringify(sourceRows[i]))
+        +'&replaceScope=studentYearMonthWeek'
+        +'&ts='+(Date.now()+i)
+        +wmLmsActorQuery();
+      var response=await fetch(saveUrl,{method:'GET',cache:'no-store'});
       var data=await response.json();
       if(!response.ok||!data||data.success===false){
         throw new Error(data&&data.message?data.message:'6-1.코멘트마스터_DB '+(i+1)+'행 저장 실패');
@@ -9107,15 +9105,11 @@ document.addEventListener('keydown',function(e){
   }
 
   async function wmLoadCommentMasterRowsFromSheet(){
-    var params=new URLSearchParams();
-    params.set('mode','commentMasterRows');
-    params.set('action','commentMasterRows');
-    params.set('route','commentMasterRows');
-    params.set('m','commentMasterRows');
-    params.set('ts',String(Date.now()));
-    var actorId=typeof wmGetSettingActorTeacherId==='function'?wmGetSettingActorTeacherId():'';
-    if(actorId) params.set('actorTeacherId',actorId);
-    var url=WM_APPS_SCRIPT_URL+'?'+params.toString();
+    var url=WM_APPS_SCRIPT_URL
+      +'?mode=students'
+      +'&commentCenter=masterRows'
+      +'&ts='+Date.now()
+      +wmLmsActorQuery();
     var response=await fetch(url,{method:'GET',cache:'no-store'});
     var data=await response.json();
     if(!response.ok||!data||data.success===false){
@@ -9138,16 +9132,8 @@ document.addEventListener('keydown',function(e){
         await wmLoadCommentMasterRowsFromSheet();
 
         /* 로그인·대시보드 초기화와 분리: 코멘트센터 진입 시에만 전용 API 2건을 병렬 조회한다. */
-        var actorId=typeof wmGetSettingActorTeacherId==='function'?wmGetSettingActorTeacherId():'';
         function wmCommentApiUrl(mode,ts){
-          var params=new URLSearchParams();
-          params.set('mode',mode);
-          params.set('action',mode);
-          params.set('route',mode);
-          params.set('m',mode);
-          params.set('ts',String(ts));
-          if(actorId) params.set('actorTeacherId',actorId);
-          return WM_APPS_SCRIPT_URL+'?'+params.toString();
+          return WM_APPS_SCRIPT_URL+'?mode='+encodeURIComponent(mode)+'&ts='+ts+wmLmsActorQuery();
         }
         var urls=[
           wmCommentApiUrl('students',Date.now()),
