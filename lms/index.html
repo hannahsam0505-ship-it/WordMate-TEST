@@ -507,6 +507,31 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
     #gradeLevelManageTable td { text-align:center; }
     #gradeLevelManageTable th:first-child,
     #gradeLevelManageTable td:first-child { width:72px; min-width:72px; max-width:72px; text-align:center; }
+    /* WM_GRADE_LEVEL_FIXED_3_PAGINATION_V1 */
+    #gradeLevelTableWrap th:nth-child(1), #gradeLevelTableWrap td:nth-child(1) {
+      position:sticky; left:0; z-index:25; width:72px; min-width:72px; max-width:72px;
+    }
+    #gradeLevelTableWrap th:nth-child(2), #gradeLevelTableWrap td:nth-child(2) {
+      position:sticky; left:72px; z-index:25; width:120px; min-width:120px; max-width:120px;
+    }
+    #gradeLevelTableWrap th:nth-child(3), #gradeLevelTableWrap td:nth-child(3) {
+      position:sticky; left:192px; z-index:25; width:90px; min-width:90px; max-width:90px;
+    }
+    #gradeLevelTableWrap thead th:nth-child(1),
+    #gradeLevelTableWrap thead th:nth-child(2),
+    #gradeLevelTableWrap thead th:nth-child(3) { z-index:45; background:#f9fafb; }
+    #gradeLevelManageTable tbody tr:nth-child(odd) td:nth-child(-n+3) { background:#fff; }
+    #gradeLevelManageTable tbody tr:nth-child(even) td:nth-child(-n+3) { background:#eef4ff; }
+    .wm-grade-level-pager {
+      display:flex; justify-content:center; align-items:center; gap:10px;
+      margin:12px 0 0; flex-wrap:wrap;
+    }
+    .wm-grade-level-pager button {
+      border:1px solid var(--wm-line); background:#fff; color:var(--wm-dark);
+      border-radius:10px; padding:8px 13px; font-size:13px; font-weight:900; cursor:pointer;
+    }
+    .wm-grade-level-pager button:disabled { opacity:.45; cursor:not-allowed; }
+    .wm-grade-level-page-info { font-size:13px; font-weight:900; color:var(--wm-gray); }
     /* WM_GRADE_LEVEL_HIGHLIGHT_V1 */
     #gradeLevelManageTable th.wm-grade-yellow-col,
     #gradeLevelManageTable td.wm-grade-yellow-col { background:#fff3a6 !important; }
@@ -2019,6 +2044,11 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
           <thead><tr><th>일련번호</th><th>학생ID</th><th>학생이름</th><th>반명</th><th>교사명</th><th>연도</th><th>월</th><th>주차</th><th>리포트유형</th><th>출석약속</th><th>세트약속</th><th class="wm-grade-yellow-col">출석점수</th><th class="wm-grade-yellow-col">참여집중도</th><th class="wm-grade-yellow-col">점수추이</th><th class="wm-grade-green-col">최종점수</th><th class="wm-grade-green-col">Grade</th><th class="wm-grade-green-col">Class</th><th>자동코멘트</th><th>실제출석일수</th><th>완료세트수</th><th>학습단어수</th><th>총학습시간</th><th>평균원점수</th><th>출석률</th><th>세트진행률</th><th>1세트평균시간</th><th>원점수환산점수</th><th>표준점수</th><th>성적표반영상태</th><th>생성일시</th><th>등록일</th><th>수정일</th></tr></thead>
           <tbody><tr><td colspan="32">6.성적등급_DB 조회 준비 중입니다.</td></tr></tbody>
         </table>
+      </div>
+      <div class="wm-grade-level-pager" id="wmGradeLevelPager">
+        <button type="button" id="wmGradeLevelPrevBtn" onclick="wmMoveGradeLevelPage(-1)">이전</button>
+        <span id="wmGradeLevelPageInfo" class="wm-grade-level-page-info">1 / 1 · 총 0건</span>
+        <button type="button" id="wmGradeLevelNextBtn" onclick="wmMoveGradeLevelPage(1)">다음</button>
       </div>
     </section>
     <div class="wm-grade-comment-modal" id="wmGradeCommentModal" role="dialog" aria-modal="true" aria-labelledby="wmGradeCommentTitle" onclick="wmCloseGradeComment(event)">
@@ -4036,6 +4066,8 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
     let WM_RECORD_MANAGE_ROWS = [];
     let WM_REPORT_MANAGE_ROWS = [];
     let WM_GRADE_LEVEL_ROWS = [];
+    let WM_GRADE_LEVEL_PAGE = 1;
+    const WM_GRADE_LEVEL_PAGE_SIZE = 25;
     let WM_DASHBOARD_CLASS_ROWS = [];
     let WM_DASHBOARD_TEACHER_ROWS = [];
     let WM_DASHBOARD_SEND_LOG_ROWS = [];
@@ -5361,6 +5393,7 @@ function extractRecordRowsFromResponse(data){
           rows=await readSheetRows(['6.성적등급_DB']);
         }
         WM_GRADE_LEVEL_ROWS=normalizeRows(rows);
+        WM_GRADE_LEVEL_PAGE=1;
         renderGradeLevelRows();
         return WM_GRADE_LEVEL_ROWS;
       }catch(err){
@@ -5368,6 +5401,26 @@ function extractRecordRowsFromResponse(data){
         if(tbody) tbody.innerHTML='<tr><td colspan="32">6.성적등급_DB 조회 실패: '+escapeHtml(err && err.message ? err.message : err)+'</td></tr>';
         return [];
       }
+    }
+
+    function wmUpdateGradeLevelPager(totalRows,totalPages,page){
+      const prevBtn=document.getElementById('wmGradeLevelPrevBtn');
+      const nextBtn=document.getElementById('wmGradeLevelNextBtn');
+      const info=document.getElementById('wmGradeLevelPageInfo');
+      if(info) info.textContent=page+' / '+totalPages+' · 총 '+totalRows+'건';
+      if(prevBtn) prevBtn.disabled=page<=1;
+      if(nextBtn) nextBtn.disabled=page>=totalPages;
+    }
+
+    function wmMoveGradeLevelPage(delta){
+      const rows=WM_GRADE_LEVEL_ROWS || [];
+      const totalPages=Math.max(1,Math.ceil(rows.length/WM_GRADE_LEVEL_PAGE_SIZE));
+      WM_GRADE_LEVEL_PAGE=Math.min(totalPages,Math.max(1,WM_GRADE_LEVEL_PAGE+Number(delta||0)));
+      renderGradeLevelRows();
+      const wrap=document.getElementById('gradeLevelTableWrap');
+      const top=document.getElementById('gradeLevelTopScroll');
+      if(wrap) wrap.scrollTop=0;
+      if(top) top.scrollLeft=wrap ? wrap.scrollLeft : 0;
     }
 
     function renderGradeLevelRows(){
@@ -5388,19 +5441,29 @@ function extractRecordRowsFromResponse(data){
       }).join('')+'</tr>';
 
       const rows=WM_GRADE_LEVEL_ROWS || [];
+      const totalRows=rows.length;
+      const totalPages=Math.max(1,Math.ceil(totalRows/WM_GRADE_LEVEL_PAGE_SIZE));
+      if(WM_GRADE_LEVEL_PAGE>totalPages) WM_GRADE_LEVEL_PAGE=totalPages;
+      if(WM_GRADE_LEVEL_PAGE<1) WM_GRADE_LEVEL_PAGE=1;
+
       if(!rows.length){
         tbody.innerHTML='<tr><td colspan="'+WM_GRADE_LEVEL_HEADERS.length+'">6.성적등급_DB 데이터가 없습니다.</td></tr>';
+        wmUpdateGradeLevelPager(0,1,1);
         wmSyncGradeLevelScroll();
         return;
       }
 
-      tbody.innerHTML=rows.map(function(row,index){
+      const start=(WM_GRADE_LEVEL_PAGE-1)*WM_GRADE_LEVEL_PAGE_SIZE;
+      const pageRows=rows.slice(start,start+WM_GRADE_LEVEL_PAGE_SIZE);
+
+      tbody.innerHTML=pageRows.map(function(row,pageIndex){
+        const absoluteIndex=start+pageIndex;
         return '<tr>'+WM_GRADE_LEVEL_HEADERS.map(function(header){
           let value=wmGradeLevelValue(row,header);
           const colorClass=gradeColorClass(header);
           const classAttr=colorClass ? ' class="'+colorClass+'"' : '';
 
-          if(header==='일련번호' && String(value||'').trim()==='') value=index+1;
+          if(header==='일련번호' && String(value||'').trim()==='') value=absoluteIndex+1;
           if(header==='자동코멘트'){
             const comment=String(value||'');
             return '<td'+classAttr+'><button type="button" class="wm-grade-comment-btn" data-comment="'+escapeHtml(comment)+'" onclick="wmOpenGradeComment(this)">코멘트보기</button></td>';
@@ -5409,6 +5472,7 @@ function extractRecordRowsFromResponse(data){
         }).join('')+'</tr>';
       }).join('');
 
+      wmUpdateGradeLevelPager(totalRows,totalPages,WM_GRADE_LEVEL_PAGE);
       wmSyncGradeLevelScroll();
     }
 
