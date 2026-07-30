@@ -3876,6 +3876,19 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       row.appendChild(cell);
     }
 
+    function formatMonthlyReportLearningDate(value){
+      const raw=value===undefined||value===null?'':String(value).trim();
+      if(!raw) return '-';
+      const match=raw.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})(?:[ T](\d{1,2}):(\d{2})(?::\d{2})?)?/);
+      if(!match) return raw;
+      const year=match[1].slice(-2);
+      const month=String(match[2]).padStart(2,'0');
+      const day=String(match[3]).padStart(2,'0');
+      const hour=match[4]===undefined?'':String(match[4]).padStart(2,'0');
+      const minute=match[5]===undefined?'':String(match[5]).padStart(2,'0');
+      return year+'.'+month+'.'+day+(hour&&minute?' '+hour+':'+minute:'');
+    }
+
     function renderMonthlyReportWeeklyTable(sheet,weeklyRows,monthly){
       const body=sheet.querySelector('[data-wmr-week-body]');
       if(!body) return;
@@ -3936,7 +3949,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
         [
           index+1,
           item.reportWeek||'-',
-          item.learningDate||'-',
+          formatMonthlyReportLearningDate(item.learningDate),
           item.learningLevel||'-',
           item.setId||'-',
           item.setLearningTime||'-',
@@ -4131,7 +4144,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       for(let rowIndex=0;rowIndex<10;rowIndex++){
         const item=detailSource[rowIndex]||{};
         const expected=[
-          rowIndex+1,item.reportWeek||'-',item.learningDate||'-',item.learningLevel||'-',
+          rowIndex+1,item.reportWeek||'-',formatMonthlyReportLearningDate(item.learningDate),item.learningLevel||'-',
           item.setId||'-',item.setLearningTime||'-',
           item.wordCount===0?0:(item.wordCount||'-'),item.score===0?0:(item.score||'-'),
           item.testTime||'-',item.device||'-'
