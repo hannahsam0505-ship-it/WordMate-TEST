@@ -498,12 +498,25 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
     #studentTableWrap thead th:nth-child(2), #studentTableWrap thead th:nth-child(3), #studentTableWrap thead th:nth-child(6), #studentTableWrap thead th:nth-child(7), #studentTableWrap thead th:nth-child(8), #studentTableWrap thead th:nth-child(10) { z-index:40; background:#f9fafb; }
     #gradeLevelTableWrap { border-radius:0 0 14px 14px; max-height:620px; overflow:auto; }
     #gradeLevelTableWrap thead th { position:sticky; top:0; z-index:30; background:#f9fafb; }
-    #gradeLevelManageTable { min-width:3600px; }
+    /* WM_GRADE_LEVEL_32_COLUMN_WIDTH_V1: 실제 데이터 최대 글자수 기준 32개 컬럼 폭 */
+    #gradeLevelManageTable { width:2877px; min-width:2877px; table-layout:fixed; }
     #gradeLevelManageTable tbody tr:nth-child(odd) { background:#fff; }
     #gradeLevelManageTable tbody tr:nth-child(even) { background:#eef4ff; }
-    #gradeLevelManageTable tbody td { background-color:inherit; }
+    #gradeLevelManageTable tbody td { background-color:inherit; overflow:hidden; text-overflow:ellipsis; }
+    #gradeLevelManageTable th,
+    #gradeLevelManageTable td { text-align:center; }
     #gradeLevelManageTable th:first-child,
     #gradeLevelManageTable td:first-child { width:72px; min-width:72px; max-width:72px; text-align:center; }
+    .wm-grade-comment-btn { border:1px solid #93b9ef; background:#fff; color:#0d55c8; border-radius:8px; padding:6px 9px; font-size:12px; font-weight:900; cursor:pointer; white-space:nowrap; }
+    .wm-grade-comment-btn:hover { border-color:#0d55c8; background:#eef4ff; }
+    .wm-grade-comment-modal { position:fixed; inset:0; z-index:130000; display:none; align-items:center; justify-content:center; padding:20px; background:rgba(15,23,42,.68); }
+    .wm-grade-comment-modal.active { display:flex; }
+    .wm-grade-comment-card { width:min(720px,94vw); max-height:86vh; overflow:hidden; background:#fff; border-radius:18px; box-shadow:0 24px 70px rgba(0,0,0,.35); }
+    .wm-grade-comment-head { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 18px; border-bottom:1px solid var(--wm-line); background:#f8fbff; }
+    .wm-grade-comment-title { font-size:17px; font-weight:950; color:#173b75; }
+    .wm-grade-comment-close { border:0; background:#111827; color:#fff; border-radius:9px; padding:8px 11px; font-size:12px; font-weight:900; cursor:pointer; }
+    .wm-grade-comment-body { padding:20px; max-height:70vh; overflow:auto; white-space:pre-wrap; word-break:keep-all; overflow-wrap:anywhere; font-size:15px; line-height:1.8; color:#111827; }
+    body.wm-grade-comment-open { overflow:hidden; }
     #currentProgressTableWrap { border-radius:0 0 14px 14px; max-height:620px; overflow:auto; }
     #currentProgressTableWrap thead th { position:sticky; top:0; z-index:30; background:#f9fafb; }
     #currentProgressManageTable tbody tr:nth-child(odd) { background:#fff; }
@@ -1997,11 +2010,21 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       <div class="wm-record-scroll-top" id="gradeLevelTopScroll"><div class="wm-record-scroll-inner" id="gradeLevelTopScrollInner"></div></div>
       <div class="wm-table-wrap" id="gradeLevelTableWrap">
         <table id="gradeLevelManageTable">
-          <thead><tr><th>일련번호</th><th>학생ID</th><th>학생이름</th><th>반명</th><th>교사명</th><th>연도</th><th>월</th><th>주차</th><th>리포트유형</th><th>출석약속</th><th>세트약속</th><th>실제출석일수</th><th>완료세트수</th><th>학습단어수</th><th>총학습시간</th><th>평균원점수</th><th>등록일</th><th>수정일</th><th>출석률</th><th>세트진행률</th><th>출석점수</th><th>1세트평균시간</th><th>참여집중도</th><th>표준점수</th><th>점수추이</th><th>최종점수</th><th>Grade</th><th>Class</th><th>자동코멘트코드</th><th>성적표반영상태</th></tr></thead>
-          <tbody><tr><td colspan="30">6.성적등급_DB 조회 준비 중입니다.</td></tr></tbody>
+          <colgroup><col style="width:72px"><col style="width:120px"><col style="width:90px"><col style="width:110px"><col style="width:90px"><col style="width:68px"><col style="width:50px"><col style="width:60px"><col style="width:90px"><col style="width:78px"><col style="width:78px"><col style="width:96px"><col style="width:88px"><col style="width:88px"><col style="width:110px"><col style="width:88px"><col style="width:105px"><col style="width:105px"><col style="width:78px"><col style="width:92px"><col style="width:78px"><col style="width:112px"><col style="width:88px"><col style="width:112px"><col style="width:78px"><col style="width:78px"><col style="width:78px"><col style="width:70px"><col style="width:65px"><col style="width:105px"><col style="width:112px"><col style="width:145px"></colgroup>
+          <thead><tr><th>일련번호</th><th>학생ID</th><th>학생이름</th><th>반명</th><th>교사명</th><th>연도</th><th>월</th><th>주차</th><th>리포트유형</th><th>출석약속</th><th>세트약속</th><th>실제출석일수</th><th>완료세트수</th><th>학습단어수</th><th>총학습시간</th><th>평균원점수</th><th>등록일</th><th>수정일</th><th>출석률</th><th>세트진행률</th><th>출석점수</th><th>1세트평균시간</th><th>참여집중도</th><th>원점수환산점수</th><th>표준점수</th><th>점수추이</th><th>최종점수</th><th>Grade</th><th>Class</th><th>자동코멘트</th><th>성적표반영상태</th><th>생성일시</th></tr></thead>
+          <tbody><tr><td colspan="32">6.성적등급_DB 조회 준비 중입니다.</td></tr></tbody>
         </table>
       </div>
     </section>
+    <div class="wm-grade-comment-modal" id="wmGradeCommentModal" role="dialog" aria-modal="true" aria-labelledby="wmGradeCommentTitle" onclick="wmCloseGradeComment(event)">
+      <div class="wm-grade-comment-card" onclick="event.stopPropagation()">
+        <div class="wm-grade-comment-head">
+          <div class="wm-grade-comment-title" id="wmGradeCommentTitle">자동코멘트</div>
+          <button type="button" class="wm-grade-comment-close" onclick="wmCloseGradeComment()">닫기</button>
+        </div>
+        <div class="wm-grade-comment-body" id="wmGradeCommentBody">자동코멘트가 없습니다.</div>
+      </div>
+    </div>
     <section class="wm-panel" id="panel-currentProgress">
       <div class="wm-panel-title-row"><h2 class="wm-panel-title">현재진행 센터</h2><p class="wm-panel-desc">연결 DB: 8.현재진행_DB / 학생별 최신 학습 진행 캐시를 그대로 표시합니다.</p></div>
       <div class="wm-filter-box" data-filter-scope="currentProgress">
@@ -8490,5 +8513,31 @@ document.addEventListener('keydown',function(e){
 });
 </script>
 
+  <script>
+  /* WM_GRADE_LEVEL_COMMENT_POPUP_V1
+   * 성적등급 데이터 행의 자동코멘트 셀은 아래 형태로 사용합니다.
+   * <button class="wm-grade-comment-btn" data-comment="AD 원문" onclick="wmOpenGradeComment(this)">코멘트보기</button>
+   */
+  function wmOpenGradeComment(source){
+    var modal=document.getElementById('wmGradeCommentModal');
+    var body=document.getElementById('wmGradeCommentBody');
+    if(!modal||!body) return;
+    var comment='';
+    if(source&&source.dataset) comment=String(source.dataset.comment||'');
+    else comment=String(source||'');
+    body.textContent=comment.trim()||'자동코멘트가 없습니다.';
+    modal.classList.add('active');
+    document.body.classList.add('wm-grade-comment-open');
+  }
+  function wmCloseGradeComment(event){
+    if(event&&event.target&&event.currentTarget&&event.target!==event.currentTarget) return;
+    var modal=document.getElementById('wmGradeCommentModal');
+    if(modal) modal.classList.remove('active');
+    document.body.classList.remove('wm-grade-comment-open');
+  }
+  document.addEventListener('keydown',function(event){
+    if(event.key==='Escape') wmCloseGradeComment();
+  });
+  </script>
 </body>
 </html>
