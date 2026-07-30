@@ -1163,7 +1163,7 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
       </div>
 
       <div class="wm-factory-box">
-        <div class="wm-profile-section-title"><h3>3. 최근 성적표</h3><span>4-1.성적표생성_DB 최신 17개 컬럼 기준으로 정리했습니다. 실제 DB 연결은 다음 단계에서 진행합니다.</span></div>
+        <div class="wm-profile-section-title"><h3>3. 최근 성적표</h3><span>4-1.성적표생성_DB 실제 연결 · 포함검색 결과 학생들의 최근 1개월 성적표를 최신순으로 표시합니다.</span></div>
         <div class="wm-table-wrap"><table class="wm-profile-table"><thead><tr><th>리포트ID</th><th>리포트주차</th><th>학생ID</th><th>학교</th><th>학년</th><th>학생이름</th><th>학습레벨</th><th>Set_ID</th><th>단어수</th><th>학습날짜</th><th>점수</th><th>총소요시간</th><th>성적표보기</th><th>Teacher’s Comment</th><th>격려메시지</th><th>로고URL</th><th>비고</th></tr></thead><tbody><tr id="profileReportRow"><td colspan="17">학생ID 검색 후 표시됩니다.</td></tr></tbody></table></div>
       </div>
 
@@ -3128,6 +3128,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
         if(!studentRows.length){
           setTableRowsByBoxTitle('1.',[]);
           setTableRowsByBoxTitle('2.',[]);
+          setTableRowsByBoxTitle('3.',[]);
           setProfileSearchStatus('일치하는 학생을 찾지 못했습니다.', 'error');
           return;
         }
@@ -3180,14 +3181,53 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
         updateProfileSummaryCards(studentRows,recordRows);
 
         setProfileSearchStatus(
+          '학생 '+studentRows.length+'명 확인 · 최근 성적표 조회 중입니다.',
+          'info'
+        );
+
+        const reportParams=new URLSearchParams();
+        reportParams.set('mode','reports');
+        reportParams.set('ts',String(Date.now()));
+        reportParams.set('studentIds',matchedStudentIds.join(','));
+        reportParams.set('dateStart',dateStart);
+        reportParams.set('dateEnd',dateEnd);
+
+        if(actorQuery){
+          const actorParams=new URLSearchParams(actorQuery);
+          actorParams.forEach((value,key)=>reportParams.set(key,value));
+        }
+
+        const reportRes=await fetch(WM_APPS_SCRIPT_URL+'?'+reportParams.toString(),{
+          method:'GET',
+          cache:'no-store'
+        });
+        const reportData=await reportRes.json();
+
+        if(!reportRes.ok || !reportData || reportData.success===false){
+          throw new Error((reportData && (reportData.message || reportData.error)) || '최근 성적표_DB 조회 실패');
+        }
+
+        let reportRows=normalizeRows(
+          reportData.reports || reportData.reportRows || reportData.rows || reportData.data || []
+        );
+        reportRows=reportRows.filter(row=>{
+          const rowId=String(cellValue(row,headerAliases('학생ID')) || '').trim().toUpperCase();
+          return matchedIdSet.has(rowId);
+        });
+        reportRows=sortRowsByDateDesc(reportRows,'학습날짜');
+
+        setTableRowsByBoxTitle('3.',reportRows);
+
+        setProfileSearchStatus(
           '조회 완료: 학생 '+studentRows.length+'명 · 학습기록 '+recordRows.length+
-          '건 ('+dateStart+' ~ '+dateEnd+')',
+          '건 · 최근 성적표 '+reportRows.length+'건 ('+dateStart+' ~ '+dateEnd+')',
           'success'
         );
       }catch(err){
         console.error('프로필센터 학생관리·학습기록_DB 조회 오류',err);
         setTableRowsByBoxTitle('1.',[]);
         setTableRowsByBoxTitle('2.',[]);
+        setTableRowsByBoxTitle('3.',[]);
         setProfileSearchStatus(
           '조회 오류: '+(err && err.message ? err.message : err),
           'error'
