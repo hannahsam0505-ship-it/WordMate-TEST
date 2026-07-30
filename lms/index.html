@@ -534,6 +534,63 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
     .wm-profile-record-page-btn{border:1px solid var(--wm-line);background:#fff;color:var(--wm-dark);border-radius:10px;padding:8px 12px;font-size:13px;font-weight:900;cursor:pointer;}
     .wm-profile-record-page-btn:disabled{opacity:.4;cursor:not-allowed;}
     .wm-profile-record-page-info{min-width:110px;text-align:center;font-size:13px;font-weight:900;color:#374151;}
+    /* WM_PROFILE_STUDENT_FLOATING_BANNER_V1 */
+    #panel-profile .wm-profile-student-banner{
+      position:sticky;
+      top:72px;
+      z-index:120;
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:0;
+      margin:0 0 18px;
+      border:1px solid #b9cbea;
+      border-radius:14px;
+      overflow:hidden;
+      background:#fff;
+      box-shadow:0 8px 24px rgba(15,23,42,.14);
+    }
+    #panel-profile .wm-profile-student-banner .wm-stat-card{
+      min-height:52px;
+      padding:8px 14px;
+      border:0;
+      border-right:1px solid #cbd9ed;
+      border-radius:0;
+      background:linear-gradient(180deg,#f8fbff 0%,#eef4ff 100%);
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    #panel-profile .wm-profile-student-banner .wm-stat-card:last-child{
+      border-right:0;
+    }
+    #panel-profile .wm-profile-student-banner .wm-stat-label{
+      flex:0 0 auto;
+      font-size:12px;
+      color:#55709d;
+      white-space:nowrap;
+    }
+    #panel-profile .wm-profile-student-banner .wm-stat-num{
+      min-width:0;
+      margin:0;
+      font-size:18px;
+      line-height:1.15;
+      color:#0f2f63;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+    @media (max-width:900px){
+      #panel-profile .wm-profile-student-banner{
+        grid-template-columns:repeat(2,minmax(0,1fr));
+      }
+      #panel-profile .wm-profile-student-banner .wm-stat-card:nth-child(2){
+        border-right:0;
+      }
+      #panel-profile .wm-profile-student-banner .wm-stat-card:nth-child(-n+2){
+        border-bottom:1px solid #cbd9ed;
+      }
+    }
+
     #profileRecordRowHost tr:nth-child(odd),
     #profileReportRowHost tr:nth-child(odd),
     #profileGradeRowHost tr:nth-child(odd){background:#fff;}
@@ -1172,11 +1229,11 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
         <div id="profileCandidateList" class="wm-profile-candidate-list"></div>
       </div>
 
-<div class="wm-card-grid">
-        <div class="wm-stat-card"><div class="wm-stat-label">현재 진행 위치</div><div class="wm-stat-num">5-1-1</div><div class="wm-stat-sub">2.학습기록_DB 기준</div></div>
-        <div class="wm-stat-card"><div class="wm-stat-label">마지막 학습일</div><div class="wm-stat-num">2026-05-29</div><div class="wm-stat-sub">최근 학습기록 기준</div></div>
-        <div class="wm-stat-card"><div class="wm-stat-label">숙제완료율</div><div class="wm-stat-num">84%</div><div class="wm-stat-sub">기간 검색 기준</div></div>
-        <div class="wm-stat-card"><div class="wm-stat-label">등록상태</div><div class="wm-stat-num">재원중</div><div class="wm-stat-sub">1.학생관리_DB 기준</div></div>
+<div id="wmProfileStudentBanner" class="wm-card-grid wm-profile-student-banner">
+        <div class="wm-stat-card"><div class="wm-stat-label">이름</div><div id="wmProfileBannerName" class="wm-stat-num">-</div></div>
+        <div class="wm-stat-card"><div class="wm-stat-label">학생ID</div><div id="wmProfileBannerStudentId" class="wm-stat-num">-</div></div>
+        <div class="wm-stat-card"><div class="wm-stat-label">반명</div><div id="wmProfileBannerClass" class="wm-stat-num">-</div></div>
+        <div class="wm-stat-card"><div class="wm-stat-label">학교</div><div id="wmProfileBannerSchool" class="wm-stat-num">-</div></div>
       </div>
 
       <div class="wm-factory-box">
@@ -3075,24 +3132,23 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
     }
 
     function updateProfileSummaryCards(studentRows, studyRows){
-      const cards=document.querySelectorAll('#panel-profile .wm-card-grid .wm-stat-card');
-      const latestStudy=studyRows && studyRows.length ? studyRows[studyRows.length-1] : null;
       const student=studentRows && studentRows.length ? studentRows[0] : null;
-      if(cards[0]){
-        const directSetId = latestStudy ? getLatestSetId(latestStudy) : '';
-        const renderedSetId = getRenderedProfileStudySetId();
-        const filterSetId = getFilterValue('profile','recentSet');
-        const currentText = cards[0].querySelector('.wm-stat-num').textContent.trim();
-        const safeCurrentText = currentText && currentText !== '-' && currentText !== '_' ? currentText : '';
-        const nextSetId = directSetId || renderedSetId || (looksLikeSetId(filterSetId) ? normalizeSetIdText(filterSetId) : '') || safeCurrentText;
-        if(nextSetId) cards[0].querySelector('.wm-stat-num').textContent=nextSetId;
-      }
-      if(cards[1] && latestStudy){
-        cards[1].querySelector('.wm-stat-num').textContent=formatKoreaDate(cellValue(latestStudy, headerAliases('학습날짜'))) || '-';
-      }
-      if(cards[3] && student){
-        cards[3].querySelector('.wm-stat-num').textContent=cellValue(student, headerAliases('등록상태')) || cellValue(student, headerAliases('활성상태')) || '-';
-      }
+      const values={
+        name: student ? cellValue(student,headerAliases('학생이름')) : '',
+        studentId: student ? cellValue(student,headerAliases('학생ID')) : '',
+        className: student ? (cellValue(student,headerAliases('반명')) || cellValue(student,headerAliases('Class'))) : '',
+        school: student ? cellValue(student,headerAliases('학교')) : ''
+      };
+
+      const nameEl=document.getElementById('wmProfileBannerName');
+      const idEl=document.getElementById('wmProfileBannerStudentId');
+      const classEl=document.getElementById('wmProfileBannerClass');
+      const schoolEl=document.getElementById('wmProfileBannerSchool');
+
+      if(nameEl) nameEl.textContent=values.name || '-';
+      if(idEl) idEl.textContent=values.studentId || '-';
+      if(classEl) classEl.textContent=values.className || '-';
+      if(schoolEl) schoolEl.textContent=values.school || '-';
     }
 
 
@@ -3445,6 +3501,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       wmProfileRecordRows=[];
       wmProfileRecordPage=1;
       wmProfileRenderRecordPage();
+      updateProfileSummaryCards([],[]);
       setTableRowsByBoxTitle('1.',[]);
       wmProfileReportRows=[];
       wmProfileReportPage=1;
