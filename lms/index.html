@@ -444,6 +444,55 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
     #panel-students > .wm-filter-box .wm-filter-grid input:focus,
     #panel-students > .wm-filter-box .wm-filter-grid select:focus { outline:2px solid rgba(13,85,200,.18); border-color:#0d55c8; }
     #panel-students > .wm-filter-box .wm-filter-actions { margin:13px 0 0; padding-top:12px; border-top:1px solid #cbd9ed; }
+    /* WM_GRADE_LEVEL_FILTER_BLUE_DESIGN_V1 */
+    #panel-gradeLevel > .wm-filter-box {
+      border:1px solid #9fbce8;
+      background:linear-gradient(180deg,#f4f8ff 0%,#eaf2ff 100%);
+      box-shadow:0 8px 22px rgba(7,59,143,.08);
+    }
+    #panel-gradeLevel > .wm-filter-box .wm-manage-filter-head {
+      margin:-14px -14px 13px;
+      padding:12px 14px;
+      border-radius:15px 15px 0 0;
+      background:linear-gradient(135deg,#073b8f 0%,#0d55c8 100%);
+    }
+    #panel-gradeLevel > .wm-filter-box .wm-filter-title {
+      color:#fff;
+      font-size:16px;
+      letter-spacing:-.2px;
+    }
+    #panel-gradeLevel .wm-manage-date-field { color:#eaf2ff; }
+    #panel-gradeLevel .wm-manage-date-field input {
+      border-color:#b9cbea;
+      box-shadow:0 1px 0 rgba(255,255,255,.16);
+    }
+    #panel-gradeLevel .wm-date-quick-btn {
+      border-color:#b9cbea;
+      color:#173b75;
+      box-shadow:0 1px 0 rgba(255,255,255,.16);
+    }
+    #panel-gradeLevel .wm-date-quick-btn:hover {
+      border-color:#fff;
+      color:#073b8f;
+      background:#eaf2ff;
+    }
+    #panel-gradeLevel > .wm-filter-box .wm-filter-grid label { color:#173b75; }
+    #panel-gradeLevel > .wm-filter-box .wm-filter-grid input,
+    #panel-gradeLevel > .wm-filter-box .wm-filter-grid select {
+      border-color:#b9cbea;
+      background:#fff;
+    }
+    #panel-gradeLevel > .wm-filter-box .wm-filter-grid input:focus,
+    #panel-gradeLevel > .wm-filter-box .wm-filter-grid select:focus {
+      outline:2px solid rgba(13,85,200,.18);
+      border-color:#0d55c8;
+    }
+    #panel-gradeLevel > .wm-filter-box .wm-filter-actions {
+      margin:13px 0 0;
+      padding-top:12px;
+      border-top:1px solid #cbd9ed;
+    }
+
     /* WM_RECORD_FILTER_BLUE_DESIGN_V1 */
     #panel-records > .wm-filter-box { border:1px solid #9fbce8; background:linear-gradient(180deg,#f4f8ff 0%,#eaf2ff 100%); box-shadow:0 8px 22px rgba(7,59,143,.08); }
     #panel-records > .wm-filter-box .wm-manage-filter-head { margin:-14px -14px 13px; padding:12px 14px; border-radius:15px 15px 0 0; background:linear-gradient(135deg,#073b8f 0%,#0d55c8 100%); }
@@ -2035,8 +2084,38 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       </div>
     </section>
     <section class="wm-panel" id="panel-gradeLevel">
-      <h2 class="wm-panel-title">성적등급</h2>
-      <p class="wm-panel-desc">6.성적등급 관리 영역입니다.</p>
+      <div class="wm-panel-title-row">
+        <h2 class="wm-panel-title">성적등급</h2>
+        <p class="wm-panel-desc">연결 DB: 6.성적등급_DB / 검색조건에 맞는 성적등급 기록을 표시합니다.</p>
+      </div>
+      <div class="wm-filter-box" data-filter-scope="gradeLevel">
+        <div class="wm-manage-filter-head">
+          <div class="wm-filter-title">검색조건</div>
+          <div class="wm-manage-date-row" aria-label="성적등급 검색기간">
+            <label class="wm-manage-date-field">시작일<input type="date" data-filter="dateStart" /></label>
+            <label class="wm-manage-date-field">마지막일<input type="date" data-filter="dateEnd" /></label>
+            <button type="button" class="wm-date-quick-btn" onclick="setManageDateRange('gradeLevel','today')">오늘</button>
+            <button type="button" class="wm-date-quick-btn" onclick="setManageDateRange('gradeLevel','yesterdayToday')">어제+오늘</button>
+            <button type="button" class="wm-date-quick-btn" onclick="setManageDateRange('gradeLevel','week')">일주일</button>
+            <button type="button" class="wm-date-quick-btn" onclick="setManageDateRange('gradeLevel','month')">한달</button>
+            <button type="button" class="wm-date-quick-btn" onclick="resetManageDateRange('gradeLevel')">기간초기화</button>
+          </div>
+        </div>
+        <div class="wm-filter-grid">
+          <label>학생ID<input type="text" placeholder="학생ID" data-filter="studentId" /></label>
+          <label>학생이름<input type="text" placeholder="학생명" data-filter="studentName" /></label>
+          <label>반<input type="text" placeholder="반명" data-filter="class" /></label>
+          <label>교사<input type="text" list="teacherList" placeholder="교사명" data-filter="teacher" /></label>
+          <label>연도<input type="text" placeholder="예: 2026" data-filter="year" /></label>
+          <label>월<input type="text" placeholder="예: 7" data-filter="month" /></label>
+          <label>주차<input type="text" placeholder="예: 5주 / 5" data-filter="week" /></label>
+          <label>리포트유형<select data-filter="reportType"><option value="">전체</option><option value="주간">주간</option><option value="월간">월간</option></select></label>
+        </div>
+        <div class="wm-filter-actions">
+          <button class="wm-action-btn" onclick="runFilter('gradeLevel')">검색</button>
+          <button class="wm-action-btn sub" onclick="resetFilter('gradeLevel')">초기화</button>
+        </div>
+      </div>
       <div class="wm-record-scroll-top" id="gradeLevelTopScroll"><div class="wm-record-scroll-inner" id="gradeLevelTopScrollInner"></div></div>
       <div class="wm-table-wrap" id="gradeLevelTableWrap">
         <table id="gradeLevelManageTable">
@@ -3472,6 +3551,15 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
         }
         return;
       }
+      if(scope==='gradeLevel'){
+        WM_GRADE_LEVEL_PAGE = 1;
+        if(WM_GRADE_LEVEL_ROWS && WM_GRADE_LEVEL_ROWS.length){
+          renderGradeLevelRows();
+        }else{
+          loadGradeLevelRows();
+        }
+        return;
+      }
       if(scope==='deployManage'){
         if(WM_DEPLOY_MANAGE_ROWS && WM_DEPLOY_MANAGE_ROWS.length){
           renderDeployManageRows();
@@ -3526,6 +3614,12 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
         WM_CURRENT_PROGRESS_PAGE = 1;
         if(WM_CURRENT_PROGRESS_ROWS && WM_CURRENT_PROGRESS_ROWS.length) renderCurrentProgressRows();
         else loadCurrentProgressRows();
+        return;
+      }
+      if(scope==='gradeLevel'){
+        WM_GRADE_LEVEL_PAGE = 1;
+        if(WM_GRADE_LEVEL_ROWS && WM_GRADE_LEVEL_ROWS.length) renderGradeLevelRows();
+        else loadGradeLevelRows();
         return;
       }
       if(scope==='dashboard') renderDashboard({allowFallback:true});
@@ -5403,6 +5497,49 @@ function extractRecordRowsFromResponse(data){
       }
     }
 
+    function getGradeLevelFilteredRows(rows){
+      const filters={
+        studentId:getFilterValue('gradeLevel','studentId').toLowerCase(),
+        studentName:getFilterValue('gradeLevel','studentName').toLowerCase(),
+        className:getFilterValue('gradeLevel','class').toLowerCase(),
+        teacher:getFilterValue('gradeLevel','teacher').toLowerCase(),
+        year:getFilterValue('gradeLevel','year').toLowerCase(),
+        month:getFilterValue('gradeLevel','month').toLowerCase(),
+        week:getFilterValue('gradeLevel','week').toLowerCase(),
+        reportType:getFilterValue('gradeLevel','reportType').toLowerCase(),
+        dateStart:getFilterValue('gradeLevel','dateStart'),
+        dateEnd:getFilterValue('gradeLevel','dateEnd')
+      };
+
+      function includesFilter(value,filter){
+        if(!filter) return true;
+        return String(value===undefined || value===null ? '' : value).toLowerCase().includes(filter);
+      }
+
+      function numberLikeMatch(value,filter){
+        if(!filter) return true;
+        const raw=String(value===undefined || value===null ? '' : value).toLowerCase();
+        if(raw.includes(filter)) return true;
+        const filterNumber=(filter.match(/\d+/)||[''])[0];
+        const valueNumber=(raw.match(/\d+/)||[''])[0];
+        return !!filterNumber && filterNumber===valueNumber;
+      }
+
+      return (rows||[]).filter(function(row){
+        const rowDate=wmGradeLevelValue(row,'생성일시') || wmGradeLevelValue(row,'등록일') || wmGradeLevelValue(row,'수정일');
+        if(!isWithinManageDateRange(rowDate,filters.dateStart,filters.dateEnd)) return false;
+        if(!includesFilter(wmGradeLevelValue(row,'학생ID'),filters.studentId)) return false;
+        if(!includesFilter(wmGradeLevelValue(row,'학생이름'),filters.studentName)) return false;
+        if(!includesFilter(wmGradeLevelValue(row,'반명'),filters.className)) return false;
+        if(!includesFilter(wmGradeLevelValue(row,'교사명'),filters.teacher)) return false;
+        if(!numberLikeMatch(wmGradeLevelValue(row,'연도'),filters.year)) return false;
+        if(!numberLikeMatch(wmGradeLevelValue(row,'월'),filters.month)) return false;
+        if(!numberLikeMatch(wmGradeLevelValue(row,'주차'),filters.week)) return false;
+        if(!includesFilter(wmGradeLevelValue(row,'리포트유형'),filters.reportType)) return false;
+        return true;
+      });
+    }
+
     function wmUpdateGradeLevelPager(totalRows,totalPages,page){
       const prevBtn=document.getElementById('wmGradeLevelPrevBtn');
       const nextBtn=document.getElementById('wmGradeLevelNextBtn');
@@ -5440,7 +5577,7 @@ function extractRecordRowsFromResponse(data){
         return '<th'+(colorClass ? ' class="'+colorClass+'"' : '')+'>'+escapeHtml(header)+'</th>';
       }).join('')+'</tr>';
 
-      const rows=WM_GRADE_LEVEL_ROWS || [];
+      const rows=getGradeLevelFilteredRows(WM_GRADE_LEVEL_ROWS || []);
       const totalRows=rows.length;
       const totalPages=Math.max(1,Math.ceil(totalRows/WM_GRADE_LEVEL_PAGE_SIZE));
       if(WM_GRADE_LEVEL_PAGE>totalPages) WM_GRADE_LEVEL_PAGE=totalPages;
