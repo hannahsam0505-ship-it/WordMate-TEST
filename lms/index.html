@@ -58,7 +58,7 @@
 
     const WM_ENV_CONFIG = {
       TEST: {
-        APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbzRlU8mLizcOC3Ycmy1B_hHRIQ6PzRs3Kit_Eaf-pCtdFzjKs04w5KwFsmB5OFAs9dH/exec',
+        APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbzY6sjKuVJnJ0EmrzkRuhBgsjXhh9Kwt-7NJraIziuTiN3Xjkj-RiVc6Kw2XdmLkg2vdQ/exec',
         LOGIN_URL: 'https://hsam05.com/test-login',
         MAP_URL: 'https://word-mate-test.vercel.app/map',
         STUDY_URL: 'https://word-mate-test.vercel.app/study',
@@ -2012,7 +2012,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
         <table id="gradeLevelManageTable">
           <colgroup><col style="width:72px"><col style="width:120px"><col style="width:90px"><col style="width:110px"><col style="width:90px"><col style="width:68px"><col style="width:50px"><col style="width:60px"><col style="width:90px"><col style="width:78px"><col style="width:78px"><col style="width:96px"><col style="width:88px"><col style="width:88px"><col style="width:110px"><col style="width:88px"><col style="width:105px"><col style="width:105px"><col style="width:78px"><col style="width:92px"><col style="width:78px"><col style="width:112px"><col style="width:88px"><col style="width:112px"><col style="width:78px"><col style="width:78px"><col style="width:78px"><col style="width:70px"><col style="width:65px"><col style="width:105px"><col style="width:112px"><col style="width:145px"></colgroup>
           <thead><tr><th>일련번호</th><th>학생ID</th><th>학생이름</th><th>반명</th><th>교사명</th><th>연도</th><th>월</th><th>주차</th><th>리포트유형</th><th>출석약속</th><th>세트약속</th><th>실제출석일수</th><th>완료세트수</th><th>학습단어수</th><th>총학습시간</th><th>평균원점수</th><th>등록일</th><th>수정일</th><th>출석률</th><th>세트진행률</th><th>출석점수</th><th>1세트평균시간</th><th>참여집중도</th><th>원점수환산점수</th><th>표준점수</th><th>점수추이</th><th>최종점수</th><th>Grade</th><th>Class</th><th>자동코멘트</th><th>성적표반영상태</th><th>생성일시</th></tr></thead>
-          <tbody id="gradeLevelTbody"><tr><td colspan="32">6.성적등급_DB 조회 준비 중입니다.</td></tr></tbody>
+          <tbody><tr><td colspan="32">6.성적등급_DB 조회 준비 중입니다.</td></tr></tbody>
         </table>
       </div>
     </section>
@@ -2333,15 +2333,6 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
         setTimeout(function(){
           if(typeof loadRecords === 'function' && (!WM_RECORD_MANAGE_ROWS || !WM_RECORD_MANAGE_ROWS.length)) loadRecords();
           else if(typeof renderRecordManageRows === 'function') renderRecordManageRows();
-        }, 0);
-      }
-      if(panelName === 'gradeLevel'){
-        setTimeout(function(){
-          if(typeof loadGradeLevelRows === 'function' && !WM_GRADE_LEVEL_FIRST_LOAD_DONE){
-            loadGradeLevelRows();
-          }else if(typeof renderGradeLevelRows === 'function'){
-            renderGradeLevelRows();
-          }
         }, 0);
       }
       if(panelName === 'reports'){
@@ -8521,91 +8512,6 @@ document.addEventListener('keydown',function(e){
   if(scope&&typeof runFilter==='function') runFilter(scope);
 });
 </script>
-
-  <script>
-  /* WM_GRADE_LEVEL_FROM_EXISTING_REPORTS_ROUTE_V1
-   * 새 mode를 만들지 않고 기존 정상작동 ?mode=reports 응답의 gradeLevels만 사용합니다.
-   */
-  var WM_GRADE_LEVEL_ROWS=[];
-  var WM_GRADE_LEVEL_FIRST_LOAD_DONE=false;
-  var WM_GRADE_LEVEL_COLUMNS=[
-    '일련번호','학생ID','학생이름','반명','교사명','연도','월','주차','리포트유형',
-    '출석약속','세트약속','실제출석일수','완료세트수','학습단어수','총학습시간','평균원점수',
-    '등록일','수정일','출석률','세트진행률','출석점수','1세트평균시간','참여집중도',
-    '원점수환산점수','표준점수','점수추이','최종점수','Grade','Class','자동코멘트',
-    '성적표반영상태','생성일시'
-  ];
-
-  function wmGradeLevelValue(row,key){
-    if(!row||!Object.prototype.hasOwnProperty.call(row,key)) return '';
-    var value=row[key];
-    return value===null||value===undefined?'':String(value);
-  }
-
-  function renderGradeLevelRows(){
-    var tbody=document.getElementById('gradeLevelTbody');
-    if(!tbody) return;
-    tbody.innerHTML='';
-
-    if(!WM_GRADE_LEVEL_ROWS.length){
-      tbody.innerHTML='<tr><td colspan="32">6.성적등급_DB에 표시할 데이터가 없습니다.</td></tr>';
-      return;
-    }
-
-    WM_GRADE_LEVEL_ROWS.forEach(function(row){
-      var tr=document.createElement('tr');
-      WM_GRADE_LEVEL_COLUMNS.forEach(function(column){
-        var td=document.createElement('td');
-        var value=wmGradeLevelValue(row,column);
-
-        if(column==='자동코멘트'){
-          var button=document.createElement('button');
-          button.type='button';
-          button.className='wm-grade-comment-btn';
-          button.textContent='코멘트보기';
-          button.dataset.comment=value;
-          button.onclick=function(){wmOpenGradeComment(button);};
-          td.appendChild(button);
-        }else{
-          td.textContent=value;
-          td.title=value;
-        }
-        tr.appendChild(td);
-      });
-      tbody.appendChild(tr);
-    });
-  }
-
-  async function loadGradeLevelRows(){
-    var tbody=document.getElementById('gradeLevelTbody');
-    if(tbody) tbody.innerHTML='<tr><td colspan="32">6.성적등급_DB 조회 중입니다.</td></tr>';
-
-    try{
-      var response=await fetch(
-        WM_APPS_SCRIPT_URL+'?mode=reports&ts='+Date.now()+wmLmsActorQuery(),
-        {method:'GET',cache:'no-store'}
-      );
-      var data=await response.json();
-      if(!data||data.success===false){
-        throw new Error(data&&data.message?data.message:'reports 응답 오류');
-      }
-
-      WM_GRADE_LEVEL_ROWS=normalizeRows(
-        data.gradeLevels||data.gradeLevelRows||[]
-      );
-      WM_GRADE_LEVEL_FIRST_LOAD_DONE=true;
-      renderGradeLevelRows();
-      return WM_GRADE_LEVEL_ROWS;
-    }catch(error){
-      WM_GRADE_LEVEL_ROWS=[];
-      WM_GRADE_LEVEL_FIRST_LOAD_DONE=false;
-      if(tbody){
-        tbody.innerHTML='<tr><td colspan="32">6.성적등급_DB 조회 실패: '+escapeHtml(error&&error.message?error.message:error)+'</td></tr>';
-      }
-      return [];
-    }
-  }
-  </script>
 
   <script>
   /* WM_GRADE_LEVEL_COMMENT_POPUP_V1
