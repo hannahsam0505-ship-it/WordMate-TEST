@@ -1163,9 +1163,9 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
   /* WM_REPORT_TOP_PART_1_2_SAMPLE_MATCH_V2 */
   .wmr-head{position:relative;display:flex;align-items:center;justify-content:center;padding:1px 11px 10px;min-height:92px}
   .wmr-brand{position:absolute;left:50%;transform:translateX(-50%);display:block;white-space:nowrap;min-width:0}
-  .wmr-brand-motion{position:absolute;right:calc(100% + 10px);top:50%;font-size:35px;line-height:.98;color:#f39a00;font-weight:950;font-style:italic;letter-spacing:-2.4px;transform:translateY(-50%) rotate(-5deg);padding:2px 0 0 9px;text-shadow:0 1px 0 rgba(255,255,255,.65)}
+  .wmr-brand-motion{position:absolute;right:calc(100% + 10px);top:50%;font-size:35px;line-height:.98;color:#e43c31;font-weight:950;font-style:italic;letter-spacing:-2.4px;transform:translateY(-50%) rotate(-5deg);padding:2px 0 0 9px;text-shadow:0 1px 0 rgba(255,255,255,.65)}
   .wmr-brand-motion:before{content:"";position:absolute;left:-2px;top:-12px;width:28px;height:21px;background:linear-gradient(72deg,transparent 46%,#073b8f 47% 53%,transparent 54%) 0 0/9px 18px no-repeat,linear-gradient(98deg,transparent 46%,#073b8f 47% 53%,transparent 54%) 10px 0/9px 15px no-repeat,linear-gradient(118deg,transparent 46%,#073b8f 47% 53%,transparent 54%) 20px 6px/8px 12px no-repeat;transform:rotate(-9deg)}
-  .wmr-brand-motion:after{content:"";position:absolute;left:17px;right:1px;bottom:-8px;height:2px;background:#f39a00;border-radius:999px;transform:rotate(-6deg);box-shadow:25px 4px 0 -0.4px #f39a00}
+  .wmr-brand-motion:after{content:"";position:absolute;left:17px;right:1px;bottom:-8px;height:2px;background:#e43c31;border-radius:999px;transform:rotate(-6deg);box-shadow:25px 4px 0 -0.4px #e43c31}
   .wmr-brand-lockup{display:flex;flex-direction:column;align-items:center;line-height:1;min-width:0}
   .wmr-brand-static{font:800 44px/.96 Georgia,"Times New Roman",serif;color:#0b3272;letter-spacing:-1.9px}
   .wmr-brand-ribbon{position:relative;margin-top:7px;background:#073b8f;color:#fff;font:700 15px/1.1 Georgia,"Times New Roman",serif;padding:4px 28px 5px;min-width:184px;text-align:center;box-shadow:inset 0 -1px 0 rgba(255,255,255,.18)}
@@ -1220,12 +1220,12 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
   .wmr-detail th:nth-child(10),.wmr-detail td:nth-child(10){width:10%}
   /* WM_REPORT_GRADE_SUMMARY_COMMENT_LAYOUT_V1: 성적 결산표 + 자동코멘트 구도 */
   .wmr-comments{display:grid;grid-template-columns:minmax(0,28%) minmax(0,72%);gap:10px;margin-top:10px}
-  .wmr-grade-summary{border:1px solid var(--wmr-line);border-radius:14px;overflow:hidden;min-height:105px;background:#fff}
-  .wmr-grade-summary-row{display:grid;grid-template-columns:minmax(0,1fr) 74px;align-items:center;min-height:26px;border-bottom:1px solid var(--wmr-line);font-size:11px;line-height:1.2}
+  .wmr-grade-summary{border:1px solid #e43c31;border-radius:14px;overflow:hidden;min-height:105px;background:#fff}
+  .wmr-grade-summary-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:center;min-height:26px;border-bottom:1px solid #f2aaa5;font-size:11px;line-height:1.2}
   .wmr-grade-summary-row:last-child{border-bottom:0}
-  .wmr-grade-summary-label{padding:6px 9px;font-weight:800;color:#173b75;background:#f8fbff}
-  .wmr-grade-summary-value{height:100%;display:flex;align-items:center;justify-content:center;padding:6px 5px;border-left:1px solid var(--wmr-line);font-weight:950;color:#073b8f;background:#fff;white-space:nowrap}
-  .wmr-grade-summary-row.total .wmr-grade-summary-label,.wmr-grade-summary-row.total .wmr-grade-summary-value{background:#073b8f;color:#fff;border-color:#4b74ab}
+  .wmr-grade-summary-label{height:100%;display:flex;align-items:center;justify-content:center;padding:6px 9px;font-weight:800;color:#173b75;background:#fff7f6;text-align:center}
+  .wmr-grade-summary-value{height:100%;display:flex;align-items:center;justify-content:center;padding:6px 5px;border-left:1px solid #f2aaa5;font-weight:950;color:#073b8f;background:#fff;white-space:nowrap;text-align:center}
+  .wmr-grade-summary-row.total .wmr-grade-summary-label,.wmr-grade-summary-row.total .wmr-grade-summary-value{background:#e43c31;color:#fff;border-color:#f28f88}
   .wmr-auto-comment{border:1px solid #f5c168;border-radius:14px;padding:9px 12px;min-height:105px;background:#fffaf0;overflow:hidden}
   .wmr-auto-comment h3{margin:0 0 6px;font-size:15px;color:#ef8b00}
   .wmr-auto-comment p{margin:0;font-size:11px;line-height:1.5;white-space:pre-line;overflow:hidden;max-height:72px;word-break:keep-all;overflow-wrap:anywhere}
@@ -1799,7 +1799,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       <div class="wmr-grade-summary-row total"><span class="wmr-grade-summary-label">등급</span><strong class="wmr-grade-summary-value" data-wmr-grade-final>1.1등급</strong></div>
     </div>
     <div class="wmr-auto-comment">
-      <h3>★ 해나샘의 자동코멘트</h3>
+      <h3>해나샘영어 Teacher's Comment</h3>
       <p data-wmr-auto-comment>6.성적등급에서 생성된 자동코멘트가 이 영역에 표시됩니다.</p>
       <span class="wmr-legacy-comment-bind" data-wmr-teacher-comment data-wm-bind="teacherComment"></span>
       <span class="wmr-legacy-comment-bind" data-wmr-message data-wm-bind="encouragementMessage"></span>
