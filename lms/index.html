@@ -385,7 +385,7 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
     .wm-panel.active { display:block; }
     .wm-panel-title { font-size:22px; font-weight:900; margin:0 0 6px; }
     .wm-panel-desc { margin:0 0 18px; color:var(--wm-gray); font-size:14px; }
-    .wm-card-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin-bottom:20px; }
+    .wm-card-grid { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:12px; margin-bottom:20px; }
     .wm-stat-card { background:var(--wm-blue-soft); border-radius:16px; padding:16px; border:1px solid #dbeafe; }
     #panel-dashboard .wm-card-grid { grid-template-columns:repeat(6,minmax(0,1fr)); gap:8px; margin-bottom:14px; }
     #panel-dashboard .wm-stat-card { padding:8px 16px; min-height:0; cursor:pointer; }
@@ -528,7 +528,7 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
     .wm-profile-candidate-box.active{display:block;}
     .wm-profile-candidate-title{font-size:14px;font-weight:900;color:#173b75;margin-bottom:10px;}
     .wm-profile-candidate-list{display:flex;gap:8px;flex-wrap:wrap;}
-    .wm-profile-candidate-btn{border:1px solid #b9cbea;background:#fff;color:#173b75;border-radius:10px;padding:9px 12px;font-size:13px;font-weight:900;cursor:pointer;}
+    .wm-profile-candidate-btn{border:1px solid #f2c94c;background:#fff;color:#173b75;border-radius:10px;padding:9px 12px;font-size:13px;font-weight:900;cursor:pointer;}
     .wm-profile-candidate-btn:hover,.wm-profile-candidate-btn.active{border-color:#0d55c8;background:#eaf2ff;color:#073b8f;}
     .wm-profile-record-pager{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:12px;}
     .wm-profile-record-page-btn{border:1px solid var(--wm-line);background:#fff;color:var(--wm-dark);border-radius:10px;padding:8px 12px;font-size:13px;font-weight:900;cursor:pointer;}
@@ -546,16 +546,16 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
       border:1px solid #b9cbea;
       border-radius:14px;
       overflow:hidden;
-      background:#fff;
+      background:#fff8cf;
       box-shadow:0 8px 24px rgba(15,23,42,.14);
     }
     #panel-profile .wm-profile-student-banner .wm-stat-card{
       min-height:52px;
       padding:8px 14px;
       border:0;
-      border-right:1px solid #cbd9ed;
+      border-right:1px solid #e8c85a;
       border-radius:0;
-      background:linear-gradient(180deg,#f8fbff 0%,#eef4ff 100%);
+      background:linear-gradient(180deg,#fffdf0 0%,#fff1a8 100%);
       display:flex;
       align-items:center;
       gap:10px;
@@ -566,7 +566,7 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
     #panel-profile .wm-profile-student-banner .wm-stat-label{
       flex:0 0 auto;
       font-size:12px;
-      color:#55709d;
+      color:#7a5b00;
       white-space:nowrap;
     }
     #panel-profile .wm-profile-student-banner .wm-stat-num{
@@ -574,20 +574,44 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
       margin:0;
       font-size:18px;
       line-height:1.15;
-      color:#0f2f63;
+      color:#5f4300;
       overflow:hidden;
       text-overflow:ellipsis;
       white-space:nowrap;
     }
+    #panel-profile .wm-profile-student-banner .wm-profile-map-card{
+      justify-content:center;
+      padding:6px 10px;
+    }
+    #panel-profile .wm-profile-map-view-btn{
+      width:100%;
+      min-height:38px;
+      border:1px solid #d59b00;
+      border-radius:10px;
+      background:#f2b705;
+      color:#3f2d00;
+      font-size:14px;
+      font-weight:900;
+      cursor:pointer;
+      box-shadow:0 2px 6px rgba(120,82,0,.16);
+    }
+    #panel-profile .wm-profile-map-view-btn:hover:not(:disabled){
+      background:#dfa600;
+    }
+    #panel-profile .wm-profile-map-view-btn:disabled{
+      opacity:.42;
+      cursor:not-allowed;
+    }
     @media (max-width:900px){
       #panel-profile .wm-profile-student-banner{
-        grid-template-columns:repeat(2,minmax(0,1fr));
+        grid-template-columns:1fr;
       }
-      #panel-profile .wm-profile-student-banner .wm-stat-card:nth-child(2){
+      #panel-profile .wm-profile-student-banner .wm-stat-card{
         border-right:0;
+        border-bottom:1px solid #e8c85a;
       }
-      #panel-profile .wm-profile-student-banner .wm-stat-card:nth-child(-n+2){
-        border-bottom:1px solid #cbd9ed;
+      #panel-profile .wm-profile-student-banner .wm-stat-card:last-child{
+        border-bottom:0;
       }
     }
 
@@ -1231,9 +1255,10 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
 
 <div id="wmProfileStudentBanner" class="wm-card-grid wm-profile-student-banner">
         <div class="wm-stat-card"><div class="wm-stat-label">이름</div><div id="wmProfileBannerName" class="wm-stat-num">-</div></div>
-        <div class="wm-stat-card"><div class="wm-stat-label">학생ID</div><div id="wmProfileBannerStudentId" class="wm-stat-num">-</div></div>
+        <div class="wm-stat-card"><div class="wm-stat-label">아이디</div><div id="wmProfileBannerStudentId" class="wm-stat-num">-</div></div>
         <div class="wm-stat-card"><div class="wm-stat-label">반명</div><div id="wmProfileBannerClass" class="wm-stat-num">-</div></div>
         <div class="wm-stat-card"><div class="wm-stat-label">학교</div><div id="wmProfileBannerSchool" class="wm-stat-num">-</div></div>
+        <div class="wm-stat-card wm-profile-map-card"><button id="wmProfileMapViewBtn" class="wm-profile-map-view-btn" type="button" disabled>학습맵보기</button></div>
       </div>
 
       <div class="wm-factory-box">
@@ -3149,6 +3174,38 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       if(idEl) idEl.textContent=values.studentId || '-';
       if(classEl) classEl.textContent=values.className || '-';
       if(schoolEl) schoolEl.textContent=values.school || '-';
+
+      window.WM_PROFILE_SELECTED_STUDENT=student ? Object.assign({},student) : null;
+      const mapBtn=document.getElementById('wmProfileMapViewBtn');
+      if(mapBtn) mapBtn.disabled=!values.studentId;
+    }
+
+    function wmOpenSelectedStudentMap(){
+      const student=window.WM_PROFILE_SELECTED_STUDENT || null;
+      const studentId=student ? String(cellValue(student,headerAliases('학생ID')) || '').trim().toUpperCase() : '';
+      if(!studentId){
+        alert('먼저 학생을 선택해 주세요.');
+        return;
+      }
+
+      const params=new URLSearchParams();
+      params.set('wmEntry','lmsAdmin');
+      params.set('wmAdminPreview','1');
+      params.set('studentId',studentId);
+      params.set('studentName',String(cellValue(student,headerAliases('학생이름')) || '').trim());
+      params.set('school',String(cellValue(student,headerAliases('학교')) || '').trim());
+      params.set('className',String(cellValue(student,headerAliases('반명')) || cellValue(student,headerAliases('Class')) || '').trim());
+      params.set('level',String(cellValue(student,headerAliases('학습레벨')) || cellValue(student,headerAliases('학습배정')) || '').trim());
+      params.set('currentSet',String(cellValue(student,headerAliases('현재세트')) || '').trim());
+
+      window.open(WM_MAP_URL+'?'+params.toString(),'_blank');
+    }
+
+    function wmBindProfileMapViewButton(){
+      const btn=document.getElementById('wmProfileMapViewBtn');
+      if(!btn || btn.dataset.bound) return;
+      btn.dataset.bound='1';
+      btn.addEventListener('click',wmOpenSelectedStudentMap);
     }
 
 
@@ -3502,6 +3559,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       wmProfileRecordPage=1;
       wmProfileRenderRecordPage();
       updateProfileSummaryCards([],[]);
+      wmBindProfileMapViewButton();
       setTableRowsByBoxTitle('1.',[]);
       wmProfileReportRows=[];
       wmProfileReportPage=1;

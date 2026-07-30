@@ -1690,6 +1690,22 @@ function wmGetUrlParam(name){
   return String(params.get(name) || '').trim();
 }
 
+function wmIsLmsAdminPreview_(){
+  const historyPreview=!!(window.history && window.history.state && window.history.state.wmLmsAdminPreview===true);
+  if(historyPreview) return true;
+
+  const entry=String(wmGetUrlParam('wmEntry') || '').trim().toLowerCase();
+  const preview=String(wmGetUrlParam('wmAdminPreview') || '').trim();
+  if(entry!=='lmsadmin' || preview!=='1') return false;
+
+  try{
+    if(!window.opener || window.opener.closed) return false;
+    return window.opener.location.origin===window.location.origin;
+  }catch(err){
+    return false;
+  }
+}
+
 function wmSafeJsonParse(value){
   try{
     return JSON.parse(value);
@@ -1939,7 +1955,7 @@ function wmAuthorizeMapEntry_(){
     entry = String(new URLSearchParams(window.location.search || '').get('wmEntry') || '').trim().toLowerCase();
   }catch(err){}
 
-  const validEntry = entry === 'login' || entry === 'study';
+  const validEntry = entry === 'login' || entry === 'study' || (entry === 'lmsadmin' && wmIsLmsAdminPreview_());
   const historyAuthorized = !!(window.history && window.history.state && window.history.state.wmMapAuthorized === true);
 
   if(!validEntry && !historyAuthorized){
@@ -1952,7 +1968,8 @@ function wmAuthorizeMapEntry_(){
       cleanUrl.searchParams.delete('wmEntry');
       const nextState = Object.assign({}, window.history.state || {}, {
         wmMapAuthorized: true,
-        wmMapEntrySource: entry
+        wmMapEntrySource: entry,
+        wmLmsAdminPreview: entry === 'lmsadmin'
       });
       window.history.replaceState(nextState, document.title, cleanUrl.pathname + cleanUrl.search + cleanUrl.hash);
     }catch(err){}
@@ -2134,8 +2151,16 @@ function wmInitLearningMap(){
       .getStudentMapProfile(wmCurrentStudent.학생ID);
   }
 
-  if(!wmCurrentStudent.학생ID || !wmGetCurrentSessionToken()){
+  const lmsAdminPreview=wmIsLmsAdminPreview_();
+
+  if(!wmCurrentStudent.학생ID || (!lmsAdminPreview && !wmGetCurrentSessionToken())){
     wmRedirectToLogin_();
+    return;
+  }
+
+  if(lmsAdminPreview){
+    wmRevealAuthenticatedMap_();
+    wmFetchLearningMap(wmCurrentStudent.학생ID);
     return;
   }
 
