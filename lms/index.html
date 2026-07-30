@@ -1153,18 +1153,18 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
       </div>
 
       <div class="wm-factory-box">
-        <div class="wm-profile-section-title"><h3>1. 학생관리_DB</h3><span>학생 기본정보, 반, 담당교사, 학부모 연락처, 결제/등록이력 정보를 기존 DB 기준으로 표시합니다.</span></div>
-        <div class="wm-table-wrap"><table class="wm-profile-table"><thead><tr><th class="wm-student-seq-col">학생일련번호</th><th>학생ID</th><th>학생이름</th><th>학교</th><th>학년</th><th>반</th><th>교사명</th><th>주소</th><th>학부모명</th><th>학부모연락처</th><th>최종결제</th><th>등록일</th><th>최초등록일</th><th>최근결제일</th><th>결제공백일수</th><th>재등록횟수</th><th>총등록기간</th><th>등록상태</th><th>활성상태</th><th>비고</th></tr></thead><tbody><tr id="profileStudentRow"><td colspan="20">학생ID 검색 후 표시됩니다.</td></tr></tbody></table></div>
+        <div class="wm-profile-section-title"><h3>1. 학생관리_DB</h3><span>1.학생관리_DB 최신 컬럼 기준으로 정리했습니다. 실제 DB 연결은 다음 단계에서 진행합니다.</span></div>
+        <div class="wm-table-wrap"><table class="wm-profile-table"><thead><tr><th class="wm-student-seq-col">학생일련번호</th><th>학생ID</th><th>학생이름</th><th>비밀번호</th><th>출석약속</th><th>세트약속</th><th>최초배정</th><th>레벨완료조건</th><th>S4실루엣단계</th><th>S6테스트모드</th><th>현재세트</th><th>다음레벨완료조건</th><th>반명</th><th>교사명</th><th>학교</th><th>학년</th><th>학부모명</th><th>학부모연락처</th><th>최종결제</th><th>등록일</th><th>최초등록일</th><th>최근결제일</th><th>결제공백일수</th><th>재등록횟수</th><th>총등록기간</th><th>등록상태</th><th>활성상태</th><th>반ID</th><th>교사ID</th><th>현재세션</th><th>세션상태</th><th>최종로그인</th><th>접속기기</th><th>비고</th></tr></thead><tbody><tr id="profileStudentRow"><td colspan="34">학생ID 검색 후 표시됩니다.</td></tr></tbody></table></div>
       </div>
 
       <div class="wm-factory-box">
-        <div class="wm-profile-section-title"><h3>2. 학습기록_DB</h3><span>2.학습기록_DB 컬럼을 먼저 빠짐없이 그대로 보여주고, 이후 회의로 숨김 항목을 결정합니다.</span></div>
-        <div class="wm-table-wrap"><table class="wm-profile-table"><thead><tr><th>학습기록ID</th><th>학습날짜</th><th>학생ID</th><th>학생이름</th><th>학교</th><th>학년</th><th>Class</th><th>교사명</th><th>Set_ID</th><th>점수</th><th>총소요시간</th><th>Step 1</th><th>Step 2</th><th>Step 3</th><th>Step 4</th><th>시험전학습</th><th>Test_총시간</th><th>영한객관식</th><th>한영객관식</th><th>영한주관식</th><th>한영주관식</th><th>완료상태</th><th>기기정보</th><th>비고</th></tr></thead><tbody><tr><td>R001</td><td>2026-05-29</td><td>S001</td><td>김학생</td><td>샘플초</td><td>4</td><td>EC001</td><td>홍길동</td><td>5-1-1</td><td>90점</td><td>18분</td><td>3분</td><td>4분</td><td>4분</td><td>3분</td><td>Y</td><td>4분</td><td>100점</td><td>95점</td><td>X</td><td>90점</td><td>완료</td><td>PC</td><td></td></tr></tbody></table></div>
+        <div class="wm-profile-section-title"><h3>2. 학습기록_DB</h3><span>2.학습기록_DB 최신 25개 컬럼 기준으로 정리했습니다. 실제 DB 연결은 다음 단계에서 진행합니다.</span></div>
+        <div class="wm-table-wrap"><table class="wm-profile-table"><thead><tr><th>일련번호</th><th>학습날짜</th><th>학생ID</th><th>학생이름</th><th>학교</th><th>학년</th><th>Class</th><th>교사명</th><th>Set_ID</th><th>점수</th><th>총소요시간</th><th>Step 1</th><th>Step 2</th><th>Step 3</th><th>Step 4</th><th>시험전학습</th><th>Test_총시간</th><th>영한객관식</th><th>한영객관식</th><th>영한주관식</th><th>한영주관식</th><th>완료상태</th><th>학습기록ID</th><th>기기정보</th><th>비고</th></tr></thead><tbody><tr id="profileRecordRow"><td colspan="25">학생ID 검색 후 표시됩니다.</td></tr></tbody></table></div>
       </div>
 
       <div class="wm-factory-box">
-        <div class="wm-profile-section-title"><h3>3. 최근 성적표</h3><span>기본은 해당 월 기준으로 현재 주차까지 모두 표시하고, 성적표보기 클릭 시 상세를 펼치는 구조입니다. 예: 현재 6월 셋째 주라면 6월 1주차, 2주차, 3주차 성적표가 모두 표시됩니다.</span></div>
-        <div class="wm-table-wrap"><table class="wm-profile-table"><thead><tr><th>리포트ID</th><th>리포트주차</th><th>학교</th><th>학년</th><th>학생이름</th><th>학습레벨</th><th>Set_ID</th><th>단어수</th><th>학습날짜</th><th>점수</th><th>총소요시간</th><th>성적표보기</th><th>Teacher’s Comment</th><th>격려메시지</th><th>로고URL</th><th>비고</th></tr></thead><tbody><tr><td>REP001</td><td>2026-06-1주차</td><td>샘플초</td><td>4</td><td>김학생</td><td>Basic 5</td><td>5-1-1</td><td>10</td><td>2026-06-05</td><td>90점</td><td>18분</td><td><button class="wm-link-btn" onclick="openReportDetail('REP001')">성적표보기</button></td><td>꾸준히 잘 따라오고 있습니다.</td><td>이번 주도 잘했습니다.</td><td></td><td></td></tr><tr><td>REP002</td><td>2026-06-2주차</td><td>샘플초</td><td>4</td><td>김학생</td><td>Basic 5</td><td>5-1-2</td><td>10</td><td>2026-06-12</td><td>92점</td><td>17분</td><td><button class="wm-link-btn" onclick="openReportDetail('REP002')">성적표보기</button></td><td>학습 흐름이 안정적입니다.</td><td>계속 잘하고 있습니다.</td><td></td><td></td></tr><tr><td>REP003</td><td>2026-06-3주차</td><td>샘플초</td><td>4</td><td>김학생</td><td>Basic 5</td><td>5-1-3</td><td>10</td><td>2026-06-19</td><td>95점</td><td>16분</td><td><button class="wm-link-btn" onclick="openReportDetail('REP003')">성적표보기</button></td><td>어휘 정확도가 좋아졌습니다.</td><td>훌륭합니다.</td><td></td><td></td></tr></tbody></table></div>
+        <div class="wm-profile-section-title"><h3>3. 최근 성적표</h3><span>4-1.성적표생성_DB 최신 17개 컬럼 기준으로 정리했습니다. 실제 DB 연결은 다음 단계에서 진행합니다.</span></div>
+        <div class="wm-table-wrap"><table class="wm-profile-table"><thead><tr><th>리포트ID</th><th>리포트주차</th><th>학생ID</th><th>학교</th><th>학년</th><th>학생이름</th><th>학습레벨</th><th>Set_ID</th><th>단어수</th><th>학습날짜</th><th>점수</th><th>총소요시간</th><th>성적표보기</th><th>Teacher’s Comment</th><th>격려메시지</th><th>로고URL</th><th>비고</th></tr></thead><tbody><tr id="profileReportRow"><td colspan="17">학생ID 검색 후 표시됩니다.</td></tr></tbody></table></div>
       </div>
 
       <div id="wmProfileReportDetail" class="wm-factory-box" style="display:none;"></div>
@@ -1849,8 +1849,8 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
 </template>
 
       <div class="wm-factory-box">
-        <div class="wm-profile-section-title"><h3>4. 성적등급</h3><span>6.성적등급_DB의 최신 컬럼 기준 실제 데이터 연결은 다음 단계에서 진행합니다.</span></div>
-        <div class="wm-table-wrap"><table class="wm-profile-table"><thead><tr><th>성적등급 데이터</th></tr></thead><tbody><tr><td>학생 검색 후 성적등급 정보가 표시될 영역입니다.</td></tr></tbody></table></div>
+        <div class="wm-profile-section-title"><h3>4. 성적등급</h3><span>6.성적등급_DB 최신 32개 컬럼 순서로 정리했습니다. 실제 DB 연결은 다음 단계에서 진행합니다.</span></div>
+        <div class="wm-table-wrap"><table class="wm-profile-table"><thead><tr><th>일련번호</th><th>학생ID</th><th>학생이름</th><th>반명</th><th>교사명</th><th>연도</th><th>월</th><th>주차</th><th>리포트유형</th><th>출석약속</th><th>세트약속</th><th class="wm-grade-yellow-col">출석점수</th><th class="wm-grade-yellow-col">참여집중도</th><th class="wm-grade-yellow-col">점수추이</th><th class="wm-grade-green-col">최종점수</th><th class="wm-grade-green-col">Grade</th><th class="wm-grade-green-col">Class</th><th>자동코멘트</th><th>실제출석일수</th><th>완료세트수</th><th>학습단어수</th><th>총학습시간</th><th>평균원점수</th><th>출석률</th><th>세트진행률</th><th>1세트평균시간</th><th>원점수환산점수</th><th>표준점수</th><th>성적표반영상태</th><th>생성일시</th><th>등록일</th><th>수정일</th></tr></thead><tbody><tr id="profileGradeRow"><td colspan="32">학생ID 검색 후 표시됩니다.</td></tr></tbody></table></div>
       </div>
 
       <div class="wm-factory-box">
