@@ -1147,7 +1147,7 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
   .wmr-sheet{
     --wmr-blue:#073b8f; --wmr-blue2:#0d55c8; --wmr-gold:#f5a900;
     --wmr-line:#bad0ef; --wmr-soft:#f5f9ff; --wmr-text:#10213b;
-    width:210mm; min-height:297mm; height:297mm; max-height:297mm; max-width:100%; margin:18px auto;
+    width:210mm; min-height:297mm; max-width:100%; margin:18px auto;
     padding:8mm 7mm 7mm; position:relative; overflow:hidden;
     background:#fff; color:var(--wmr-text);
     border:2px solid var(--wmr-blue); border-radius:18px;
@@ -1227,13 +1227,12 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
   .wmr-grade-summary-value{height:100%;display:flex;align-items:center;justify-content:center;padding:6px 5px;border-left:1px solid #f2aaa5;font-weight:950;color:#073b8f;background:#fff;white-space:nowrap;text-align:center}
   .wmr-grade-summary-row.total .wmr-grade-summary-label,.wmr-grade-summary-row.total .wmr-grade-summary-value{background:#e43c31;color:#fff;border-color:#f28f88}
   .wmr-auto-comment{border:1px solid #f5c168;border-radius:14px;padding:7px 12px;min-height:105px;background:#fffaf0;overflow:hidden}
-  /* WM_REPORT_COMMENT_FINAL_DESIGN_V1: 제목 중앙 / 본문 좌측 / 곤색 일반체 / 핵심값만 Bold */
-  .wmr-auto-comment h3{margin:0 0 3px;font-size:15px;line-height:1.1;color:#ef8b00;text-align:center;font-weight:900}
-  .wmr-auto-comment p{margin:0;font-size:11px;line-height:1.25;letter-spacing:-.35px;color:#173b75;font-weight:400;text-align:left;white-space:normal;overflow:hidden;max-height:69px;word-break:keep-all;overflow-wrap:normal}
-  .wmr-auto-comment-line{display:block;white-space:nowrap;overflow:hidden;text-overflow:clip;font-weight:400}
+  .wmr-auto-comment h3{margin:0 0 3px;font-size:15px;line-height:1.1;color:#ef8b00;text-align:center}
+  .wmr-auto-comment p{margin:0;font-size:11px;line-height:1.25;letter-spacing:-.35px;color:#173b75;white-space:normal;overflow:hidden;max-height:69px;word-break:keep-all;overflow-wrap:normal}
+  .wmr-auto-comment-line{display:block;white-space:nowrap;overflow:hidden;text-overflow:clip}
   .wmr-auto-comment-emphasis{color:#173b75;font-weight:400}
   .wmr-auto-comment-key{color:#173b75;font-weight:950}
-  .wmr-auto-comment-score-sub{margin-left:2px;font-size:9px;font-weight:400;vertical-align:baseline}
+  .wmr-auto-comment-score-sub{font-size:9px;font-weight:400}
   .wmr-legacy-comment-bind{display:none !important}
   .wmr-footer{position:relative;margin:10px -7mm -7mm;background:linear-gradient(90deg,#052d6b,#0750b8,#052d6b);color:#fff;display:flex;align-items:center;justify-content:space-between;min-height:55px;padding:6px 18px}.wmr-footer:after{content:"";position:absolute;left:0;right:0;top:100%;height:30mm;background:linear-gradient(90deg,#052d6b,#0750b8,#052d6b);pointer-events:none}
   .wmr-footer-brand{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;font-size:14px;font-weight:900;line-height:1.05;white-space:nowrap;text-align:center}.wmr-footer-brand small{display:block;width:100%;margin-top:2px;font-size:7px;font-weight:700;letter-spacing:.01em;text-transform:none;text-align:center}
@@ -1253,8 +1252,6 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
     min-width:210mm !important;
     max-width:210mm !important;
     min-height:297mm !important;
-    height:297mm !important;
-    max-height:297mm !important;
     margin:18px auto !important;
     padding:8mm 7mm 7mm !important;
     position:relative !important;
@@ -1730,8 +1727,8 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
 
   @media print{
     @page{size:A4 portrait;margin:0}
-    html,body{width:210mm!important;height:297mm!important;margin:0!important;padding:0!important;background:#fff!important}
-    .wmr-sheet{width:210mm!important;min-width:210mm!important;max-width:210mm!important;height:297mm!important;min-height:297mm!important;max-height:297mm!important;margin:0!important;border-radius:0!important;box-shadow:none!important;overflow:hidden!important;break-after:avoid-page!important;page-break-after:avoid!important}
+    body{background:#fff!important}
+    .wmr-sheet{width:210mm;height:297mm;margin:0;border-radius:0;box-shadow:none;page-break-after:avoid}
   }
   @media(max-width:900px){
     .wmr-sheet{width:100%;min-height:auto;padding:16px}
@@ -1754,7 +1751,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
   이후 데이터 바인딩은 기존 data-wmr-* 값 요소만 변경한다.
 -->
 <!--
-  WM_REPORT_TEMPLATE_LOCK_V5 HTML 최종 적용 완료
+  WM_REPORT_TEMPLATE_LOCK_V4 실제 고정 마무리 완료
   data-wm-template="fixed" : 전체 고정 템플릿
   data-wm-lock="design"    : 1~7번 디자인 고정 영역
   data-wm-bind="..."       : 이후 실제 데이터만 교체되는 값
@@ -1801,10 +1798,10 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
   <table class="wmr-detail" data-wmr-section="6" data-wmr-design-fixed="true" data-wm-lock="design" data-wmr-data-scope="set-detail"><thead><tr><th>일련번호</th><th>리포트주차</th><th>학습날짜</th><th>학습레벨</th><th>Set_ID</th><th>세트학습시간</th><th>단어수</th><th>점수</th><th>시험소요시간</th><th>기기정보</th></tr></thead><tbody data-wmr-detail-body data-wm-bind="detailRows"><tr><td>1</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr><tr><td>2</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr><tr><td>3</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr><tr><td>4</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr><tr><td>5</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr><tr><td>6</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr><tr><td>7</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr><tr><td>8</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr><tr><td>9</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr><tr><td>10</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr></tbody></table>
   <section class="wmr-comments" data-wmr-section="7" data-wmr-design-fixed="true" data-wm-lock="design" data-wmr-data-scope="comments">
     <div class="wmr-grade-summary" aria-label="성적 결산표">
-      <div class="wmr-grade-summary-row"><span class="wmr-grade-summary-label">출석점수</span><strong class="wmr-grade-summary-value" data-wmr-grade-attendance>4점</strong></div>
-      <div class="wmr-grade-summary-row"><span class="wmr-grade-summary-label">학업집중도</span><strong class="wmr-grade-summary-value" data-wmr-grade-focus>10점</strong></div>
-      <div class="wmr-grade-summary-row"><span class="wmr-grade-summary-label">점수추이</span><strong class="wmr-grade-summary-value" data-wmr-grade-trend>10점</strong></div>
-      <div class="wmr-grade-summary-row total"><span class="wmr-grade-summary-label">등급</span><strong class="wmr-grade-summary-value" data-wmr-grade-final>1.8등급</strong></div>
+      <div class="wmr-grade-summary-row"><span class="wmr-grade-summary-label">출석점수</span><strong class="wmr-grade-summary-value" data-wmr-grade-attendance>30점</strong></div>
+      <div class="wmr-grade-summary-row"><span class="wmr-grade-summary-label">학업집중도</span><strong class="wmr-grade-summary-value" data-wmr-grade-focus>28점</strong></div>
+      <div class="wmr-grade-summary-row"><span class="wmr-grade-summary-label">점수추이</span><strong class="wmr-grade-summary-value" data-wmr-grade-trend>29점</strong></div>
+      <div class="wmr-grade-summary-row total"><span class="wmr-grade-summary-label">등급</span><strong class="wmr-grade-summary-value" data-wmr-grade-final>1.1등급</strong></div>
     </div>
     <div class="wmr-auto-comment">
       <h3>해나샘영어 Teacher's Comment</h3>
@@ -3756,13 +3753,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
         const reportSourceRows=(WM_REPORT_MANAGE_ROWS || []).filter(isValidReportDbRow);
         const clickedReportRow=findReportDetailRow(reportId, reportSourceRows);
 
-        let reportHtml=buildMonthlyCumulativeReportHtml(reportId, template.innerHTML);
-        const monthlyReportResponse=await fetchMonthlyReportSingleData(clickedReportRow);
-        if(monthlyReportResponse && monthlyReportResponse.success && monthlyReportResponse.data){
-          reportHtml=bindMonthlyReportSingleValues(reportHtml, monthlyReportResponse.data);
-        }else{
-          console.warn('월간 성적표 단일 값 API 응답 확인:', monthlyReportResponse);
-        }
+        const reportHtml=buildMonthlyCumulativeReportHtml(reportId, template.innerHTML);
         setReportActualPreview(reportHtml,reportId,clickedReportRow);
         openReportDesignPreview();
       }catch(err){
