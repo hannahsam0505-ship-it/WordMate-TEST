@@ -2341,6 +2341,15 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
           else if(typeof renderReportManageRows === 'function') renderReportManageRows();
         }, 0);
       }
+      if(panelName === 'gradeLevel'){
+        setTimeout(function(){
+          if(typeof loadGradeLevelRows === 'function' && !WM_GRADE_LEVEL_FIRST_LOAD_DONE){
+            loadGradeLevelRows();
+          }else if(typeof renderGradeLevelRows === 'function'){
+            renderGradeLevelRows();
+          }
+        }, 0);
+      }
       if(panelName === 'classes'){
         setTimeout(function(){
           if(typeof loadSettingCenterDB === 'function' && !WM_SETTING_CENTER_FIRST_LOAD_DONE){
@@ -2351,15 +2360,6 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
               '반명','담당교사ID','담당교사명','학생ID목록','학생이름목록',
               '학생수','상태','등록일','수정일','등록자','메모'
             ]);
-          }
-        }, 0);
-      }
-      if(panelName === 'gradeLevel'){
-        setTimeout(function(){
-          if(typeof loadGradeLevelRows === 'function' && (!WM_GRADE_LEVEL_ROWS || !WM_GRADE_LEVEL_ROWS.length)){
-            loadGradeLevelRows();
-          }else if(typeof renderGradeLevelRows === 'function'){
-            renderGradeLevelRows();
           }
         }, 0);
       }
@@ -4038,8 +4038,6 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
     let WM_DASHBOARD_SEND_LOG_ROWS = [];
     let WM_DASHBOARD_COUNSEL_ROWS = [];
     let WM_DASHBOARD_PAYMENT_ROWS = [];
-    let WM_GRADE_LEVEL_ROWS = [];
-    let WM_GRADE_LEVEL_LOADING = false;
     let WM_CURRENT_PROGRESS_ROWS = [];
     let WM_STUDENT_MANAGE_PAGE = 1;
     let WM_RECORD_MANAGE_PAGE = 1;
@@ -7285,82 +7283,6 @@ function getDeployManageFilteredRows(rows){
   });
 }
 
-/* WM_GRADE_LEVEL_READ_ONLY_LMS_V1
- * Code.gs ?mode=gradeLevels 조회값을 32개 컬럼 순서 그대로 표시합니다.
- * 자동코멘트 원문은 셀에 노출하지 않고 코멘트보기 버튼의 dataset으로만 전달합니다.
- */
-const WM_GRADE_LEVEL_HEADERS = [
-  '일련번호','학생ID','학생이름','반명','교사명','연도','월','주차','리포트유형',
-  '출석약속','세트약속','실제출석일수','완료세트수','학습단어수','총학습시간',
-  '평균원점수','등록일','수정일','출석률','세트진행률','출석점수','1세트평균시간',
-  '참여집중도','원점수환산점수','표준점수','점수추이','최종점수','Grade','Class',
-  '자동코멘트','성적표반영상태','생성일시'
-];
-
-async function loadGradeLevelRows(){
-  const tbody = document.getElementById('gradeLevelTbody');
-  if(WM_GRADE_LEVEL_LOADING) return WM_GRADE_LEVEL_ROWS || [];
-  WM_GRADE_LEVEL_LOADING = true;
-  if(tbody) tbody.innerHTML = '<tr><td colspan="32">6.성적등급_DB 조회 중입니다.</td></tr>';
-
-  try{
-    const res = await fetch(
-      WM_APPS_SCRIPT_URL + '?mode=gradeLevels&ts=' + Date.now() + wmLmsActorQuery(),
-      {method:'GET', cache:'no-store'}
-    );
-    if(!res.ok) throw new Error('HTTP ' + res.status);
-    const data = await res.json();
-    if(data && data.success === false){
-      throw new Error(data.message || data.error || '6.성적등급_DB 조회 실패');
-    }
-    WM_GRADE_LEVEL_ROWS = normalizeRows(
-      data && (data.gradeLevels || data.gradeLevelRows || data.rows || data.data)
-        ? (data.gradeLevels || data.gradeLevelRows || data.rows || data.data)
-        : []
-    );
-    renderGradeLevelRows();
-    return WM_GRADE_LEVEL_ROWS;
-  }catch(err){
-    WM_GRADE_LEVEL_ROWS = [];
-    if(tbody){
-      tbody.innerHTML = '<tr><td colspan="32">6.성적등급_DB 조회 실패: '
-        + escapeHtml(err && err.message ? err.message : err) + '</td></tr>';
-    }
-    return [];
-  }finally{
-    WM_GRADE_LEVEL_LOADING = false;
-  }
-}
-
-function renderGradeLevelRows(){
-  const tbody = document.getElementById('gradeLevelTbody');
-  if(!tbody) return;
-  const rows = WM_GRADE_LEVEL_ROWS || [];
-
-  if(!rows.length){
-    tbody.innerHTML = '<tr><td colspan="32">표시할 6.성적등급_DB 데이터가 없습니다.</td></tr>';
-    return;
-  }
-
-  tbody.innerHTML = rows.map(function(row){
-    return '<tr>' + WM_GRADE_LEVEL_HEADERS.map(function(header){
-      if(header === '자동코멘트'){
-        const comment = String(row[header] || '');
-        return '<td><button type="button" class="wm-grade-comment-btn" data-comment="'
-          + escapeHtml(comment) + '" onclick="wmOpenGradeComment(this)">코멘트보기</button></td>';
-      }
-      return '<td title="' + escapeHtml(displayCellValue(row[header] || '')) + '">'
-        + escapeHtml(displayCellValue(row[header] || '')) + '</td>';
-    }).join('') + '</tr>';
-  }).join('');
-
-  if(typeof syncHorizontalScroll === 'function'){
-    setTimeout(function(){
-      try{ syncHorizontalScroll('gradeLevelTopScroll','gradeLevelTableWrap','gradeLevelTopScrollInner','gradeLevelManageTable'); }catch(err){}
-    }, 0);
-  }
-}
-
 async function loadCurrentProgressRows(){
   wmLockStatusMessage('CurrentProgressDB_V2_LOCK','현재진행_DB 조회/표시 구조');
   const tbody = document.getElementById('currentProgressTbody');
@@ -8599,6 +8521,110 @@ document.addEventListener('keydown',function(e){
   if(scope&&typeof runFilter==='function') runFilter(scope);
 });
 </script>
+
+  <script>
+  /* WM_GRADE_LEVEL_READONLY_CONNECTION_V1
+   * 기존 Code.gs action/mode 라우터의 gradeLevels를 호출해 32개 컬럼을 표시합니다.
+   */
+  var WM_GRADE_LEVEL_ROWS=[];
+  var WM_GRADE_LEVEL_FIRST_LOAD_DONE=false;
+  var WM_GRADE_LEVEL_COLUMNS=[
+    '일련번호','학생ID','학생이름','반명','교사명','연도','월','주차','리포트유형',
+    '출석약속','세트약속','실제출석일수','완료세트수','학습단어수','총학습시간','평균원점수',
+    '등록일','수정일','출석률','세트진행률','출석점수','1세트평균시간','참여집중도',
+    '원점수환산점수','표준점수','점수추이','최종점수','Grade','Class','자동코멘트',
+    '성적표반영상태','생성일시'
+  ];
+
+  function wmGradeLevelText(value){
+    return value===null||value===undefined ? '' : String(value);
+  }
+
+  function renderGradeLevelRows(){
+    var tbody=document.getElementById('gradeLevelTbody');
+    if(!tbody) return;
+    tbody.innerHTML='';
+
+    if(!WM_GRADE_LEVEL_ROWS.length){
+      var emptyRow=document.createElement('tr');
+      var emptyCell=document.createElement('td');
+      emptyCell.colSpan=32;
+      emptyCell.textContent='6.성적등급_DB에 표시할 데이터가 없습니다.';
+      emptyRow.appendChild(emptyCell);
+      tbody.appendChild(emptyRow);
+      return;
+    }
+
+    WM_GRADE_LEVEL_ROWS.forEach(function(row){
+      var tr=document.createElement('tr');
+      WM_GRADE_LEVEL_COLUMNS.forEach(function(column){
+        var td=document.createElement('td');
+        var value=wmGradeLevelText(row&&Object.prototype.hasOwnProperty.call(row,column)?row[column]:'');
+        td.title=value;
+
+        if(column==='자동코멘트'){
+          var button=document.createElement('button');
+          button.type='button';
+          button.className='wm-grade-comment-btn';
+          button.textContent='코멘트보기';
+          button.dataset.comment=value;
+          button.addEventListener('click',function(){wmOpenGradeComment(button);});
+          td.removeAttribute('title');
+          td.appendChild(button);
+        }else{
+          td.textContent=value;
+        }
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+  }
+
+  async function loadGradeLevelRows(){
+    var tbody=document.getElementById('gradeLevelTbody');
+    if(tbody) tbody.innerHTML='<tr><td colspan="32">6.성적등급_DB 조회 중입니다.</td></tr>';
+
+    try{
+      var query=new URLSearchParams({
+        action:'gradeLevels',
+        mode:'gradeLevels',
+        ts:String(Date.now())
+      });
+      var actorId=typeof wmGetSettingActorTeacherId==='function' ? wmGetSettingActorTeacherId() : '';
+      if(actorId) query.set('actorTeacherId',actorId);
+
+      var response=await fetch(WM_APPS_SCRIPT_URL+'?'+query.toString(),{
+        method:'GET',
+        cache:'no-store',
+        redirect:'follow'
+      });
+      if(!response.ok) throw new Error('HTTP '+response.status);
+
+      var data=await response.json();
+      if(!data||data.success!==true){
+        throw new Error(data&&data.message?data.message:'조회 응답 오류');
+      }
+
+      WM_GRADE_LEVEL_ROWS=normalizeRows(
+        data.gradeLevels||data.gradeLevelRows||[]
+      );
+      WM_GRADE_LEVEL_FIRST_LOAD_DONE=true;
+      renderGradeLevelRows();
+    }catch(error){
+      WM_GRADE_LEVEL_ROWS=[];
+      WM_GRADE_LEVEL_FIRST_LOAD_DONE=false;
+      if(tbody){
+        tbody.innerHTML='';
+        var row=document.createElement('tr');
+        var cell=document.createElement('td');
+        cell.colSpan=32;
+        cell.textContent='6.성적등급_DB 조회 실패: '+String(error&&error.message?error.message:error);
+        row.appendChild(cell);
+        tbody.appendChild(row);
+      }
+    }
+  }
+  </script>
 
   <script>
   /* WM_GRADE_LEVEL_COMMENT_POPUP_V1
