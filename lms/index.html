@@ -579,6 +579,13 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
       text-overflow:ellipsis;
       white-space:nowrap;
     }
+    #panel-profile .wm-profile-student-banner{
+      grid-template-columns:repeat(5,minmax(0,1fr)) !important;
+      min-width:760px;
+    }
+    #panel-profile{
+      overflow-x:auto;
+    }
     #panel-profile .wm-profile-student-banner .wm-profile-map-card{
       justify-content:center;
       padding:6px 10px;
@@ -602,20 +609,7 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
       opacity:.42;
       cursor:not-allowed;
     }
-    @media (max-width:900px){
-      #panel-profile .wm-profile-student-banner{
-        grid-template-columns:1fr;
-      }
-      #panel-profile .wm-profile-student-banner .wm-stat-card{
-        border-right:0;
-        border-bottom:1px solid #e8c85a;
-      }
-      #panel-profile .wm-profile-student-banner .wm-stat-card:last-child{
-        border-bottom:0;
-      }
-    }
-
-    #profileRecordRowHost tr:nth-child(odd),
+#profileRecordRowHost tr:nth-child(odd),
     #profileReportRowHost tr:nth-child(odd),
     #profileGradeRowHost tr:nth-child(odd){background:#fff;}
     #profileRecordRowHost tr:nth-child(even),
@@ -1258,7 +1252,7 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
         <div class="wm-stat-card"><div class="wm-stat-label">아이디</div><div id="wmProfileBannerStudentId" class="wm-stat-num">-</div></div>
         <div class="wm-stat-card"><div class="wm-stat-label">반명</div><div id="wmProfileBannerClass" class="wm-stat-num">-</div></div>
         <div class="wm-stat-card"><div class="wm-stat-label">학교</div><div id="wmProfileBannerSchool" class="wm-stat-num">-</div></div>
-        <div class="wm-stat-card wm-profile-map-card"><button id="wmProfileMapViewBtn" class="wm-profile-map-view-btn" type="button" disabled>학습맵보기</button></div>
+        <div class="wm-stat-card wm-profile-map-card"><button id="wmProfileMapViewBtn" class="wm-profile-map-view-btn" type="button">학습맵보기</button></div>
       </div>
 
       <div class="wm-factory-box">
@@ -3177,28 +3171,11 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
 
       window.WM_PROFILE_SELECTED_STUDENT=student ? Object.assign({},student) : null;
       const mapBtn=document.getElementById('wmProfileMapViewBtn');
-      if(mapBtn) mapBtn.disabled=!values.studentId;
+      if(mapBtn) mapBtn.disabled=false;
     }
 
     function wmOpenSelectedStudentMap(){
-      const student=window.WM_PROFILE_SELECTED_STUDENT || null;
-      const studentId=student ? String(cellValue(student,headerAliases('학생ID')) || '').trim().toUpperCase() : '';
-      if(!studentId){
-        alert('먼저 학생을 선택해 주세요.');
-        return;
-      }
-
-      const params=new URLSearchParams();
-      params.set('wmEntry','lmsAdmin');
-      params.set('wmAdminPreview','1');
-      params.set('studentId',studentId);
-      params.set('studentName',String(cellValue(student,headerAliases('학생이름')) || '').trim());
-      params.set('school',String(cellValue(student,headerAliases('학교')) || '').trim());
-      params.set('className',String(cellValue(student,headerAliases('반명')) || cellValue(student,headerAliases('Class')) || '').trim());
-      params.set('level',String(cellValue(student,headerAliases('학습레벨')) || cellValue(student,headerAliases('학습배정')) || '').trim());
-      params.set('currentSet',String(cellValue(student,headerAliases('현재세트')) || '').trim());
-
-      window.open(WM_MAP_URL+'?'+params.toString(),'_blank');
+      window.open(WM_MAP_URL,'_blank');
     }
 
     function wmBindProfileMapViewButton(){
