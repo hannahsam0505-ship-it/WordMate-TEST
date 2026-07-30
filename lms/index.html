@@ -1228,8 +1228,8 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
   .wmr-grade-summary-row.total .wmr-grade-summary-label,.wmr-grade-summary-row.total .wmr-grade-summary-value{background:#e43c31;color:#fff;border-color:#f28f88}
   .wmr-auto-comment{border:1px solid #f5c168;border-radius:14px;padding:7px 12px;min-height:105px;background:#fffaf0;overflow:hidden}
   .wmr-auto-comment h3{margin:0 0 3px;font-size:15px;line-height:1.1;color:#ef8b00;text-align:center}
-  .wmr-auto-comment p{margin:0;font-size:11px;line-height:1.25;letter-spacing:-.35px;color:#173b75;white-space:normal;overflow:hidden;max-height:69px;word-break:keep-all;overflow-wrap:normal}
-  .wmr-auto-comment-line{display:block;white-space:nowrap;overflow:hidden;text-overflow:clip}
+  .wmr-auto-comment p{margin:0;font-size:11px;line-height:1.25;letter-spacing:-.35px;color:#173b75;text-align:left;white-space:normal;overflow:hidden;max-height:69px;word-break:keep-all;overflow-wrap:normal}
+  .wmr-auto-comment-line{display:block;white-space:nowrap;overflow:hidden;text-overflow:clip;color:#173b75;font-weight:400;text-align:left}
   .wmr-auto-comment-emphasis{color:#173b75;font-weight:400}
   .wmr-auto-comment-key{color:#173b75;font-weight:950}
   .wmr-auto-comment-score-sub{font-size:9px;font-weight:400}
@@ -3780,7 +3780,12 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       const commentEl=sheet.querySelector('[data-wmr-auto-comment]');
       if(commentEl){
         const lines=String(data['자동코멘트']||'').split(/\r?\n/).map(v=>v.trim()).filter(Boolean).slice(0,5);
-        commentEl.innerHTML=lines.map(line=>'<span class="wmr-auto-comment-line">'+escapeHtml(line)+'</span>').join('');
+        commentEl.innerHTML=lines.map(function(line){
+          var html=escapeHtml(line);
+          html=html.replace(/\(([-+]?\d+(?:\.\d+)?)\/30\)/g,'<span class="wmr-auto-comment-score-sub">($1/30)</span>');
+          html=html.replace(/(\d+\.\d+등급)/g,'<strong class="wmr-auto-comment-key">$1</strong>');
+          return '<span class="wmr-auto-comment-line">'+html+'</span>';
+        }).join('');
       }
       let created=sheet.querySelector('[data-wmr-grade-created]');
       if(!created){
