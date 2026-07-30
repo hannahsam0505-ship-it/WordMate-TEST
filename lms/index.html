@@ -507,6 +507,21 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
     #panel-records > .wm-filter-box .wm-filter-grid input:focus,
     #panel-records > .wm-filter-box .wm-filter-grid select:focus { outline:2px solid rgba(13,85,200,.18); border-color:#0d55c8; }
     #panel-records > .wm-filter-box .wm-filter-actions { margin:13px 0 0; padding-top:12px; border-top:1px solid #cbd9ed; }
+    /* WM_PROFILE_CENTER_UI_V1: 학생관리/학습기록과 동일한 검색 디자인 + 6개 상세영역 */
+    #panel-profile > .wm-filter-box { border:1px solid #9fbce8; background:linear-gradient(180deg,#f4f8ff 0%,#eaf2ff 100%); box-shadow:0 8px 22px rgba(7,59,143,.08); }
+    #panel-profile > .wm-filter-box .wm-manage-filter-head { margin:-14px -14px 13px; padding:12px 14px; border-radius:15px 15px 0 0; background:linear-gradient(135deg,#073b8f 0%,#0d55c8 100%); }
+    #panel-profile > .wm-filter-box .wm-filter-title { color:#fff; font-size:16px; letter-spacing:-.2px; }
+    #panel-profile .wm-manage-date-field { color:#eaf2ff; }
+    #panel-profile .wm-manage-date-field input { border-color:#b9cbea; box-shadow:0 1px 0 rgba(255,255,255,.16); }
+    #panel-profile .wm-date-quick-btn { border-color:#b9cbea; color:#173b75; box-shadow:0 1px 0 rgba(255,255,255,.16); }
+    #panel-profile .wm-date-quick-btn:hover { border-color:#fff; color:#073b8f; background:#eaf2ff; }
+    #panel-profile > .wm-filter-box .wm-filter-grid label { color:#173b75; }
+    #panel-profile > .wm-filter-box .wm-filter-grid input { border-color:#b9cbea; background:#fff; }
+    #panel-profile > .wm-filter-box .wm-filter-grid input:focus { outline:2px solid rgba(13,85,200,.18); border-color:#0d55c8; }
+    #panel-profile > .wm-filter-box .wm-filter-actions { margin:13px 0 0; padding-top:12px; border-top:1px solid #cbd9ed; }
+    #panel-profile .wm-profile-layout-note { margin:0 0 16px; padding:11px 14px; border:1px solid #dbeafe; border-radius:12px; background:#f8fbff; color:#173b75; font-size:13px; font-weight:800; line-height:1.55; }
+    #panel-profile .wm-factory-box { display:block; }
+
     /* WM_CURRENT_PROGRESS_FILTER_BLUE_DESIGN_V1 */
     #panel-currentProgress > .wm-filter-box { border:1px solid #9fbce8; background:linear-gradient(180deg,#f4f8ff 0%,#eaf2ff 100%); box-shadow:0 8px 22px rgba(7,59,143,.08); }
     #panel-currentProgress > .wm-filter-box > .wm-filter-title { margin:-14px -14px 13px; padding:12px 14px; border-radius:15px 15px 0 0; background:linear-gradient(135deg,#073b8f 0%,#0d55c8 100%); color:#fff; font-size:16px; letter-spacing:-.2px; }
@@ -1096,49 +1111,47 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
     </section>
 
     <section class="wm-panel" id="panel-profile">
-      <h2 class="wm-panel-title">프로필센터</h2>
-      <p class="wm-panel-desc">학생ID 기준으로 기존 DB 내용을 더하거나 빼지 않고 한 화면에 모아보는 학생 개인 중심 허브입니다.</p>
+      <div class="wm-panel-title-row"><h2 class="wm-panel-title">프로필센터</h2><p class="wm-panel-desc">학생 한 명의 기본정보와 최근 한 달 학습·성적·관리 이력을 한 화면에서 확인하는 학생 개인 중심 허브입니다.</p></div>
 
       <div class="wm-filter-box" data-filter-scope="profile">
-        <div class="wm-filter-title">학생 / 기간 검색</div>
+        <div class="wm-manage-filter-head">
+          <div class="wm-filter-title">검색조건</div>
+          <div class="wm-manage-date-row" aria-label="프로필센터 검색기간">
+            <label class="wm-manage-date-field">시작일<input type="date" data-filter="dateStart" /></label>
+            <label class="wm-manage-date-field">마지막일<input type="date" data-filter="dateEnd" /></label>
+            <button type="button" class="wm-date-quick-btn" onclick="setManageDateRange('profile','today')">오늘</button>
+            <button type="button" class="wm-date-quick-btn" onclick="setManageDateRange('profile','week')">일주일</button>
+            <button type="button" class="wm-date-quick-btn" onclick="setManageDateRange('profile','month')">한달</button>
+          </div>
+        </div>
         <div class="wm-filter-grid">
-          <label>기간 시작<input type="date" data-filter="dateStart" /></label>
-          <label>기간 종료<input type="date" data-filter="dateEnd" /></label>
-          <label>학생ID<input type="text" placeholder="예: S001" data-filter="studentId" /></label>
-          <label>학생이름<input type="text" placeholder="학생명" data-filter="studentName" /></label>
+          <label>학생ID<input type="text" placeholder="학생ID" data-filter="studentId" /></label>
+          <label>학생명<input type="text" placeholder="학생명" data-filter="studentName" /></label>
           <label>반<input type="text" placeholder="반명" data-filter="class" /></label>
-          <label>교사<input type="text" placeholder="교사명" data-filter="teacher" /></label>
-          <label>월 기준<input type="month" data-filter="month" /></label>
-          <label>최근학습세트<input type="text" placeholder="예: 5-1-1" data-filter="recentSet" /></label>
+          <label>교사<input type="text" list="teacherList" placeholder="교사명" data-filter="teacher" /></label>
         </div>
         <div class="wm-filter-actions">
-          <button type="button" class="wm-action-btn" onclick="runProfileFilter()">검색</button>
-          <span id="wmProfileLoading" class="wm-profile-loading"><span class="wm-loading-spinner"></span>검색 중</span>
-          <button type="button" class="wm-action-btn sub" onclick="resetFilter('profile')">초기화</button>
+          <button type="button" class="wm-action-btn" onclick="runProfileUiSearch()">검색</button>
+          <button type="button" class="wm-action-btn sub" onclick="resetProfileUi()">초기화</button>
           <div id="wmProfileSearchStatus" class="wm-note wm-profile-inline-note" style="display:none;"></div>
         </div>
       </div>
 
-      <div class="wm-card-grid">
-        <div class="wm-stat-card"><div class="wm-stat-label">현재 진행 위치</div><div class="wm-stat-num">5-1-1</div><div class="wm-stat-sub">2.학습기록_DB 기준</div></div>
-        <div class="wm-stat-card"><div class="wm-stat-label">마지막 학습일</div><div class="wm-stat-num">2026-05-29</div><div class="wm-stat-sub">최근 학습기록 기준</div></div>
-        <div class="wm-stat-card"><div class="wm-stat-label">숙제완료율</div><div class="wm-stat-num">84%</div><div class="wm-stat-sub">기간 검색 기준</div></div>
-        <div class="wm-stat-card"><div class="wm-stat-label">등록상태</div><div class="wm-stat-num">재원중</div><div class="wm-stat-sub">1.학생관리_DB 기준</div></div>
+      <div class="wm-profile-layout-note">기본 조회기간은 오늘을 기준으로 최근 한 달입니다. 이번 단계는 검색 UI와 6개 상세영역 구성만 적용하며 실제 DB 조회는 연결하지 않습니다.</div>
+
+      <div class="wm-factory-box">
+        <div class="wm-profile-section-title"><h3>1. 학생관리 DB</h3><span>학생 기본정보, 반, 담당교사, 학부모 연락처와 등록정보 영역입니다.</span></div>
+        <div class="wm-table-wrap"><table class="wm-profile-table"><thead><tr><th>학생ID</th><th>학생이름</th><th>학교</th><th>학년</th><th>반</th><th>교사명</th><th>학부모명</th><th>학부모연락처</th><th>등록일</th><th>등록상태</th><th>활성상태</th><th>비고</th></tr></thead><tbody><tr><td colspan="12">학생을 검색하면 학생관리 정보가 표시될 영역입니다.</td></tr></tbody></table></div>
       </div>
 
       <div class="wm-factory-box">
-        <div class="wm-profile-section-title"><h3>1. 학생관리_DB</h3><span>학생 기본정보, 반, 담당교사, 학부모 연락처, 결제/등록이력 정보를 기존 DB 기준으로 표시합니다.</span></div>
-        <div class="wm-table-wrap"><table class="wm-profile-table"><thead><tr><th class="wm-student-seq-col">학생일련번호</th><th>학생ID</th><th>학생이름</th><th>학교</th><th>학년</th><th>반</th><th>교사명</th><th>주소</th><th>학부모명</th><th>학부모연락처</th><th>최종결제</th><th>등록일</th><th>최초등록일</th><th>최근결제일</th><th>결제공백일수</th><th>재등록횟수</th><th>총등록기간</th><th>등록상태</th><th>활성상태</th><th>비고</th></tr></thead><tbody><tr id="profileStudentRow"><td colspan="20">학생ID 검색 후 표시됩니다.</td></tr></tbody></table></div>
+        <div class="wm-profile-section-title"><h3>2. 학습기록 DB</h3><span>기본 최근 한 달의 학습일, 세트, 점수와 학습시간을 표시할 영역입니다.</span></div>
+        <div class="wm-table-wrap"><table class="wm-profile-table"><thead><tr><th>학습날짜</th><th>학생ID</th><th>학생이름</th><th>Set_ID</th><th>점수</th><th>총소요시간</th><th>Step 1</th><th>Step 2</th><th>Step 3</th><th>Step 4</th><th>시험점수</th><th>완료상태</th><th>비고</th></tr></thead><tbody><tr><td colspan="13">학생을 검색하면 최근 한 달 학습기록이 표시될 영역입니다.</td></tr></tbody></table></div>
       </div>
 
       <div class="wm-factory-box">
-        <div class="wm-profile-section-title"><h3>2. 학습기록_DB</h3><span>2.학습기록_DB 컬럼을 먼저 빠짐없이 그대로 보여주고, 이후 회의로 숨김 항목을 결정합니다.</span></div>
-        <div class="wm-table-wrap"><table class="wm-profile-table"><thead><tr><th>학습기록ID</th><th>학습날짜</th><th>학생ID</th><th>학생이름</th><th>학교</th><th>학년</th><th>Class</th><th>교사명</th><th>Set_ID</th><th>점수</th><th>총소요시간</th><th>Step 1</th><th>Step 2</th><th>Step 3</th><th>Step 4</th><th>시험전학습</th><th>Test_총시간</th><th>영한객관식</th><th>한영객관식</th><th>영한주관식</th><th>한영주관식</th><th>완료상태</th><th>기기정보</th><th>비고</th></tr></thead><tbody><tr><td>R001</td><td>2026-05-29</td><td>S001</td><td>김학생</td><td>샘플초</td><td>4</td><td>EC001</td><td>홍길동</td><td>5-1-1</td><td>90점</td><td>18분</td><td>3분</td><td>4분</td><td>4분</td><td>3분</td><td>Y</td><td>4분</td><td>100점</td><td>95점</td><td>X</td><td>90점</td><td>완료</td><td>PC</td><td></td></tr></tbody></table></div>
-      </div>
-
-      <div class="wm-factory-box">
-        <div class="wm-profile-section-title"><h3>3. 최근 성적표</h3><span>기본은 해당 월 기준으로 현재 주차까지 모두 표시하고, 성적표보기 클릭 시 상세를 펼치는 구조입니다. 예: 현재 6월 셋째 주라면 6월 1주차, 2주차, 3주차 성적표가 모두 표시됩니다.</span></div>
-        <div class="wm-table-wrap"><table class="wm-profile-table"><thead><tr><th>리포트ID</th><th>리포트주차</th><th>학교</th><th>학년</th><th>학생이름</th><th>학습레벨</th><th>Set_ID</th><th>단어수</th><th>학습날짜</th><th>점수</th><th>총소요시간</th><th>성적표보기</th><th>Teacher’s Comment</th><th>격려메시지</th><th>로고URL</th><th>비고</th></tr></thead><tbody><tr><td>REP001</td><td>2026-06-1주차</td><td>샘플초</td><td>4</td><td>김학생</td><td>Basic 5</td><td>5-1-1</td><td>10</td><td>2026-06-05</td><td>90점</td><td>18분</td><td><button class="wm-link-btn" onclick="openReportDetail('REP001')">성적표보기</button></td><td>꾸준히 잘 따라오고 있습니다.</td><td>이번 주도 잘했습니다.</td><td></td><td></td></tr><tr><td>REP002</td><td>2026-06-2주차</td><td>샘플초</td><td>4</td><td>김학생</td><td>Basic 5</td><td>5-1-2</td><td>10</td><td>2026-06-12</td><td>92점</td><td>17분</td><td><button class="wm-link-btn" onclick="openReportDetail('REP002')">성적표보기</button></td><td>학습 흐름이 안정적입니다.</td><td>계속 잘하고 있습니다.</td><td></td><td></td></tr><tr><td>REP003</td><td>2026-06-3주차</td><td>샘플초</td><td>4</td><td>김학생</td><td>Basic 5</td><td>5-1-3</td><td>10</td><td>2026-06-19</td><td>95점</td><td>16분</td><td><button class="wm-link-btn" onclick="openReportDetail('REP003')">성적표보기</button></td><td>어휘 정확도가 좋아졌습니다.</td><td>훌륭합니다.</td><td></td><td></td></tr></tbody></table></div>
+        <div class="wm-profile-section-title"><h3>3. 최근 성적표</h3><span>기본 최근 한 달의 주간·월간 성적표와 상세보기 기능을 배치할 영역입니다.</span></div>
+        <div class="wm-table-wrap"><table class="wm-profile-table"><thead><tr><th>리포트ID</th><th>연도</th><th>월</th><th>주차</th><th>리포트유형</th><th>학생ID</th><th>학생이름</th><th>최종점수</th><th>Grade</th><th>Class</th><th>생성일시</th><th>성적표보기</th></tr></thead><tbody><tr><td colspan="12">학생을 검색하면 최근 성적표가 표시될 영역입니다.</td></tr></tbody></table></div>
       </div>
 
       <div id="wmProfileReportDetail" class="wm-factory-box" style="display:none;"></div>
@@ -1823,23 +1836,18 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
 </template>
 
       <div class="wm-factory-box">
-        <div class="wm-profile-section-title"><h3>4. 발송대기</h3><span>6.발송대기_DB 내용을 기본 최근 한 달 기준으로 그대로 표시합니다.</span></div>
-        <div class="wm-table-wrap"><table class="wm-profile-table"><thead><tr><th>발송ID</th><th>리포트ID</th><th>학습날짜</th><th>학생이름</th><th>학부모명</th><th>학부모연락처</th><th>발송방식</th><th>발송문구</th><th>Teacher’s Comment</th><th>발송상태</th><th>확인여부</th><th>비고</th></tr></thead><tbody><tr><td>SW001</td><td>REP001</td><td>2026-05-29</td><td>김학생</td><td>김학부모</td><td>010-0000-0001</td><td>카카오</td><td>성적표가 도착했습니다.</td><td>꾸준히 잘 따라오고 있습니다.</td><td>대기</td><td>N</td><td></td></tr></tbody></table></div>
+        <div class="wm-profile-section-title"><h3>4. 발송기록</h3><span>기본 최근 한 달의 실제 발송 결과와 성적표 링크를 표시할 영역입니다.</span></div>
+        <div class="wm-table-wrap"><table class="wm-profile-table"><thead><tr><th>발송ID</th><th>학생ID</th><th>학생이름</th><th>학부모명</th><th>학부모연락처</th><th>리포트월</th><th>리포트주차</th><th>발송상태</th><th>발송일시</th><th>성적표보기</th><th>비고</th></tr></thead><tbody><tr><td colspan="11">학생을 검색하면 최근 한 달 발송기록이 표시될 영역입니다.</td></tr></tbody></table></div>
       </div>
 
       <div class="wm-factory-box">
-        <div class="wm-profile-section-title"><h3>5. 발송기록</h3><span>7.발송기록_DB 내용을 기본 최근 한 달 기준으로 그대로 표시합니다.</span></div>
-        <div class="wm-table-wrap"><table class="wm-profile-table"><thead><tr><th>Send_ID</th><th>Student_ID</th><th>Student_Name</th><th>Parent_Name</th><th>Parent_Phone</th><th>Report_Month</th><th>Report_Week</th><th>Sent_Status</th><th>Sent_Date</th><th>Sent_Time</th><th>Report_Link</th><th>Memo</th></tr></thead><tbody><tr><td>SEND001</td><td>S001</td><td>김학생</td><td>김학부모</td><td>010-0000-0001</td><td>2026-05</td><td>4</td><td>SUCCESS</td><td>2026-05-29</td><td>13:00</td><td><button class="wm-link-btn" onclick="alert('발송 성적표 상세보기 연결 예정입니다.')">상세보기</button></td><td></td></tr></tbody></table></div>
+        <div class="wm-profile-section-title"><h3>5. 반이동정보</h3><span>학생의 현재 반과 이전 반, 담당교사 및 이동일을 표시할 영역입니다.</span></div>
+        <div class="wm-table-wrap"><table class="wm-profile-table"><thead><tr><th>학생ID</th><th>학생이름</th><th>현재반</th><th>현재담당교사</th><th>이전반</th><th>이전담당교사</th><th>이동일</th><th>이동사유</th><th>이동처리자</th><th>비고</th></tr></thead><tbody><tr><td colspan="10">학생을 검색하면 반이동정보가 표시될 영역입니다.</td></tr></tbody></table></div>
       </div>
 
       <div class="wm-factory-box">
-        <div class="wm-profile-section-title"><h3>6. 반이동정보</h3><span>7-2.반관리_DB의 학생별 반 정보를 학생ID 기준으로 표시합니다.</span></div>
-        <div class="wm-table-wrap"><table class="wm-profile-table"><thead><tr><th>반ID</th><th>학생ID</th><th>학생이름</th><th>현재반</th><th>현재담당교사</th><th>현재담당리더</th><th>이전반</th><th>이전담당교사</th><th>이전담당리더</th><th>이전일</th><th>등록일</th><th>최근결제일</th><th>이동사유</th><th>이동처리자</th><th>메모</th></tr></thead><tbody><tr><td colspan="15">학생ID 검색 후 표시됩니다.</td></tr></tbody></table></div>
-      </div>
-
-      <div class="wm-factory-box">
-        <div class="wm-profile-section-title"><h3>7. 상담카페</h3><span>6.상담카페_DB의 실제 상담 데이터를 학생ID 기준으로 표시합니다.</span></div>
-        <div class="wm-table-wrap"><table class="wm-profile-table"><thead><tr><th>상담ID</th><th>학생ID</th><th>학생이름</th><th>상담일</th><th>상담자</th><th>상담대상</th><th>상담유형</th><th>상담방식</th><th>상담목적</th><th>학부모관심사항</th><th>학습특이사항</th><th>상담요약</th><th>특이사항</th><th>다음상담예정일</th><th>수정일</th></tr></thead><tbody><tr><td>CS001</td><td>S001</td><td>김학생</td><td>2026-05-30</td><td>홍길동</td><td>김학부모</td><td>정기상담</td><td>전화</td><td>학습상태공유</td><td>숙제완료율</td><td>단어암기 속도</td><td>최근 학습 흐름은 안정적입니다.</td><td></td><td>2026-06-15</td><td>2026-05-30</td></tr></tbody></table></div>
+        <div class="wm-profile-section-title"><h3>6. 상담카페</h3><span>기본 최근 한 달의 상담일, 상담유형, 상담요약과 다음 상담예정일을 표시할 영역입니다.</span></div>
+        <div class="wm-table-wrap"><table class="wm-profile-table"><thead><tr><th>상담ID</th><th>학생ID</th><th>학생이름</th><th>상담일</th><th>상담자</th><th>상담대상</th><th>상담유형</th><th>상담방식</th><th>상담목적</th><th>상담요약</th><th>특이사항</th><th>다음상담예정일</th><th>수정일</th></tr></thead><tbody><tr><td colspan="13">학생을 검색하면 최근 한 달 상담기록이 표시될 영역입니다.</td></tr></tbody></table></div>
       </div>
     </section>
 
@@ -3023,6 +3031,45 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       if(cards[3] && student){
         cards[3].querySelector('.wm-stat-num').textContent=cellValue(student, headerAliases('등록상태')) || cellValue(student, headerAliases('활성상태')) || '-';
       }
+    }
+
+    function ensureProfileDefaultDates(){
+      const scope=document.querySelector('[data-filter-scope="profile"]');
+      if(!scope) return;
+      const startEl=scope.querySelector('[data-filter="dateStart"]');
+      const endEl=scope.querySelector('[data-filter="dateEnd"]');
+      if(!startEl || !endEl || startEl.value || endEl.value) return;
+      const today=new Date();
+      today.setHours(0,0,0,0);
+      const monthAgo=new Date(today);
+      monthAgo.setMonth(monthAgo.getMonth()-1);
+      startEl.value=toDateInputValue(monthAgo);
+      endEl.value=toDateInputValue(today);
+    }
+
+    function runProfileUiSearch(){
+      const studentId=getFilterValue('profile','studentId');
+      const studentName=getFilterValue('profile','studentName');
+      if(!studentId && !studentName){
+        setProfileSearchStatus('학생ID 또는 학생이름을 입력해 주세요.', 'error');
+        return;
+      }
+      const dateStart=getFilterValue('profile','dateStart');
+      const dateEnd=getFilterValue('profile','dateEnd');
+      setProfileSearchStatus((studentName || studentId)+' / '+dateStart+' ~ '+dateEnd+' 검색 UI가 준비되었습니다. 실제 DB 조회는 다음 연결 단계에서 적용합니다.', 'success');
+    }
+
+    function resetProfileUi(){
+      const scope=document.querySelector('[data-filter-scope="profile"]');
+      if(scope) scope.querySelectorAll('input').forEach(input=>input.value='');
+      setProfileSearchStatus('', 'info');
+      ensureProfileDefaultDates();
+    }
+
+    if(document.readyState==='loading'){
+      document.addEventListener('DOMContentLoaded', ensureProfileDefaultDates, {once:true});
+    }else{
+      ensureProfileDefaultDates();
     }
 
     async function runProfileFilter(){
