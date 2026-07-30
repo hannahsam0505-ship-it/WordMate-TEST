@@ -1158,7 +1158,7 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
       </div>
 
       <div class="wm-factory-box">
-        <div class="wm-profile-section-title"><h3>2. 학습기록_DB</h3><span>2.학습기록_DB 최신 25개 컬럼 기준으로 정리했습니다. 실제 DB 연결은 다음 단계에서 진행합니다.</span></div>
+        <div class="wm-profile-section-title"><h3>2. 학습기록_DB</h3><span>2.학습기록_DB 실제 연결 · 학생ID 부분검색 후 해당 학생의 학습기록을 표시합니다.</span></div>
         <div class="wm-table-wrap"><table class="wm-profile-table"><thead><tr><th>일련번호</th><th>학습날짜</th><th>학생ID</th><th>학생이름</th><th>학교</th><th>학년</th><th>Class</th><th>교사명</th><th>Set_ID</th><th>점수</th><th>총소요시간</th><th>Step 1</th><th>Step 2</th><th>Step 3</th><th>Step 4</th><th>시험전학습</th><th>Test_총시간</th><th>영한객관식</th><th>한영객관식</th><th>영한주관식</th><th>한영주관식</th><th>완료상태</th><th>학습기록ID</th><th>기기정보</th><th>비고</th></tr></thead><tbody><tr id="profileRecordRow"><td colspan="25">학생ID 검색 후 표시됩니다.</td></tr></tbody></table></div>
       </div>
 
@@ -2747,7 +2747,9 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
     function matchesProfileStudent(row, studentId, studentName){
       const rowId=String(cellValue(row,['학생ID','Student_ID','studentId','student_id','학생 Id','학생id']) || '').trim();
       const rowName=String(cellValue(row,['학생이름','Student_Name','studentName','student_name','이름','학생명']) || '').trim();
-      const idOk = studentId ? rowId === studentId : true;
+      const idQuery=String(studentId || '').trim().toUpperCase();
+      const rowIdUpper=rowId.toUpperCase();
+      const idOk = idQuery ? rowIdUpper.includes(idQuery) : true;
       const nameOk = studentName ? rowName.includes(studentName) : true;
       return idOk && nameOk;
     }
@@ -3052,48 +3054,50 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
     }
 
     async function runProfileFilter(){
-      const studentId=String(getFilterValue('profile','studentId') || '').trim();
+      const studentIdQuery=String(getFilterValue('profile','studentId') || '').trim();
       const studentName=String(getFilterValue('profile','studentName') || '').trim();
 
-      if(!studentId && !studentName){
+      if(!studentIdQuery && !studentName){
         setProfileSearchStatus('학생ID 또는 학생이름을 입력해 주세요.', 'error');
         setProfileLoading(false);
         return;
       }
 
       setProfileLoading(true);
-      setProfileSearchStatus('1.학생관리_DB 조회 중입니다.', 'info');
+      setProfileSearchStatus('학생관리_DB에서 대상 학생을 찾는 중입니다.', 'info');
 
       try{
-        const params=new URLSearchParams();
-        params.set('mode','students');
-        params.set('ts',String(Date.now()));
-        if(studentId) params.set('studentId',studentId);
-        if(!studentId && studentName) params.set('studentName',studentName);
+        const studentParams=new URLSearchParams();
+        studentParams.set('mode','students');
+        studentParams.set('ts',String(Date.now()));
+        studentParams.set('matchMode','contains');
+        if(studentIdQuery) studentParams.set('studentId',studentIdQuery);
+        if(!studentIdQuery && studentName) studentParams.set('studentName',studentName);
 
         const actorQuery=String(wmLmsActorQuery() || '').replace(/^&/,'');
         if(actorQuery){
           const actorParams=new URLSearchParams(actorQuery);
-          actorParams.forEach((value,key)=>params.set(key,value));
+          actorParams.forEach((value,key)=>studentParams.set(key,value));
         }
 
-        const res=await fetch(WM_APPS_SCRIPT_URL+'?'+params.toString(),{
+        const studentRes=await fetch(WM_APPS_SCRIPT_URL+'?'+studentParams.toString(),{
           method:'GET',
           cache:'no-store'
         });
-        const data=await res.json();
+        const studentData=await studentRes.json();
 
-        if(!res.ok || !data || data.success===false){
-          throw new Error((data && (data.message || data.error)) || '학생관리_DB 조회 실패');
+        if(!studentRes.ok || !studentData || studentData.success===false){
+          throw new Error((studentData && (studentData.message || studentData.error)) || '학생관리_DB 조회 실패');
         }
 
-        let studentRows=normalizeRows(data.students || data.rows || data.data || []);
-        studentRows=filterProfileRows(studentRows,studentId,studentId ? '' : studentName);
+        let studentRows=normalizeRows(studentData.students || studentData.rows || studentData.data || []);
+        studentRows=filterProfileRows(studentRows,studentIdQuery,studentIdQuery ? '' : studentName);
 
-        if(!studentId && studentName && studentRows.length>1){
+        if(studentRows.length>1){
           setTableRowsByBoxTitle('1.',[]);
+          setTableRowsByBoxTitle('2.',[]);
           setProfileSearchStatus(
-            '동명이인 '+studentRows.length+'명이 조회되었습니다. 학생ID를 입력해 주세요.',
+            '검색어와 일치하는 학생이 '+studentRows.length+'명입니다. 학생ID를 더 입력해 주세요.',
             'error'
           );
           setProfileLoading(false);
@@ -3102,10 +3106,8 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
 
         if(!studentRows.length){
           setTableRowsByBoxTitle('1.',[]);
-          setProfileSearchStatus(
-            '1.학생관리_DB에서 일치하는 학생을 찾지 못했습니다.',
-            'error'
-          );
+          setTableRowsByBoxTitle('2.',[]);
+          setProfileSearchStatus('일치하는 학생을 찾지 못했습니다.', 'error');
           setProfileLoading(false);
           return;
         }
@@ -3114,26 +3116,54 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
           cellValue(studentRows[0],headerAliases('학생ID')) || ''
         ).trim();
 
-        if(!studentId && resolvedStudentId){
-          const idInput=document.querySelector(
-            '[data-filter-scope="profile"] [data-filter="studentId"]'
-          );
-          if(idInput) idInput.value=resolvedStudentId;
-        }
+        const idInput=document.querySelector(
+          '[data-filter-scope="profile"] [data-filter="studentId"]'
+        );
+        if(idInput && resolvedStudentId) idInput.value=resolvedStudentId;
 
         setTableRowsByBoxTitle('1.',studentRows);
-        updateProfileSummaryCards(studentRows,[]);
+        setProfileSearchStatus('2.학습기록_DB 조회 중입니다.', 'info');
+
+        const recordParams=new URLSearchParams();
+        recordParams.set('mode','records');
+        recordParams.set('ts',String(Date.now()));
+        recordParams.set('studentId',resolvedStudentId);
+        recordParams.set('matchMode','exact');
+        if(actorQuery){
+          const actorParams=new URLSearchParams(actorQuery);
+          actorParams.forEach((value,key)=>recordParams.set(key,value));
+        }
+
+        const recordRes=await fetch(WM_APPS_SCRIPT_URL+'?'+recordParams.toString(),{
+          method:'GET',
+          cache:'no-store'
+        });
+        const recordData=await recordRes.json();
+
+        if(!recordRes.ok || !recordData || recordData.success===false){
+          throw new Error((recordData && (recordData.message || recordData.error)) || '학습기록_DB 조회 실패');
+        }
+
+        let recordRows=normalizeRows(
+          recordData.records || recordData.learningRecords || recordData.rows || recordData.data || []
+        );
+        recordRows=filterProfileRows(recordRows,resolvedStudentId,'');
+        recordRows=sortRowsByDateDesc(recordRows,'학습날짜');
+
+        setTableRowsByBoxTitle('2.',recordRows);
+        updateProfileSummaryCards(studentRows,recordRows);
 
         setProfileSearchStatus(
-          '학생관리_DB 조회 완료: '+resolvedStudentId+' / '+studentRows.length+'건',
+          '조회 완료: '+resolvedStudentId+' / 학생관리 '+studentRows.length+'건 · 학습기록 '+recordRows.length+'건',
           'success'
         );
         setProfileLoading(false);
       }catch(err){
-        console.error('프로필센터 학생관리_DB 조회 오류',err);
+        console.error('프로필센터 학생관리·학습기록_DB 조회 오류',err);
         setTableRowsByBoxTitle('1.',[]);
+        setTableRowsByBoxTitle('2.',[]);
         setProfileSearchStatus(
-          '학생관리_DB 조회 오류: '+(err && err.message ? err.message : err),
+          '조회 오류: '+(err && err.message ? err.message : err),
           'error'
         );
         setProfileLoading(false);
