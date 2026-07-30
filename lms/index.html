@@ -534,9 +534,15 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
     .wm-profile-record-page-btn{border:1px solid var(--wm-line);background:#fff;color:var(--wm-dark);border-radius:10px;padding:8px 12px;font-size:13px;font-weight:900;cursor:pointer;}
     .wm-profile-record-page-btn:disabled{opacity:.4;cursor:not-allowed;}
     .wm-profile-record-page-info{min-width:110px;text-align:center;font-size:13px;font-weight:900;color:#374151;}
-    #profileRecordRowHost tr:nth-child(odd){background:#fff;}
-    #profileRecordRowHost tr:nth-child(even){background:#eef4ff;}
-    #profileRecordRowHost td{background:inherit;}
+    #profileRecordRowHost tr:nth-child(odd),
+    #profileReportRowHost tr:nth-child(odd),
+    #profileGradeRowHost tr:nth-child(odd){background:#fff;}
+    #profileRecordRowHost tr:nth-child(even),
+    #profileReportRowHost tr:nth-child(even),
+    #profileGradeRowHost tr:nth-child(even){background:#eef4ff;}
+    #profileRecordRowHost td,
+    #profileReportRowHost td,
+    #profileGradeRowHost td{background:inherit;}
 
     /* WM_CURRENT_PROGRESS_FILTER_BLUE_DESIGN_V1 */
     #panel-currentProgress > .wm-filter-box { border:1px solid #9fbce8; background:linear-gradient(180deg,#f4f8ff 0%,#eaf2ff 100%); box-shadow:0 8px 22px rgba(7,59,143,.08); }
@@ -1191,6 +1197,11 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
       <div class="wm-factory-box">
         <div class="wm-profile-section-title"><h3>3. 최근 성적표</h3><span>LMS 성적표생성 하단 기록과 동일한 14개 컬럼을 선택 학생 기준으로 표시합니다.</span></div>
         <div class="wm-table-wrap"><table class="wm-profile-table"><thead><tr><th>일련번호</th><th>리포트주차</th><th>학생ID</th><th>학교</th><th>학년</th><th>학생이름</th><th>학습레벨</th><th>Set_ID</th><th>단어수</th><th>학습날짜</th><th>점수</th><th>총소요시간</th><th>성적표보기</th><th>비고</th></tr></thead><tbody id="profileReportRowHost"><tr id="profileReportRow"><td colspan="14">학생을 선택하면 표시됩니다.</td></tr></tbody></table></div>
+        <div id="profileReportPager" class="wm-profile-record-pager" style="display:none;">
+          <button id="profileReportPrevBtn" class="wm-profile-record-page-btn" type="button">이전</button>
+          <span id="profileReportPageInfo" class="wm-profile-record-page-info">1 / 1</span>
+          <button id="profileReportNextBtn" class="wm-profile-record-page-btn" type="button">다음</button>
+        </div>
       </div>
 
       <div id="wmProfileReportDetail" class="wm-factory-box" style="display:none;"></div>
@@ -1875,8 +1886,13 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
 </template>
 
       <div class="wm-factory-box">
-        <div class="wm-profile-section-title"><h3>4. 성적등급</h3><span>6.성적등급_DB 최신 32개 컬럼 순서로 정리했습니다. 실제 DB 연결은 다음 단계에서 진행합니다.</span></div>
-        <div class="wm-table-wrap"><table class="wm-profile-table"><thead><tr><th>일련번호</th><th>학생ID</th><th>학생이름</th><th>반명</th><th>교사명</th><th>연도</th><th>월</th><th>주차</th><th>리포트유형</th><th>출석약속</th><th>세트약속</th><th class="wm-grade-yellow-col">출석점수</th><th class="wm-grade-yellow-col">참여집중도</th><th class="wm-grade-yellow-col">점수추이</th><th class="wm-grade-green-col">최종점수</th><th class="wm-grade-green-col">Grade</th><th class="wm-grade-green-col">Class</th><th>자동코멘트</th><th>실제출석일수</th><th>완료세트수</th><th>학습단어수</th><th>총학습시간</th><th>평균원점수</th><th>출석률</th><th>세트진행률</th><th>1세트평균시간</th><th>원점수환산점수</th><th>표준점수</th><th>성적표반영상태</th><th>생성일시</th><th>등록일</th><th>수정일</th></tr></thead><tbody><tr id="profileGradeRow"><td colspan="32">학생ID 검색 후 표시됩니다.</td></tr></tbody></table></div>
+        <div class="wm-profile-section-title"><h3>4. 성적등급</h3><span>6.성적등급_DB 실제 연결 · 선택 학생의 기록을 15행씩 표시합니다.</span></div>
+        <div class="wm-table-wrap"><table class="wm-profile-table"><thead><tr><th>일련번호</th><th>학생ID</th><th>학생이름</th><th>반명</th><th>교사명</th><th>연도</th><th>월</th><th>주차</th><th>리포트유형</th><th>출석약속</th><th>세트약속</th><th class="wm-grade-yellow-col">출석점수</th><th class="wm-grade-yellow-col">참여집중도</th><th class="wm-grade-yellow-col">점수추이</th><th class="wm-grade-green-col">최종점수</th><th class="wm-grade-green-col">Grade</th><th class="wm-grade-green-col">Class</th><th>자동코멘트</th><th>실제출석일수</th><th>완료세트수</th><th>학습단어수</th><th>총학습시간</th><th>평균원점수</th><th>출석률</th><th>세트진행률</th><th>1세트평균시간</th><th>원점수환산점수</th><th>표준점수</th><th>성적표반영상태</th><th>생성일시</th><th>등록일</th><th>수정일</th></tr></thead><tbody id="profileGradeRowHost"><tr id="profileGradeRow"><td colspan="32">학생을 선택하면 표시됩니다.</td></tr></tbody></table></div>
+        <div id="profileGradePager" class="wm-profile-record-pager" style="display:none;">
+          <button id="profileGradePrevBtn" class="wm-profile-record-page-btn" type="button">이전</button>
+          <span id="profileGradePageInfo" class="wm-profile-record-page-info">1 / 1</span>
+          <button id="profileGradeNextBtn" class="wm-profile-record-page-btn" type="button">다음</button>
+        </div>
       </div>
 
       <div class="wm-factory-box">
@@ -3081,8 +3097,14 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
 
 
     const WM_PROFILE_RECORD_PAGE_SIZE=15;
+    const WM_PROFILE_REPORT_PAGE_SIZE=15;
+    const WM_PROFILE_GRADE_PAGE_SIZE=15;
     let wmProfileRecordRows=[];
     let wmProfileRecordPage=1;
+    let wmProfileReportRows=[];
+    let wmProfileReportPage=1;
+    let wmProfileGradeRows=[];
+    let wmProfileGradePage=1;
 
     function wmProfileEscapeHtml(value){
       return String(value == null ? '' : value)
@@ -3140,9 +3162,10 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       const headers=table ? Array.from(table.querySelectorAll('thead th')).map(th=>th.textContent.trim()) : [];
 
       host.innerHTML=pageRows.length
-        ? pageRows.map(row=>'<tr>'+headers.map(header=>
-            '<td>'+wmProfileEscapeHtml(cellValue(row,headerAliases(header)))+'</td>'
-          ).join('')+'</tr>').join('')
+        ? pageRows.map((row,pageIndex)=>'<tr>'+headers.map(header=>{
+            if(header==='일련번호') return '<td>'+(start+pageIndex+1)+'</td>';
+            return '<td>'+wmProfileEscapeHtml(cellValue(row,headerAliases(header)))+'</td>';
+          }).join('')+'</tr>').join('')
         : '<tr><td colspan="25">해당 기간의 학습기록이 없습니다.</td></tr>';
 
       if(pager) pager.style.display=total>WM_PROFILE_RECORD_PAGE_SIZE ? 'flex' : 'none';
@@ -3170,44 +3193,143 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
     }
 
 
-    function wmProfileRenderReportRows(selectedId){
+    function wmProfileRenderReportPage(){
       const host=document.getElementById('profileReportRowHost');
-      if(!host) return [];
+      const pager=document.getElementById('profileReportPager');
+      const prev=document.getElementById('profileReportPrevBtn');
+      const next=document.getElementById('profileReportNextBtn');
+      const info=document.getElementById('profileReportPageInfo');
+      if(!host) return;
 
-      const wanted=String(selectedId || '').trim().toUpperCase();
-      const sourceRows=(WM_REPORT_MANAGE_ROWS || []).filter(isValidReportDbRow);
-      const rows=sourceRows.filter(row=>
-        String(cellValue(row,headerAliases('학생ID')) || '').trim().toUpperCase()===wanted
-      );
+      const total=wmProfileReportRows.length;
+      const totalPages=Math.max(1,Math.ceil(total/WM_PROFILE_REPORT_PAGE_SIZE));
+      wmProfileReportPage=Math.min(Math.max(1,wmProfileReportPage),totalPages);
+      const start=(wmProfileReportPage-1)*WM_PROFILE_REPORT_PAGE_SIZE;
+      const pageRows=wmProfileReportRows.slice(start,start+WM_PROFILE_REPORT_PAGE_SIZE);
 
-      if(!rows.length){
+      if(!pageRows.length){
         host.innerHTML='<tr><td colspan="14">성적표생성 하단에 해당 학생 기록이 없습니다.</td></tr>';
-        return [];
+      }else{
+        host.innerHTML=pageRows.map((row,pageIndex)=>{
+          const reportId=String(getReportIdForDisplay(row,start+pageIndex,wmProfileReportRows) || row['리포트ID'] || '').trim();
+          return '<tr data-report-id="'+wmProfileEscapeHtml(reportId)+'">'+
+            WM_REPORT_HEADERS.map(header=>{
+              if(header==='일련번호') return '<td>'+(start+pageIndex+1)+'</td>';
+              if(header==='리포트주차'){
+                return '<td><button type="button" class="wm-action-btn sub" disabled aria-disabled="true">리포트주차</button></td>';
+              }
+              if(header==='성적표보기'){
+                return '<td><button type="button" class="wm-action-btn" onclick="openReportDetail(\''+
+                  wmProfileEscapeHtml(reportId)+'\')">성적표보기</button></td>';
+              }
+              return '<td>'+wmProfileEscapeHtml(displayCellValue(row[header],header))+'</td>';
+            }).join('')+
+          '</tr>';
+        }).join('');
       }
 
-      host.innerHTML=rows.map((row,index)=>{
-        const reportId=String(
-          getReportIdForDisplay(row,index,rows) || row['리포트ID'] || ''
-        ).trim();
+      if(pager) pager.style.display=total>WM_PROFILE_REPORT_PAGE_SIZE ? 'flex' : 'none';
+      if(prev) prev.disabled=wmProfileReportPage<=1;
+      if(next) next.disabled=wmProfileReportPage>=totalPages;
+      if(info) info.textContent=wmProfileReportPage+' / '+totalPages;
+    }
 
-        return '<tr data-report-id="'+wmProfileEscapeHtml(reportId)+'">'+
-          WM_REPORT_HEADERS.map(header=>{
-            if(header==='일련번호'){
-              return '<td>'+(index+1)+'</td>';
-            }
-            if(header==='리포트주차'){
-              return '<td><button type="button" class="wm-action-btn sub" disabled aria-disabled="true">리포트주차</button></td>';
-            }
-            if(header==='성적표보기'){
-              return '<td><button type="button" class="wm-action-btn" onclick="openReportDetail(\''+
-                wmProfileEscapeHtml(reportId)+'\')">성적표보기</button></td>';
-            }
-            return '<td>'+wmProfileEscapeHtml(displayCellValue(row[header],header))+'</td>';
-          }).join('')+
-        '</tr>';
-      }).join('');
+    function wmProfileBindReportPager(){
+      const prev=document.getElementById('profileReportPrevBtn');
+      const next=document.getElementById('profileReportNextBtn');
+      if(prev && !prev.dataset.bound){
+        prev.dataset.bound='1';
+        prev.addEventListener('click',()=>{
+          if(wmProfileReportPage>1){wmProfileReportPage--;wmProfileRenderReportPage();}
+        });
+      }
+      if(next && !next.dataset.bound){
+        next.dataset.bound='1';
+        next.addEventListener('click',()=>{
+          const totalPages=Math.max(1,Math.ceil(wmProfileReportRows.length/WM_PROFILE_REPORT_PAGE_SIZE));
+          if(wmProfileReportPage<totalPages){wmProfileReportPage++;wmProfileRenderReportPage();}
+        });
+      }
+    }
 
-      return rows;
+    function wmProfilePrepareReportRows(selectedId){
+      const wanted=String(selectedId || '').trim().toUpperCase();
+      wmProfileReportRows=(WM_REPORT_MANAGE_ROWS || []).filter(isValidReportDbRow).filter(row=>
+        String(cellValue(row,headerAliases('학생ID')) || '').trim().toUpperCase()===wanted
+      );
+      wmProfileReportPage=1;
+      wmProfileRenderReportPage();
+      wmProfileBindReportPager();
+      return wmProfileReportRows;
+    }
+
+    function wmProfileRenderGradePage(){
+      const host=document.getElementById('profileGradeRowHost');
+      const pager=document.getElementById('profileGradePager');
+      const prev=document.getElementById('profileGradePrevBtn');
+      const next=document.getElementById('profileGradeNextBtn');
+      const info=document.getElementById('profileGradePageInfo');
+      if(!host) return;
+
+      const total=wmProfileGradeRows.length;
+      const totalPages=Math.max(1,Math.ceil(total/WM_PROFILE_GRADE_PAGE_SIZE));
+      wmProfileGradePage=Math.min(Math.max(1,wmProfileGradePage),totalPages);
+      const start=(wmProfileGradePage-1)*WM_PROFILE_GRADE_PAGE_SIZE;
+      const pageRows=wmProfileGradeRows.slice(start,start+WM_PROFILE_GRADE_PAGE_SIZE);
+
+      if(!pageRows.length){
+        host.innerHTML='<tr><td colspan="32">6.성적등급_DB에 해당 학생 기록이 없습니다.</td></tr>';
+      }else{
+        host.innerHTML=pageRows.map((row,pageIndex)=>{
+          return '<tr>'+WM_GRADE_LEVEL_HEADERS.map(header=>{
+            let value=wmGradeLevelValue(row,header);
+            if(header==='일련번호') value=start+pageIndex+1;
+            if(header==='자동코멘트'){
+              const comment=String(value || '');
+              return '<td><button type="button" class="wm-grade-comment-btn" data-comment="'+
+                wmProfileEscapeHtml(comment)+'" onclick="wmOpenGradeComment(this)">코멘트보기</button></td>';
+            }
+            return '<td>'+wmProfileEscapeHtml(value)+'</td>';
+          }).join('')+'</tr>';
+        }).join('');
+      }
+
+      if(pager) pager.style.display=total>WM_PROFILE_GRADE_PAGE_SIZE ? 'flex' : 'none';
+      if(prev) prev.disabled=wmProfileGradePage<=1;
+      if(next) next.disabled=wmProfileGradePage>=totalPages;
+      if(info) info.textContent=wmProfileGradePage+' / '+totalPages;
+    }
+
+    function wmProfileBindGradePager(){
+      const prev=document.getElementById('profileGradePrevBtn');
+      const next=document.getElementById('profileGradeNextBtn');
+      if(prev && !prev.dataset.bound){
+        prev.dataset.bound='1';
+        prev.addEventListener('click',()=>{
+          if(wmProfileGradePage>1){wmProfileGradePage--;wmProfileRenderGradePage();}
+        });
+      }
+      if(next && !next.dataset.bound){
+        next.dataset.bound='1';
+        next.addEventListener('click',()=>{
+          const totalPages=Math.max(1,Math.ceil(wmProfileGradeRows.length/WM_PROFILE_GRADE_PAGE_SIZE));
+          if(wmProfileGradePage<totalPages){wmProfileGradePage++;wmProfileRenderGradePage();}
+        });
+      }
+    }
+
+    async function wmProfilePrepareGradeRows(selectedId){
+      if(!Array.isArray(WM_GRADE_LEVEL_ROWS) || !WM_GRADE_LEVEL_ROWS.length){
+        await loadGradeLevelRows();
+      }
+      const wanted=String(selectedId || '').trim().toUpperCase();
+      wmProfileGradeRows=(WM_GRADE_LEVEL_ROWS || []).filter(row=>
+        String(wmGradeLevelValue(row,'학생ID') || '').trim().toUpperCase()===wanted
+      );
+      wmProfileGradePage=1;
+      wmProfileRenderGradePage();
+      wmProfileBindGradePager();
+      return wmProfileGradeRows;
     }
 
     async function wmProfileLoadSelectedStudent(studentId,studentRow){
@@ -3259,11 +3381,12 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
           await loadReports();
         }
 
-        const reportRows=wmProfileRenderReportRows(selectedId);
+        const reportRows=wmProfilePrepareReportRows(selectedId);
+        const gradeRows=await wmProfilePrepareGradeRows(selectedId);
 
         setProfileSearchStatus(
           '선택 완료: '+selectedId+' · 학습기록 '+wmProfileRecordRows.length+
-          '건 · 최근 성적표 '+reportRows.length+'건',
+          '건 · 최근 성적표 '+reportRows.length+'건 · 성적등급 '+gradeRows.length+'건',
           'success'
         );
       }catch(err){
@@ -3271,8 +3394,12 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
         wmProfileRecordRows=[];
         wmProfileRecordPage=1;
         wmProfileRenderRecordPage();
-        const reportHost=document.getElementById('profileReportRowHost');
-        if(reportHost) reportHost.innerHTML='<tr><td colspan="14">최근 성적표 조회 실패</td></tr>';
+        wmProfileReportRows=[];
+        wmProfileReportPage=1;
+        wmProfileRenderReportPage();
+        wmProfileGradeRows=[];
+        wmProfileGradePage=1;
+        wmProfileRenderGradePage();
         setProfileSearchStatus('조회 오류: '+(err && err.message ? err.message : err),'error');
       }finally{
         setProfileLoading(false);
@@ -3319,8 +3446,12 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       wmProfileRecordPage=1;
       wmProfileRenderRecordPage();
       setTableRowsByBoxTitle('1.',[]);
-      const reportHost=document.getElementById('profileReportRowHost');
-      if(reportHost) reportHost.innerHTML='<tr><td colspan="14">학생을 선택하면 표시됩니다.</td></tr>';
+      wmProfileReportRows=[];
+      wmProfileReportPage=1;
+      wmProfileRenderReportPage();
+      wmProfileGradeRows=[];
+      wmProfileGradePage=1;
+      wmProfileRenderGradePage();
       setProfileLoading(true);
       setProfileSearchStatus('학생 후보를 검색 중입니다.', 'info');
 
