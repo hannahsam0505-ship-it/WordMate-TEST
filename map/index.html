@@ -711,6 +711,8 @@ const WM_LMS_URL = WM_CONFIG.LMS_URL;
 
     <div class="detail-box">
 
+      <div class="wm-homework-control-box">
+
       <div class="detail-header">
         <h2>숙제검사 / 학습기록 자세히 보기</h2>
         <button onclick="printRecords()">인쇄하기</button>
@@ -781,6 +783,8 @@ const WM_LMS_URL = WM_CONFIG.LMS_URL;
 
       <div id="learningDetailBox" class="learning-detail-box">
         학습 블럭을 클릭하면 상세기록이 표시됩니다.
+      </div>
+
       </div>
 
       <div class="homework-scroll-top-fixed" id="homeworkScrollTopFixed">
@@ -975,6 +979,31 @@ body.wm-map-loading-active #wm-learning-record-widget{
 
 #wm-learning-record-widget .detail-box{
   background:#fff;
+}
+
+.wm-homework-control-box{
+  margin-bottom:12px;
+  padding:14px;
+  border:1.5px solid #82aef3;
+  border-radius:16px;
+  background:linear-gradient(180deg,#ffffff 0%,#f5f9ff 100%);
+  box-shadow:0 8px 22px rgba(13,85,200,.08);
+}
+
+.wm-homework-control-box .detail-header{
+  margin-bottom:12px;
+}
+
+.wm-homework-control-box .filter-box{
+  margin-bottom:12px;
+}
+
+.wm-homework-control-box .record-summary{
+  margin-bottom:12px;
+}
+
+.wm-homework-control-box .learning-detail-box{
+  margin-bottom:0;
 }
 
 .detail-box{
