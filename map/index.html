@@ -1625,13 +1625,18 @@ body.wm-homework-fixed-scroll-ready{
   overflow:auto;
 }
 
+body.wm-test-booth-active .wm-report-overlay{
+  top:var(--wm-test-booth-height);
+  height:calc(100vh - var(--wm-test-booth-height));
+}
+
 .wm-report-overlay.active{
   display:flex;
 }
 
 .wm-report-overlay-card{
   width:min(1120px,96vw);
-  min-height:72vh;
+  min-height:calc(100vh - 44px);
   background:#fff;
   border-radius:18px;
   box-shadow:0 28px 80px rgba(0,0,0,.35);
@@ -1697,7 +1702,7 @@ body.wm-homework-fixed-scroll-ready{
 }
 
 .wm-report-overlay-body{
-  min-height:calc(72vh - 109px);
+  min-height:calc(100vh - 153px);
   padding:18px;
   background:#eaf0f8;
   display:flex;
@@ -1714,8 +1719,9 @@ body.wm-homework-fixed-scroll-ready{
 .wm-report-overlay-loading,
 .wm-report-overlay-error,
 .wm-report-overlay-empty{
-  width:min(760px,100%);
-  min-height:360px;
+  width:min(210mm,100%);
+  aspect-ratio:210 / 297;
+  min-height:0;
   display:flex;
   align-items:center;
   justify-content:center;
@@ -1757,11 +1763,11 @@ body.wm-report-overlay-open{
 
   .wm-report-overlay-card{
     width:100%;
-    min-height:88vh;
+    min-height:calc(100vh - 16px);
   }
 
   .wm-report-overlay-body{
-    min-height:calc(88vh - 58px);
+    min-height:calc(100vh - 125px);
     padding:8px;
   }
 }
@@ -5727,53 +5733,136 @@ function wmReportCurrentStudentId_(){
     (window.wmCurrentStudent && window.wmCurrentStudent.학생ID) ||
     (window.wmStudentProfile && window.wmStudentProfile.학생ID) ||
     (document.getElementById('studentId') && document.getElementById('studentId').textContent) ||
+    wmGetUrlParam('studentId') ||
     ''
   ).trim().toUpperCase().replace(/^[-]+$/,'');
 }
 
+function wmReportCurrentStudentName_(){
+  return String(
+    (window.wmCurrentStudent && window.wmCurrentStudent.학생이름) ||
+    (window.wmStudentProfile && window.wmStudentProfile.학생이름) ||
+    (document.getElementById('studentName') && document.getElementById('studentName').textContent) ||
+    wmGetUrlParam('studentName') ||
+    ''
+  ).trim().replace(/^[-]+$/,'');
+}
+
 function wmReportRowsFromPayload_(data){
+  if(!data) return [];
   if(Array.isArray(data)) return data;
   const candidates = [
-    data && data.rows, data && data.records, data && data.data,
-    data && data.learningRecords, data && data.result
+    data['2.학습기록_DB'],
+    data['학습기록_DB'],
+    data.records,
+    data.recordRows,
+    data.learningRecords,
+    data.studyRecords,
+    data.rows,
+    data.data,
+    data.result && data.result['2.학습기록_DB'],
+    data.result && data.result['학습기록_DB'],
+    data.result && data.result.records,
+    data.result && data.result.recordRows,
+    data.result && data.result.learningRecords,
+    data.result && data.result.rows,
+    data.result && data.result.data,
+    data.result
   ];
   for(const candidate of candidates){
-    if(Array.isArray(candidate)) return candidate;
-    if(candidate && Array.isArray(candidate.rows)) return candidate.rows;
+    if(Array.isArray(candidate) && candidate.length) return candidate;
+    if(candidate && Array.isArray(candidate.rows) && candidate.rows.length) return candidate.rows;
   }
   return [];
 }
 
-async function wmFetchLatestStudentReportRow_(studentId){
-  const urls = [
-    WM_APPS_SCRIPT_URL + '?mode=records&studentId=' + encodeURIComponent(studentId) + '&ts=' + Date.now(),
-    WM_APPS_SCRIPT_URL + '?action=learningRecords&studentId=' + encodeURIComponent(studentId) + '&ts=' + Date.now()
-  ];
+async function wmFetchLatestStudentReportRow_(studentId, studentName){
+  const targetId = String(studentId || '').trim().toUpperCase();
+  const targetName = String(studentName || '').trim();
+  const ts = Date.now();
+  const urls = [];
+
+  function pushUrl(url){
+    if(url && !urls.includes(url)) urls.push(url);
+  }
+
+  /* LMS 실제 성적표 조회 순서와 동일:
+     1. 학생ID+학생이름 직접조회
+     2. 학생이름 직접조회
+     3. 전체 학습기록_DB fallback
+     4. action=learningRecords fallback */
+  if(targetId){
+    pushUrl(WM_APPS_SCRIPT_URL + '?studentId=' + encodeURIComponent(targetId) +
+      '&studentName=' + encodeURIComponent(targetName) + '&ts=' + ts);
+  }
+  if(targetName){
+    pushUrl(WM_APPS_SCRIPT_URL + '?studentName=' + encodeURIComponent(targetName) + '&ts=' + ts);
+  }
+  pushUrl(WM_APPS_SCRIPT_URL + '?mode=records&ts=' + ts);
+  pushUrl(WM_APPS_SCRIPT_URL + '?action=learningRecords&ts=' + ts);
+
   let lastError = null;
+  let collected = [];
 
   for(const url of urls){
     try{
       const response = await fetch(url, {method:'GET', cache:'no-store'});
-      const text = await response.text();
+      const raw = await response.text();
       if(!response.ok) throw new Error('HTTP ' + response.status);
-      const data = JSON.parse(text);
+
+      let data;
+      try{
+        data = JSON.parse(raw);
+      }catch(parseError){
+        throw new Error('학습기록_DB JSON 파싱 실패');
+      }
+
       const rows = wmReportRowsFromPayload_(data);
       const matched = rows.filter(function(row){
-        const rowId = String(wmReportFirst_(row,['학생ID','studentId','Student_ID','ID']) || '').trim().toUpperCase();
-        const completed = String(wmReportFirst_(row,['완료','완료여부','상태','Status','Completed']) || '').trim().toLowerCase();
-        const isCompleted = !completed || /완료|true|yes|1|completed/.test(completed);
-        return rowId === studentId && isCompleted;
-      }).sort(function(a,b){
-        const da = wmReportDate_(wmReportFirst_(a,['학습날짜','완료일시','수정일','등록일','Date']));
-        const db = wmReportDate_(wmReportFirst_(b,['학습날짜','완료일시','수정일','등록일','Date']));
-        return (db ? db.getTime() : 0) - (da ? da.getTime() : 0);
+        const rowId = String(wmReportFirst_(row,['학생ID','studentId','studentID','Student_ID','ID']) || '').trim().toUpperCase();
+        const rowName = String(wmReportFirst_(row,['학생이름','studentName','이름','Name']) || '').trim();
+        const idMatch = targetId && rowId === targetId;
+        const nameMatch = targetName && rowName === targetName;
+        return idMatch || nameMatch;
       });
-      if(matched.length) return matched[0];
+
+      if(matched.length){
+        collected = collected.concat(matched);
+        /* 직접조회에서 찾으면 전체조회까지 진행하지 않음 */
+        if(url.includes('studentId=') || url.includes('studentName=')) break;
+      }
     }catch(err){
       lastError = err;
+      console.warn('성적표 학습기록 조회 실패:', url, err);
     }
   }
-  if(lastError) console.warn('최신 성적표 기준행 조회:', lastError);
+
+  const unique = [];
+  const keys = new Set();
+  collected.forEach(function(row){
+    const key = String(wmReportFirst_(row,['학습기록ID','recordId','Record_ID']) || '') + '|' +
+      String(wmReportFirst_(row,['Set_ID','setId','세트ID']) || '') + '|' +
+      String(wmReportFirst_(row,['학습날짜','완료일시','수정일','등록일','Date']) || '');
+    if(!keys.has(key)){
+      keys.add(key);
+      unique.push(row);
+    }
+  });
+
+  const completed = unique.filter(function(row){
+    const completedValue = String(wmReportFirst_(row,['완료','완료여부','상태','Status','Completed']) || '').trim().toLowerCase();
+    const hasCoreData = !!String(wmReportFirst_(row,['학습기록ID','Set_ID','점수','총소요시간','학습날짜']) || '').trim();
+    return hasCoreData && (!completedValue || /완료|true|yes|1|completed/.test(completedValue));
+  });
+
+  completed.sort(function(a,b){
+    const da = wmReportDate_(wmReportFirst_(a,['학습날짜','완료일시','수정일','등록일','Date']));
+    const db = wmReportDate_(wmReportFirst_(b,['학습날짜','완료일시','수정일','등록일','Date']));
+    return (db ? db.getTime() : 0) - (da ? da.getTime() : 0);
+  });
+
+  if(completed.length) return completed[0];
+  if(lastError) console.warn('최신 성적표 기준행 최종 조회:', lastError);
   return null;
 }
 
@@ -5868,14 +5957,16 @@ async function wmLoadLatestReport_(){
   const select = document.getElementById('wmReportPeriodSelect');
   const title = document.getElementById('wmReportOverlayTitle');
   const studentId = wmReportCurrentStudentId_();
+  const studentName = wmReportCurrentStudentName_();
 
   try{
-    if(!studentId) throw new Error('현재 학생ID를 확인할 수 없습니다.');
-    if(body) body.innerHTML = '<div class="wm-report-overlay-loading">'+wmReportEscape_(studentId)+' 학생의 최신 성적표를 불러오는 중입니다.</div>';
-    if(title) title.textContent = '성적표 자세히 보기 · ' + studentId;
+    if(!studentId && !studentName) throw new Error('현재 학생ID와 학생이름을 확인할 수 없습니다.');
+    const studentLabel = [studentName, studentId].filter(Boolean).join(' · ');
+    if(body) body.innerHTML = '<div class="wm-report-overlay-loading">'+wmReportEscape_(studentLabel)+' 학생의 최신 성적표를 불러오는 중입니다.</div>';
+    if(title) title.textContent = '성적표 자세히 보기 · ' + studentLabel;
 
-    const row = await wmFetchLatestStudentReportRow_(studentId);
-    if(!row) throw new Error('현재 학생의 완료 학습기록을 찾지 못했습니다.');
+    const row = await wmFetchLatestStudentReportRow_(studentId, studentName);
+    if(!row) throw new Error('학생ID·학생이름 직접조회와 전체 학습기록_DB fallback 모두 0건입니다.');
 
     WM_MAP_REPORT_LATEST_ROW = row;
     const gradeData = await wmFetchReportGradeComment_(row);
