@@ -4871,9 +4871,9 @@ wmForceHomeworkBottomFixedBarOnFirstView();
 </script>
 
 
-<!-- WM_MAP_ACTUAL_REPORT_DROPDOWN_V2 -->
+<!-- WM_MAP_ACTUAL_REPORT_DROPDOWN_V3 -->
 <script>
-(function wmMapActualReportDropdownV2_(){
+(function wmMapActualReportDropdownV3_(){
   'use strict';
   let reportRows=[];
 
@@ -4933,6 +4933,7 @@ wmForceHomeworkBottomFixedBarOnFirstView();
       reportType:String(row.reportType||'주간'),
       learningDate:String(row.learningDate||''),
       reportId:String(row.reportId||''),
+      reportKey:String(row.key||''),
       available:row.available===false?'0':'1',
       emptyMessage:String(row.emptyMessage||''),
       t:String(Date.now())
@@ -4950,4 +4951,4 @@ wmForceHomeworkBottomFixedBarOnFirstView();
   window.addEventListener('load',function(){setTimeout(load_,900);},{once:true});
 })();
 </script>
-<!-- WM_MAP_ACTUAL_REPORT_DROPDOWN_V2 END -->
+<!-- WM_MAP_ACTUAL_REPORT_DROPDOWN_V3 END -->
