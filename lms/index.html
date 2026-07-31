@@ -2,6 +2,20 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
+  <!-- WM_STUDENT_REPORT_EARLY_ENTRY_GUARD_V1 -->
+  <script>
+  (function(){
+    'use strict';
+    var isReport = new URLSearchParams(window.location.search || '').get('wmStudentReport') === '1';
+    window.WM_STUDENT_REPORT_ENTRY = isReport;
+    if(isReport) document.documentElement.classList.add('wm-student-report-entry');
+  })();
+  </script>
+  <style>
+    html.wm-student-report-entry body{visibility:hidden!important;}
+    html.wm-student-report-entry body.wm-student-report-mode{visibility:visible!important;}
+  </style>
+  <!-- WM_STUDENT_REPORT_EARLY_ENTRY_GUARD_V1 END -->
 
   <script>
     /****************************************************************************************************
@@ -2582,6 +2596,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       wmFetchLmsLogin(teacherId, password);
     }
     document.addEventListener('DOMContentLoaded', function(){
+      if(window.WM_STUDENT_REPORT_ENTRY === true) return;
       wmLockStatusMessage('LMS_Login_V1_LOCK','LMS 교사 로그인/인증 흐름');
       wmRestoreLmsAuth();
       const loginBtn = document.getElementById('wmLmsLoginBtn');
@@ -9484,11 +9499,9 @@ document.addEventListener('keydown',function(e){
     if(event.key==='Escape') wmCloseGradeComment();
   });
   </script>
-</body>
-</html>
 
 
-<!-- WM_LMS_STUDENT_REPORT_POPUP_BRIDGE_V3 -->
+<!-- WM_LMS_STUDENT_REPORT_POPUP_BRIDGE_V2 -->
 <style>
 body.wm-student-report-mode{margin:0!important;background:#eaf0f8!important;overflow:auto!important;}
 body.wm-student-report-mode>.wm-lms-login-gate,
@@ -9502,7 +9515,7 @@ body.wm-student-report-mode .wm-report-preview-modal-head button{display:none!im
 .wm-student-report-empty-message{padding:40px;text-align:center;color:#173b75;font-size:24px;font-weight:900;line-height:1.6;}
 </style>
 <script>
-(function wmLmsStudentReportPopupBridgeV3_(){
+(function wmLmsStudentReportPopupBridgeV2_(){
   'use strict';
   const params=new URLSearchParams(location.search||'');
   if(params.get('wmStudentReport')!=='1') return;
@@ -9566,27 +9579,31 @@ body.wm-student-report-mode .wm-report-preview-modal-head button{display:none!im
       });
       if(!allowed) throw new Error(emptyMessage);
 
-      const detailQ=new URLSearchParams({
-        action:'studentReportDetail',
-        mode:'studentReportDetail',
-        studentId:studentId,
-        sessionToken:sessionToken,
-        year:String(year),
-        month:String(month),
-        week:String(week),
-        reportType:reportType,
-        reportId:String(params.get('reportId')||'').trim(),
-        reportKey:String(params.get('reportKey')||'').trim(),
-        t:String(Date.now())
+      const recordsQ=new URLSearchParams({action:'learningRecords',mode:'learningRecords',studentId:studentId,sessionToken:sessionToken,t:String(Date.now())});
+      const recordsRes=await fetch(WM_APPS_SCRIPT_URL+'?'+recordsQ.toString(),{cache:'no-store'});
+      const raw=await recordsRes.json();
+      let rows=typeof wmExtractLearningRecordRows==='function' ? wmExtractLearningRecordRows(raw) : (raw.records||raw.rows||[]);
+      rows=(rows||[]).filter(function(row){
+        const sid=String(cellValue(row,headerAliases('학생ID'))||'').trim().toUpperCase();
+        return sid===studentId.toUpperCase();
       });
-      const detailRes=await fetch(WM_APPS_SCRIPT_URL+'?'+detailQ.toString(),{cache:'no-store'});
-      const detail=await detailRes.json();
-      if(!detail.success || detail.sessionValid!==true) throw new Error(detail.message||'완성 성적표 조회 실패');
-      if(detail.found===false || !(detail.rows||detail.reports||[]).length) throw new Error(detail.message||emptyMessage);
+      WM_REPORT_MANAGE_ROWS=wmNormalizeCompletedSetRows(rows);
 
-      WM_REPORT_MANAGE_ROWS=normalizeRows(detail.rows||detail.reports||[]);
-      const reportId=String(detail.reportId||params.get('reportId')||'').trim();
-      if(!reportId) throw new Error(emptyMessage);
+      let candidates=(WM_REPORT_MANAGE_ROWS||[]).filter(function(row){
+        const d=parseDateValue(reportDetailDate(row));
+        if(!d || d.getFullYear()!==year || (d.getMonth()+1)!==month) return false;
+        if(reportType==='월간') return true;
+        return Math.min(5,Math.max(1,reportDetailWeek(row)||1))===week;
+      });
+
+      if(!candidates.length) throw new Error(emptyMessage);
+
+      const clicked=candidates.slice().sort(function(a,b){
+        return (parseDateValue(reportDetailDate(b))||0)-(parseDateValue(reportDetailDate(a))||0);
+      })[0];
+
+      const reportId=String(params.get('reportId')||'').trim() ||
+        reportDetailReportId(clicked,(WM_REPORT_MANAGE_ROWS||[]).indexOf(clicked),WM_REPORT_MANAGE_ROWS||[]);
       await openReportDetail(reportId);
 
       const title=document.querySelector('.wm-report-preview-modal-title');
@@ -9605,4 +9622,6 @@ body.wm-student-report-mode .wm-report-preview-modal-head button{display:none!im
   else setTimeout(boot_,0);
 })();
 </script>
-<!-- WM_LMS_STUDENT_REPORT_POPUP_BRIDGE_V3 END -->
+<!-- WM_LMS_STUDENT_REPORT_POPUP_BRIDGE_V2 END -->
+</body>
+</html>
