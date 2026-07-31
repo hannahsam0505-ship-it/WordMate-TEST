@@ -5748,6 +5748,27 @@ function wmReportCurrentStudentName_(){
   ).trim().replace(/^[-]+$/,'');
 }
 
+function wmReportActorTeacherId_(){
+  const candidates = [
+    wmGetUrlParam('actorTeacherId'),
+    wmGetUrlParam('teacherId'),
+    window.WM_MAP_ACTOR_TEACHER_ID
+  ];
+
+  try{ candidates.push(sessionStorage.getItem('WM_MAP_ACTOR_TEACHER_ID')); }catch(err){}
+  try{ candidates.push(localStorage.getItem('WM_MAP_ACTOR_TEACHER_ID')); }catch(err){}
+
+  for(const value of candidates){
+    const id = String(value || '').trim();
+    if(id){
+      window.WM_MAP_ACTOR_TEACHER_ID = id;
+      try{ sessionStorage.setItem('WM_MAP_ACTOR_TEACHER_ID',id); }catch(err){}
+      return id;
+    }
+  }
+  return '';
+}
+
 function wmReportRowsFromPayload_(data){
   if(!data) return [];
   if(Array.isArray(data)) return data;
@@ -5845,6 +5866,8 @@ async function wmFetchReportGradeComment_(row){
     reportType:'주간',
     ts:String(Date.now())
   });
+  const actorTeacherId = wmReportActorTeacherId_();
+  if(actorTeacherId) params.set('actorTeacherId',actorTeacherId);
   try{
     const response = await fetch(WM_APPS_SCRIPT_URL + '?' + params.toString(), {method:'GET',cache:'no-store'});
     const data = await response.json();
@@ -5866,6 +5889,8 @@ async function wmFetchMonthlyReportData_(row){
   params.set('studentId',studentId);
   params.set('yearMonth',yearMonth);
   params.set('reportWeek',yearMonth+'-'+week+'주차');
+  const actorTeacherId = wmReportActorTeacherId_();
+  if(actorTeacherId) params.set('actorTeacherId',actorTeacherId);
   params.set('ts',Date.now());
 
   const response = await fetch(WM_APPS_SCRIPT_URL+'?'+params.toString(),{method:'GET',cache:'no-store'});
@@ -5963,6 +5988,7 @@ async function wmLoadLatestReport_(){
 
   try{
     if(!studentId && !studentName) throw new Error('현재 학생ID와 학생이름을 확인할 수 없습니다.');
+    if(!wmReportActorTeacherId_()) throw new Error('LMS 교사 권한값(actorTeacherId)이 전달되지 않았습니다.');
     const studentLabel = [studentName, studentId].filter(Boolean).join(' · ');
     if(body) body.innerHTML = '<div class="wm-report-overlay-loading">'+wmReportEscape_(studentLabel)+' 학생의 최신 성적표를 불러오는 중입니다.</div>';
     if(title) title.textContent = '성적표 자세히 보기 · ' + studentLabel;

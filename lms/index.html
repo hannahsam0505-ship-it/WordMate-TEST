@@ -3191,7 +3191,31 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
     }
 
     function wmOpenSelectedStudentMap(){
-      window.open(WM_MAP_URL+'?wmEntry=lmsPreview&wmPreview=1','_blank');
+      const student=window.WM_PROFILE_SELECTED_STUDENT || {};
+      const actorTeacherId=(typeof wmGetSettingActorTeacherId==='function')
+        ? String(wmGetSettingActorTeacherId() || '').trim()
+        : '';
+
+      const params=new URLSearchParams();
+      params.set('wmEntry','lmsPreview');
+      params.set('wmPreview','1');
+
+      const values={
+        studentId:cellValue(student,headerAliases('학생ID')),
+        studentName:cellValue(student,headerAliases('학생이름')),
+        school:cellValue(student,headerAliases('학교')),
+        grade:cellValue(student,headerAliases('학년')),
+        className:cellValue(student,headerAliases('반명')) || cellValue(student,headerAliases('Class')),
+        teacherName:cellValue(student,headerAliases('교사명')),
+        actorTeacherId:actorTeacherId
+      };
+
+      Object.keys(values).forEach(function(key){
+        const value=String(values[key] || '').trim();
+        if(value) params.set(key,value);
+      });
+
+      window.open(WM_MAP_URL+'?'+params.toString(),'_blank');
     }
 
     function wmBindProfileMapViewButton(){
