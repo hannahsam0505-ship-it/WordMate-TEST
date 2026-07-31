@@ -3816,6 +3816,23 @@ function wmApplyLearningMapStatus(mapData){
     const recordRepeatCount = wmGetRepeatCountFromRecordsForMap_(records, item.set, normalizeSetIdForMap_, isCompletedRecord_);
     const repeatCount = Math.max(1, Number(statusInfo.repeatCount || 0), recordRepeatCount);
 
+    /* WM_MAP_ALL_COMPLETED_HISTORY_LEVELS_GREEN_FIX_20260731
+       완료된 이전 레벨을 열었을 때는 개별 학습기록 개수와 무관하게
+       해당 레벨의 모든 세트를 완료 상태·초록색으로 고정합니다. */
+    if(forceLevelDone){
+      return {
+        set:item.set,
+        status:'complete',
+        progress:100,
+        repeatCount:repeatCount,
+        officialRound:Number(sequentialState.targetLimit || 1),
+        targetRoundLimit:Number(sequentialState.targetLimit || 1),
+        levelComplete:true,
+        score:String(recordInfo.점수 || recordInfo.score || recordInfo.한영주관식 || statusInfo.latestScore || statusInfo.score || '-').trim() || '-',
+        latestDate:String(statusInfo.latestDate || recordInfo.학습날짜 || '').trim()
+      };
+    }
+
     if(isComplete){
       return {
         set:item.set,
