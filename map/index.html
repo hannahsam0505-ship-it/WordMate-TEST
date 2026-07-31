@@ -279,8 +279,7 @@ const WM_LMS_URL = WM_CONFIG.LMS_URL;
     text-align:center;
     font-size:28px;
     font-weight:900;
-    line-height:55px;
-  text-align:center;
+    line-height:1;
     padding:0 10px;
     letter-spacing:-0.02em;
     font-family:Pretendard, "Noto Sans KR", Arial, sans-serif;
@@ -700,7 +699,7 @@ const WM_LMS_URL = WM_CONFIG.LMS_URL;
       <span><i class="dot complete3"></i>3회 완료</span>
       <span><i class="dot leveldone"></i>레벨완료</span>
       <span class="wm-sequential-guide"><span style="color:#16a34a;font-weight:700;">레벨완료기준</span>에 따라 <span style="color:#2563eb;font-weight:700;">세트순차완주</span> 방식으로 학습이 진행됩니다.</span>
-      <button id="wm-report-view-button" class="wm-report-view-button" type="button">📄 성적표 보기</button>
+      <button id="wm-report-view-button" class="wm-report-view-button" type="button" onclick="wmOpenReportOverlay_()">📄 성적표 보기</button>
     </div>
 
     <div id="setMap" class="set-map"></div>
@@ -845,6 +844,19 @@ const WM_LMS_URL = WM_CONFIG.LMS_URL;
 
 </div>
 
+<!-- WM_MAP_REPORT_OVERLAY_V1: 3차 빈 성적표 오버레이 -->
+<div id="wmReportOverlay" class="wm-report-overlay" role="dialog" aria-modal="true" aria-labelledby="wmReportOverlayTitle" onclick="wmReportOverlayBackdropClose_(event)">
+  <div class="wm-report-overlay-card">
+    <div class="wm-report-overlay-head">
+      <div id="wmReportOverlayTitle" class="wm-report-overlay-title">성적표 자세히 보기</div>
+      <button type="button" class="wm-report-overlay-close" onclick="wmCloseReportOverlay_()">닫기</button>
+    </div>
+    <div class="wm-report-overlay-body">
+      <div class="wm-report-overlay-empty">성적표 내용은 4차 작업에서 연결됩니다.</div>
+    </div>
+  </div>
+</div>
+
 
 <!-- 4. 공통 CSS -->
 <style>
@@ -913,6 +925,106 @@ body.wm-lms-map-preview.wm-test-booth-active{
 
 body.wm-homework-fixed-scroll-ready{
   padding-bottom:44px;
+}
+
+.wm-report-overlay{
+  position:fixed;
+  inset:0;
+  z-index:120000;
+  display:none;
+  align-items:flex-start;
+  justify-content:center;
+  padding:22px;
+  background:rgba(15,23,42,.72);
+  overflow:auto;
+}
+
+.wm-report-overlay.active{
+  display:flex;
+}
+
+.wm-report-overlay-card{
+  width:min(1120px,96vw);
+  min-height:72vh;
+  background:#fff;
+  border-radius:18px;
+  box-shadow:0 28px 80px rgba(0,0,0,.35);
+  overflow:hidden;
+}
+
+.wm-report-overlay-head{
+  position:sticky;
+  top:0;
+  z-index:5;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:12px 16px;
+  background:#fff;
+  border-bottom:1px solid #e5e7eb;
+}
+
+.wm-report-overlay-title{
+  font-size:16px;
+  font-weight:950;
+  color:#173b75;
+}
+
+.wm-report-overlay-close{
+  border:0;
+  border-radius:10px;
+  padding:9px 14px;
+  background:#111827;
+  color:#fff;
+  font-size:13px;
+  font-weight:900;
+  cursor:pointer;
+}
+
+.wm-report-overlay-body{
+  min-height:calc(72vh - 58px);
+  padding:18px;
+  background:#eaf0f8;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.wm-report-overlay-empty{
+  width:min(760px,100%);
+  min-height:360px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:30px;
+  border:2px dashed #b9cbea;
+  border-radius:16px;
+  background:#fff;
+  color:#6b7280;
+  font-size:16px;
+  font-weight:900;
+  text-align:center;
+}
+
+body.wm-report-overlay-open{
+  overflow:hidden;
+}
+
+@media(max-width:720px){
+  .wm-report-overlay{
+    padding:8px;
+  }
+
+  .wm-report-overlay-card{
+    width:100%;
+    min-height:88vh;
+  }
+
+  .wm-report-overlay-body{
+    min-height:calc(88vh - 58px);
+    padding:8px;
+  }
 }
 
 .detail-box,
@@ -1265,9 +1377,13 @@ body.wm-map-loading-active #wm-learning-record-widget{
   border-radius:10px;
   background:linear-gradient(135deg,#0066cc,#004a99);
   color:#fff;
-  font-size:14px;
+  font-size:16px;
   font-weight:900;
   line-height:1;
+  text-align:center;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
   cursor:pointer;
   box-shadow:0 4px 10px rgba(0,74,153,.18);
 }
@@ -4830,4 +4946,35 @@ wmForceHomeworkBottomFixedBarOnFirstView();
 wmInitHomeworkSearchEnterKey();
 wmInitLearningMap();
 wmForceHomeworkBottomFixedBarOnFirstView();
+</script>
+
+
+<script>
+/* WM_MAP_REPORT_OVERLAY_V1: 버튼 클릭 → 현재 화면 위 빈 성적표 오버레이 */
+function wmOpenReportOverlay_(){
+  const modal = document.getElementById('wmReportOverlay');
+  if(!modal) return false;
+  modal.classList.add('active');
+  document.body.classList.add('wm-report-overlay-open');
+  return true;
+}
+
+function wmCloseReportOverlay_(){
+  const modal = document.getElementById('wmReportOverlay');
+  if(modal) modal.classList.remove('active');
+  document.body.classList.remove('wm-report-overlay-open');
+  return true;
+}
+
+function wmReportOverlayBackdropClose_(event){
+  if(event && event.target && event.target.id === 'wmReportOverlay'){
+    wmCloseReportOverlay_();
+  }
+}
+
+document.addEventListener('keydown', function(event){
+  if(event.key === 'Escape'){
+    wmCloseReportOverlay_();
+  }
+});
 </script>
