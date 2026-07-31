@@ -5218,7 +5218,8 @@ function extractRecordRowsFromResponse(data){
         const [data, currentProgressData] = await Promise.all([res.json(), currentProgressRes.json()]);
         WM_STUDENT_MANAGE_ROWS = normalizeRows(data && data.students ? data.students : []);
         const currentProgressRows = normalizeRows(currentProgressData && (currentProgressData.currentProgress || currentProgressData.currentProgressRows || currentProgressData.rows || currentProgressData.data) ? (currentProgressData.currentProgress || currentProgressData.currentProgressRows || currentProgressData.rows || currentProgressData.data) : currentProgressData);
-        const currentProgressByStudentId = new Map(currentProgressRows.map(row => [String(row['학생ID'] || '').trim().toLowerCase(), row]));
+        WM_CURRENT_PROGRESS_ROWS = currentProgressRows;
+        const currentProgressByStudentId = new Map(currentProgressRows.map(row => [String(wmProgressField(row, ['학생ID','StudentID','studentId']) || '').trim().toLowerCase(), row]));
         WM_STUDENT_MANAGE_ROWS.forEach(row => {
           const currentProgress = currentProgressByStudentId.get(String(row['학생ID'] || '').trim().toLowerCase());
           const currentSet = currentProgress ? String(currentProgress['Set_ID'] || '').trim() : '';
@@ -7965,20 +7966,44 @@ function wmModeSelectHtml(studentId, key, value, options, config){
   return `<select class="wm-mode-select" data-student-id="${escapeHtml(studentId)}" data-mode-key="${escapeHtml(key)}" id="wmMode_${escapeHtml(key)}_${escapeHtml(safeId)}" ${locked ? 'disabled' : ''} ${reason ? `title="${escapeHtml(reason)}"` : ''}>${options.map(opt=>{ const pair = Array.isArray(opt) ? opt : [opt,opt]; return `<option value="${escapeHtml(pair[0])}" ${pair[0] === current ? 'selected' : ''}>${escapeHtml(pair[1])}</option>`; }).join('')}</select>${locked ? `<span title="${escapeHtml(reason)}" style="margin-left:5px;cursor:help;">🔒</span>` : ''}`;
 }
 
+function wmProgressField(progress, aliases){
+  if(!progress) return '';
+  for(const alias of aliases){
+    if(progress[alias] !== undefined && progress[alias] !== null && String(progress[alias]).trim() !== ''){
+      return progress[alias];
+    }
+  }
+  const normalizedAliases = aliases.map(alias => String(alias).replace(/[\s_\-]/g,'').toLowerCase());
+  for(const key of Object.keys(progress)){
+    const normalizedKey = String(key).replace(/[\s_\-]/g,'').toLowerCase();
+    if(normalizedAliases.includes(normalizedKey)) return progress[key];
+  }
+  return '';
+}
+
+function wmCurrentProgressForStudentRow(row){
+  if(row && row.__wmCurrentProgress) return row.__wmCurrentProgress;
+  const studentId = String(row && row['학생ID'] || '').trim().toLowerCase();
+  if(!studentId) return null;
+  return (WM_CURRENT_PROGRESS_ROWS || []).find(progress =>
+    String(wmProgressField(progress, ['학생ID','StudentID','studentId']) || '').trim().toLowerCase() === studentId
+  ) || null;
+}
+
 function wmInitialLevelLockState(row){
-  const progress = row && row.__wmCurrentProgress;
-  const completedStep = String(progress && progress['완료Step'] || '').trim();
+  const progress = wmCurrentProgressForStudentRow(row);
+  const completedStep = String(wmProgressField(progress, ['완료Step','완료 STEP','CompletedStep','completedStep']) || '').trim();
   return completedStep
     ? {locked:true, reason:'완료Step이 생성된 학생의 최초레벨은 수정할 수 없습니다.'}
     : {locked:false, reason:''};
 }
 
 function wmLevelConditionLockState(row){
-  const progress = row && row.__wmCurrentProgress;
+  const progress = wmCurrentProgressForStudentRow(row);
   if(!progress) return {locked:false, reason:''};
-  const currentLevel = Number(String(progress['현재레벨'] || '').match(/\d+/)?.[0] || 0);
-  const setMatch = String(progress['Set_ID'] || '').trim().match(/^WM(\d{1,2})-(\d+)-(\d+)$/i);
-  const completedStep = String(progress['완료Step'] || '').trim();
+  const currentLevel = Number(String(wmProgressField(progress, ['현재레벨','현재 레벨','CurrentLevel','currentLevel']) || '').match(/\d+/)?.[0] || 0);
+  const setMatch = String(wmProgressField(progress, ['Set_ID','Set ID','SetID','setId']) || '').trim().match(/^WM(\d{1,2})-(\d+)-(\d+)$/i);
+  const completedStep = String(wmProgressField(progress, ['완료Step','완료 STEP','CompletedStep','completedStep']) || '').trim();
   if(!currentLevel || !setMatch || !completedStep) return {locked:false, reason:''};
   const setLevel = Number(setMatch[1]);
   const unit = Number(setMatch[2]);
