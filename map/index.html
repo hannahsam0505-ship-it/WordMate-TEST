@@ -854,6 +854,39 @@ body{
   color:#111;
 }
 
+html body.wm-lms-map-preview{
+  margin:0 !important;
+  padding:24px !important;
+  background:#f4f6fb !important;
+  overflow:auto !important;
+}
+body.wm-lms-map-preview #wm-test-booth-banner,
+body.wm-lms-map-preview #wm-student-info-widget,
+body.wm-lms-map-preview #wm-learning-record-widget,
+body.wm-lms-map-preview .wm-map-message,
+body.wm-lms-map-preview .wm-map-loading-block{
+  display:none !important;
+}
+body.wm-lms-map-preview #wm-map-root{
+  width:min(1180px,100%) !important;
+  margin:0 auto !important;
+  padding:0 !important;
+}
+body.wm-lms-map-preview #wm-level-map-widget{
+  margin:0 !important;
+}
+body.wm-lms-map-preview #setMap,
+body.wm-lms-map-preview #setMap *{
+  pointer-events:none !important;
+  user-select:none !important;
+}
+body.wm-lms-map-preview .level-bar button{
+  pointer-events:none !important;
+}
+body.wm-lms-map-preview.wm-test-booth-active{
+  margin-top:0 !important;
+}
+
 #wm-map-root{
   max-width:1320px;
   margin:20px auto 40px auto;
@@ -1690,20 +1723,81 @@ function wmGetUrlParam(name){
   return String(params.get(name) || '').trim();
 }
 
-function wmIsLmsAdminPreview_(){
-  const historyPreview=!!(window.history && window.history.state && window.history.state.wmLmsAdminPreview===true);
-  if(historyPreview) return true;
+function wmIsLmsMapPreview_(){
+  const entry = String(wmGetUrlParam('wmEntry') || '').trim();
+  const preview = String(wmGetUrlParam('wmPreview') || '').trim();
 
-  const entry=String(wmGetUrlParam('wmEntry') || '').trim().toLowerCase();
-  const preview=String(wmGetUrlParam('wmAdminPreview') || '').trim();
-  if(entry!=='lmsadmin' || preview!=='1') return false;
+  if(entry !== 'lmsPreview' || preview !== '1') return false;
 
   try{
     if(!window.opener || window.opener.closed) return false;
-    return window.opener.location.origin===window.location.origin;
+    return window.opener.location.origin === window.location.origin;
   }catch(err){
     return false;
   }
+}
+
+function wmRenderLmsMapPreview_(){
+  document.documentElement.classList.remove('wm-map-auth-pending');
+  document.body.classList.add('wm-lms-map-preview');
+
+  const root = document.getElementById('wm-map-root');
+  const mapWidget = document.getElementById('wm-level-map-widget');
+  if(root) root.style.display = 'block';
+  if(mapWidget) mapWidget.style.display = 'block';
+
+  currentLevelNumber = 3;
+  totalSets = wmBuildLevelSetData(currentLevelNumber).length;
+
+  setData = wmBuildLevelSetData(currentLevelNumber).map(function(item, index){
+    if(index === 0){
+      return {
+        set:item.set,
+        status:'current',
+        progress:0,
+        repeatCount:0,
+        officialRound:0,
+        targetRoundLimit:2,
+        levelComplete:false,
+        score:'-',
+        latestDate:''
+      };
+    }
+    return {
+      set:item.set,
+      status:'locked',
+      progress:0,
+      repeatCount:0,
+      officialRound:0,
+      targetRoundLimit:2,
+      levelComplete:false,
+      score:'-',
+      latestDate:''
+    };
+  });
+
+  wmMapDataReady = true;
+  setText('currentLevelLabel','LEVEL 3');
+  setText('progressLevelLabel','LEVEL 3 진행률');
+  setText('levelPercent','0%');
+  setText('mainProgressText','0%');
+
+  const fill = document.getElementById('progressFill');
+  if(fill) fill.style.width = '0%';
+
+  renderSetMap();
+
+  const map = document.getElementById('setMap');
+  if(map){
+    map.setAttribute('aria-label','학습맵 보기 전용');
+    map.querySelectorAll('button').forEach(function(button){
+      button.disabled = true;
+      button.removeAttribute('onclick');
+      button.setAttribute('tabindex','-1');
+    });
+  }
+
+  return true;
 }
 
 function wmSafeJsonParse(value){
@@ -1955,7 +2049,7 @@ function wmAuthorizeMapEntry_(){
     entry = String(new URLSearchParams(window.location.search || '').get('wmEntry') || '').trim().toLowerCase();
   }catch(err){}
 
-  const validEntry = entry === 'login' || entry === 'study' || (entry === 'lmsadmin' && wmIsLmsAdminPreview_());
+  const validEntry = entry === 'login' || entry === 'study';
   const historyAuthorized = !!(window.history && window.history.state && window.history.state.wmMapAuthorized === true);
 
   if(!validEntry && !historyAuthorized){
@@ -1968,8 +2062,7 @@ function wmAuthorizeMapEntry_(){
       cleanUrl.searchParams.delete('wmEntry');
       const nextState = Object.assign({}, window.history.state || {}, {
         wmMapAuthorized: true,
-        wmMapEntrySource: entry,
-        wmLmsAdminPreview: entry === 'lmsadmin'
+        wmMapEntrySource: entry
       });
       window.history.replaceState(nextState, document.title, cleanUrl.pathname + cleanUrl.search + cleanUrl.hash);
     }catch(err){}
@@ -2127,6 +2220,11 @@ function wmRenderInstantMapFromStudentCache_(){
 function wmInitLearningMap(){
   wmMapDataReady = false;
 
+  if(wmIsLmsMapPreview_()){
+    wmRenderLmsMapPreview_();
+    return;
+  }
+
   /* 주소창 직접 /map 진입 차단: 로그인 또는 Study 복귀 표시가 없으면 로그인 화면으로 이동 */
   if(!wmAuthorizeMapEntry_()){
     wmRedirectToLogin_();
@@ -2151,16 +2249,8 @@ function wmInitLearningMap(){
       .getStudentMapProfile(wmCurrentStudent.학생ID);
   }
 
-  const lmsAdminPreview=wmIsLmsAdminPreview_();
-
-  if(!wmCurrentStudent.학생ID || (!lmsAdminPreview && !wmGetCurrentSessionToken())){
+  if(!wmCurrentStudent.학생ID || !wmGetCurrentSessionToken()){
     wmRedirectToLogin_();
-    return;
-  }
-
-  if(lmsAdminPreview){
-    wmRevealAuthenticatedMap_();
-    wmFetchLearningMap(wmCurrentStudent.학생ID);
     return;
   }
 
