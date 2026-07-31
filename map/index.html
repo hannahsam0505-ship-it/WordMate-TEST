@@ -3220,7 +3220,11 @@ function wmBuildSequentialDisplayRoundMapForMap_(records, setStatusMap, levelNum
   const levelCompleteCount = Math.max(0, Math.min(targetLimit, Number(formulaSource.레벨완료횟수 || 0)));
   const sequentialRound = Math.max(0, Math.min(targetLimit, Number(formulaSource.순차완주회차 || 0)));
   const sequentialSetCount = Math.max(0, Math.min(sequence.length, Number(formulaSource.순차완주세트 || 0)));
+  const formulaCurrentSet = normalizeSetIdForMap_(formulaSource.currentSet || '');
+  const formulaLevelMatch = formulaCurrentSet.match(/^(3|4|5|6|7|8|9|10|11|12|13)-/);
+  const formulaLevelNumber = formulaLevelMatch ? Number(formulaLevelMatch[1]) : 0;
   const hasDirectFormula =
+    (!formulaLevelNumber || formulaLevelNumber === sourceLevelNumber) &&
     String(formulaSource.레벨완료횟수 || '').trim() !== '' &&
     String(formulaSource.순차완주회차 || '').trim() !== '' &&
     String(formulaSource.순차완주세트 || '').trim() !== '';
@@ -3233,13 +3237,17 @@ function wmBuildSequentialDisplayRoundMapForMap_(records, setStatusMap, levelNum
       }
     });
 
+    const levelComplete = sequence.length > 0 && sequence.every(function(setId){
+      return Number(officialRoundMap[setId] || 0) >= targetLimit;
+    });
+
     return {
       targetLimit: targetLimit,
       repeatMap: officialRoundMap,
       officialRoundMap: officialRoundMap,
-      순차완주회차: sequentialRound,
-      순차완주세트: sequentialSetCount,
-      levelComplete: levelCompleteCount >= targetLimit
+      순차완주회차: levelComplete ? targetLimit : sequentialRound,
+      순차완주세트: levelComplete ? sequence.length : sequentialSetCount,
+      levelComplete: levelComplete
     };
   }
 
