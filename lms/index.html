@@ -2402,9 +2402,21 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
         wmSetLmsLoginMessage((res && res.message) || '로그인 실패');
         return;
       }
-      localStorage.setItem(WM_LMS_AUTH_STORAGE_KEY, JSON.stringify({ teacher:res.teacher, loginAt:new Date().toISOString() }));
+      const loginTeacher = res.teacher || {};
+      const normalizedTeacherId = String(
+        loginTeacher.교사ID ||
+        loginTeacher.teacherId ||
+        loginTeacher.teacherID ||
+        loginTeacher.Teacher_ID ||
+        loginTeacher.TeacherID ||
+        loginTeacher.ID ||
+        loginTeacher.id ||
+        ''
+      ).trim();
+      if(normalizedTeacherId && !loginTeacher.교사ID) loginTeacher.교사ID = normalizedTeacherId;
+      localStorage.setItem(WM_LMS_AUTH_STORAGE_KEY, JSON.stringify({ teacher:loginTeacher, loginAt:new Date().toISOString() }));
       wmSetLmsLoginMessage('로그인 성공 · 대시보드 자료를 불러오는 중입니다.', true);
-      wmApplyLmsAuth(res.teacher);
+      wmApplyLmsAuth(loginTeacher);
       setTimeout(function(){ wmSetLmsLoginMessage('', true); }, 300);
     }
 
@@ -6449,8 +6461,45 @@ async function generateSettingTeacherId(){
 }
 
 function wmGetSettingActorTeacherId(){
-  const teacher = window.WM_LMS_AUTH_TEACHER || {};
-  return String(teacher.교사ID || '').trim();
+  const candidates = [];
+  const pushTeacherIds = function(teacher){
+    teacher = teacher || {};
+    [
+      teacher.교사ID,
+      teacher.teacherId,
+      teacher.teacherID,
+      teacher.Teacher_ID,
+      teacher.TeacherID,
+      teacher.ID,
+      teacher.id,
+      teacher.아이디
+    ].forEach(function(value){
+      const id = String(value || '').trim();
+      if(id) candidates.push(id);
+    });
+  };
+
+  pushTeacherIds(window.WM_LMS_AUTH_TEACHER);
+
+  try{
+    const saved = JSON.parse(localStorage.getItem(WM_LMS_AUTH_STORAGE_KEY) || '{}');
+    pushTeacherIds(saved.teacher);
+    pushTeacherIds(saved);
+  }catch(err){}
+
+  try{
+    const loginInput = document.getElementById('wmLmsTeacherId');
+    const loginId = String(loginInput && loginInput.value || '').trim();
+    if(loginId) candidates.push(loginId);
+  }catch(err){}
+
+  const actorTeacherId = String(candidates.find(Boolean) || '').trim();
+  if(actorTeacherId && window.WM_LMS_AUTH_TEACHER){
+    if(!window.WM_LMS_AUTH_TEACHER.교사ID){
+      window.WM_LMS_AUTH_TEACHER.교사ID = actorTeacherId;
+    }
+  }
+  return actorTeacherId;
 }
 
 
