@@ -1730,13 +1730,6 @@ function wmGetUrlParam(name){
   return String(params.get(name) || '').trim();
 }
 
-<!-- ==========================================================
-     학습맵보기 (LMS Preview)
-     선택 학생의 최신 상단정보·현재 진도맵·최근 학습기록 첫 화면을 조회하며,
-     검색·페이지 이동·학습 진입·저장 등 모든 추가 동작은 비활성화한
-     교사용 읽기 전용 화면입니다.
-========================================================== -->
-
 function wmIsLmsMapPreview_(){
   const entry = String(wmGetUrlParam('wmEntry') || '').trim();
   const preview = String(wmGetUrlParam('wmPreview') || '').trim();
@@ -1820,8 +1813,10 @@ function wmRenderLmsMapPreview_(){
     return false;
   }
 
-  /* LMS가 전달한 학생ID로 현재진행_DB와 학습기록_DB를 조회합니다.
-     학생 로그인 세션은 사용하지 않으며, 화면은 MutationObserver로 계속 읽기 전용을 유지합니다. */
+  /* LMS 학습맵 Preview
+     선택 학생의 최신 상단정보·현재 진도맵·최근 학습기록 첫 화면만 조회하며,
+     검색·페이지 이동·학습 진입·저장 등 모든 추가 동작은 비활성화한
+     교사용 읽기 전용 화면입니다. */
   wmFetchLearningMap(studentId);
   return true;
 }
