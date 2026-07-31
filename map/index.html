@@ -792,6 +792,7 @@ const WM_LMS_URL = WM_CONFIG.LMS_URL;
 
           <thead>
             <tr>
+              <th>일련번호</th>
               <th>학습날짜</th>
               <th>Set_ID</th>
               <th>점수</th>
@@ -815,7 +816,7 @@ const WM_LMS_URL = WM_CONFIG.LMS_URL;
 
           <tbody id="homeworkTableBody">
             <tr>
-              <td colspan="18">아직 표시할 학습기록이 없습니다.</td>
+              <td colspan="19">아직 표시할 학습기록이 없습니다.</td>
             </tr>
           </tbody>
 
@@ -1312,15 +1313,26 @@ body.wm-map-loading-active #wm-learning-record-widget{
   grid-template-columns:1fr 1fr 1fr 1fr 1fr 1fr auto auto;
   gap:8px;
   margin-bottom:14px;
+  padding:14px;
+  border:1px solid #9fbce8;
+  border-radius:16px;
+  background:linear-gradient(180deg,#f4f8ff 0%,#eaf2ff 100%);
+  box-shadow:0 8px 22px rgba(7,59,143,.08);
 }
 
 .filter-box input,
 .filter-box select{
   padding:10px;
-  border:1px solid #ddd;
+  border:1px solid #b9cbea;
   border-radius:10px;
   font-size:13px;
+  background:#fff;
   box-sizing:border-box;
+}
+.filter-box input:focus,
+.filter-box select:focus{
+  outline:2px solid rgba(13,85,200,.18);
+  border-color:#0d55c8;
 }
 
 .reset-btn{
@@ -1422,7 +1434,7 @@ body.wm-map-loading-active #wm-learning-record-widget{
 
 .homework-table-scroll{
   width:100%;
-  max-height:1120px;
+  max-height:690px;
   overflow-x:hidden;
   overflow-y:auto;
   scrollbar-width:none;
@@ -1507,17 +1519,18 @@ body.wm-map-loading-active #wm-learning-record-widget{
   z-index:20;
   background:#f3f3f3;
 }
- .homework-table th:nth-child(1), .homework-table td:nth-child(1){min-width:82px;}
-.homework-table th:nth-child(2), .homework-table td:nth-child(2){min-width:72px;}
-.homework-table th:nth-child(3), .homework-table td:nth-child(3){min-width:44px;}
-.homework-table th:nth-child(n+4):nth-child(-n+10),
-.homework-table td:nth-child(n+4):nth-child(-n+10){min-width:68px;white-space:nowrap;}
-.homework-table th:nth-child(n+11):nth-child(-n+14){min-width:48px;font-size:10px;line-height:1.1;letter-spacing:-0.04em;padding-left:4px;padding-right:4px;}
-.homework-table td:nth-child(n+11):nth-child(-n+14){min-width:48px;font-size:13px;line-height:1.2;padding-left:4px;padding-right:4px;white-space:nowrap;}
-.homework-table th:nth-child(15), .homework-table td:nth-child(15){min-width:42px;max-width:48px;white-space:nowrap;}
-.homework-table th:nth-child(16), .homework-table td:nth-child(16){min-width:36px;}
-.homework-table th:nth-child(17), .homework-table td:nth-child(17){min-width:42px;}
-.homework-table th:nth-child(18), .homework-table td:nth-child(18){min-width:32px;}
+.homework-table th:nth-child(1), .homework-table td:nth-child(1){min-width:58px;width:58px;text-align:center;}
+.homework-table th:nth-child(2), .homework-table td:nth-child(2){min-width:82px;}
+.homework-table th:nth-child(3), .homework-table td:nth-child(3){min-width:72px;}
+.homework-table th:nth-child(4), .homework-table td:nth-child(4){min-width:44px;}
+.homework-table th:nth-child(n+5):nth-child(-n+11),
+.homework-table td:nth-child(n+5):nth-child(-n+11){min-width:68px;white-space:nowrap;}
+.homework-table th:nth-child(n+12):nth-child(-n+15){min-width:48px;font-size:10px;line-height:1.1;letter-spacing:-0.04em;padding-left:4px;padding-right:4px;}
+.homework-table td:nth-child(n+12):nth-child(-n+15){min-width:48px;font-size:13px;line-height:1.2;padding-left:4px;padding-right:4px;white-space:nowrap;}
+.homework-table th:nth-child(16), .homework-table td:nth-child(16){min-width:42px;max-width:48px;white-space:nowrap;}
+.homework-table th:nth-child(17), .homework-table td:nth-child(17){min-width:36px;}
+.homework-table th:nth-child(18), .homework-table td:nth-child(18){min-width:42px;}
+.homework-table th:nth-child(19), .homework-table td:nth-child(19){min-width:32px;}
 .homework-table .wm-score-head{font-size:10px;line-height:1.1;letter-spacing:-0.04em;}
 
 .score{
@@ -1608,7 +1621,7 @@ let wmCurrentProgressHistoryCache = null;
 let wmBottomRecordsDirectLoading = false;
 let wmCurrentProgressRecentScoreForMap_ = '';
 let wmCurrentProgressDisplayOverride = null;
-const WM_HOMEWORK_PAGE_SIZE = 25;
+const WM_HOMEWORK_PAGE_SIZE = 15;
 const WM_HOMEWORK_DEFAULT_MONTHS = 3;
 const WM_HOMEWORK_DEFAULT_PERIOD_RANGE = '0-3';
 let wmHomeworkCurrentPage = 1;
@@ -4055,9 +4068,9 @@ function renderHomeworkTable(records, profile, options){
     wmHomeworkCurrentSourceRecords = [];
 
     if(baseProfile && (baseProfile.학생ID || baseProfile.학생이름)){
-      tbody.innerHTML = wmRenderHomeworkRow(baseProfile);
+      tbody.innerHTML = wmRenderHomeworkRow(baseProfile, '');
     }else{
-      tbody.innerHTML = '<tr><td colspan="18">아직 표시할 학습기록이 없습니다.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="19">아직 표시할 학습기록이 없습니다.</td></tr>';
     }
     wmUpdateHomeworkPager_(0);
     wmInitHomeworkTopScrollbar();
@@ -4068,7 +4081,7 @@ function renderHomeworkTable(records, profile, options){
   wmHomeworkCurrentSourceRecords = sortedRecords;
 
   if(sortedRecords.length === 0){
-    tbody.innerHTML = '<tr><td colspan="18">선택한 조회기간에 표시할 학습기록이 없습니다.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="19">선택한 조회기간에 표시할 학습기록이 없습니다.</td></tr>';
     wmUpdateHomeworkPager_(0);
     wmInitHomeworkTopScrollbar();
     return;
@@ -4076,8 +4089,8 @@ function renderHomeworkTable(records, profile, options){
 
   const startIndex = (wmHomeworkCurrentPage - 1) * WM_HOMEWORK_PAGE_SIZE;
   const pageRecords = sortedRecords.slice(startIndex, startIndex + WM_HOMEWORK_PAGE_SIZE);
-  tbody.innerHTML = pageRecords.map(function(record){
-    return wmRenderHomeworkRow(record);
+  tbody.innerHTML = pageRecords.map(function(record, pageIndex){
+    return wmRenderHomeworkRow(record, startIndex + pageIndex + 1);
   }).join('');
   wmUpdateHomeworkPager_(sortedRecords.length);
   wmInitHomeworkTopScrollbar();
@@ -4127,9 +4140,10 @@ function wmFormatScoreWithPoint_(value){
   return /점$/.test(text) ? text : text + '점';
 }
 
-function wmRenderHomeworkRow(record){
+function wmRenderHomeworkRow(record, serialNumber){
   return `
     <tr>
+      <td>${escapeHtml(serialNumber === undefined || serialNumber === null ? '' : serialNumber)}</td>
       <td>${escapeHtml(record.학습날짜 || '')}</td>
       <td>${escapeHtml(record.Set_ID || '')}</td>
       <td class="score">${escapeHtml(wmFormatScoreWithPoint_(record.한영주관식 || record.점수 || ''))}</td>
