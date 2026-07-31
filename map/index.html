@@ -860,12 +860,19 @@ html body.wm-lms-map-preview{
   background:#f4f6fb !important;
   overflow:auto !important;
 }
-body.wm-lms-map-preview #wm-test-booth-banner,
-body.wm-lms-map-preview #wm-student-info-widget,
-body.wm-lms-map-preview #wm-learning-record-widget,
-body.wm-lms-map-preview .wm-map-message,
-body.wm-lms-map-preview .wm-map-loading-block{
+body.wm-lms-map-preview #wm-test-booth-banner{
   display:none !important;
+}
+body.wm-lms-map-preview .logout-card,
+body.wm-lms-map-preview button,
+body.wm-lms-map-preview input,
+body.wm-lms-map-preview select{
+  pointer-events:none !important;
+  user-select:none !important;
+}
+body.wm-lms-map-preview .logout-card,
+body.wm-lms-map-preview button{
+  cursor:default !important;
 }
 body.wm-lms-map-preview #wm-map-root{
   width:min(1180px,100%) !important;
@@ -1737,66 +1744,78 @@ function wmIsLmsMapPreview_(){
   }
 }
 
+function wmApplyLmsPreviewReadOnly_(){
+  if(!wmIsLmsMapPreview_()) return false;
+
+  const root = document.getElementById('wm-map-root');
+  if(!root) return false;
+
+  root.setAttribute('aria-label','교사용 학습맵 읽기 전용 화면');
+
+  root.querySelectorAll('button').forEach(function(button){
+    button.disabled = true;
+    button.removeAttribute('onclick');
+    button.setAttribute('tabindex','-1');
+    button.setAttribute('aria-disabled','true');
+  });
+
+  root.querySelectorAll('input, select, textarea').forEach(function(control){
+    control.disabled = true;
+    control.setAttribute('tabindex','-1');
+    control.setAttribute('aria-disabled','true');
+  });
+
+  const logoutCard = root.querySelector('.logout-card');
+  if(logoutCard){
+    logoutCard.removeAttribute('onclick');
+    logoutCard.removeAttribute('role');
+    logoutCard.setAttribute('tabindex','-1');
+    logoutCard.setAttribute('aria-disabled','true');
+  }
+
+  return true;
+}
+
+function wmWatchLmsPreviewReadOnly_(){
+  if(!wmIsLmsMapPreview_() || window.__WM_LMS_PREVIEW_READONLY_OBSERVER__) return;
+
+  const root = document.getElementById('wm-map-root');
+  if(!root) return;
+
+  const observer = new MutationObserver(function(){
+    wmApplyLmsPreviewReadOnly_();
+  });
+  observer.observe(root, {childList:true, subtree:true});
+  window.__WM_LMS_PREVIEW_READONLY_OBSERVER__ = observer;
+}
+
 function wmRenderLmsMapPreview_(){
   document.documentElement.classList.remove('wm-map-auth-pending');
   document.body.classList.add('wm-lms-map-preview');
 
   const root = document.getElementById('wm-map-root');
-  const mapWidget = document.getElementById('wm-level-map-widget');
   if(root) root.style.display = 'block';
-  if(mapWidget) mapWidget.style.display = 'block';
 
-  currentLevelNumber = 3;
-  totalSets = wmBuildLevelSetData(currentLevelNumber).length;
+  wmCurrentStudent = wmResolveStudentInfo();
+  wmStudentProfile = wmMergeStudentPreserveValues_({}, wmCurrentStudent || {});
+  wmApplyStudentLearningMap(wmCurrentStudent, { skipMapRender:true });
+  wmShowMapLoadingState_();
+  renderHomeworkTable([], wmStudentProfile || wmCurrentStudent);
 
-  setData = wmBuildLevelSetData(currentLevelNumber).map(function(item, index){
-    if(index === 0){
-      return {
-        set:item.set,
-        status:'current',
-        progress:0,
-        repeatCount:0,
-        officialRound:0,
-        targetRoundLimit:2,
-        levelComplete:false,
-        score:'-',
-        latestDate:''
-      };
-    }
-    return {
-      set:item.set,
-      status:'locked',
-      progress:0,
-      repeatCount:0,
-      officialRound:0,
-      targetRoundLimit:2,
-      levelComplete:false,
-      score:'-',
-      latestDate:''
-    };
-  });
+  wmApplyLmsPreviewReadOnly_();
+  wmWatchLmsPreviewReadOnly_();
 
-  wmMapDataReady = true;
-  setText('currentLevelLabel','LEVEL 3');
-  setText('progressLevelLabel','LEVEL 3 진행률');
-  setText('levelPercent','0%');
-  setText('mainProgressText','0%');
-
-  const fill = document.getElementById('progressFill');
-  if(fill) fill.style.width = '0%';
-
-  renderSetMap();
-
-  const map = document.getElementById('setMap');
-  if(map){
-    map.setAttribute('aria-label','학습맵 보기 전용');
-    map.querySelectorAll('button').forEach(function(button){
-      button.disabled = true;
-      button.removeAttribute('onclick');
-      button.setAttribute('tabindex','-1');
-    });
+  const studentId = String(wmCurrentStudent && wmCurrentStudent.학생ID || '').trim().toUpperCase();
+  if(!studentId){
+    wmStopMapLoadingState_();
+    wmShowMapUnavailable_('선택한 학생ID가 전달되지 않아 학습맵을 불러올 수 없습니다.');
+    wmApplyLmsPreviewReadOnly_();
+    return false;
   }
 
+  /* LMS가 전달한 학생ID로 현재진행_DB와 학습기록_DB를 조회합니다.
+     학생 로그인 세션은 사용하지 않으며, 화면은 MutationObserver로 계속 읽기 전용을 유지합니다. */
+  wmFetchLearningMap(studentId);
   return true;
 }
 
