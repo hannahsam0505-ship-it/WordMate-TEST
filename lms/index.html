@@ -652,11 +652,11 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
     #studentManageTable tbody td { background-color:inherit; }
     #studentTableWrap th:nth-child(2), #studentTableWrap td:nth-child(2) { position:sticky; left:0; z-index:25; width:110px; min-width:110px; max-width:110px; }
     #studentTableWrap th:nth-child(3), #studentTableWrap td:nth-child(3) { position:sticky; left:110px; z-index:25; width:120px; min-width:120px; max-width:120px; }
-    #studentTableWrap th:nth-child(8), #studentTableWrap td:nth-child(8) { position:sticky; left:230px; z-index:25; width:120px; min-width:120px; max-width:120px; }
-    #studentTableWrap th:nth-child(9), #studentTableWrap td:nth-child(9) { position:sticky; left:350px; z-index:25; width:120px; min-width:120px; max-width:120px; }
-    #studentTableWrap th:nth-child(10), #studentTableWrap td:nth-child(10) { position:sticky; left:470px; z-index:25; width:120px; min-width:120px; max-width:120px; }
-    #studentTableWrap th:nth-child(12), #studentTableWrap td:nth-child(12) { position:sticky; left:590px; z-index:25; width:140px; min-width:140px; max-width:140px; }
-    #studentTableWrap thead th:nth-child(2), #studentTableWrap thead th:nth-child(3), #studentTableWrap thead th:nth-child(8), #studentTableWrap thead th:nth-child(9), #studentTableWrap thead th:nth-child(10), #studentTableWrap thead th:nth-child(12) { z-index:40; background:#f9fafb; }
+    #studentTableWrap th:nth-child(6), #studentTableWrap td:nth-child(6) { position:sticky; left:230px; z-index:25; width:120px; min-width:120px; max-width:120px; }
+    #studentTableWrap th:nth-child(7), #studentTableWrap td:nth-child(7) { position:sticky; left:350px; z-index:25; width:120px; min-width:120px; max-width:120px; }
+    #studentTableWrap th:nth-child(8), #studentTableWrap td:nth-child(8) { position:sticky; left:470px; z-index:25; width:120px; min-width:120px; max-width:120px; }
+    #studentTableWrap th:nth-child(10), #studentTableWrap td:nth-child(10) { position:sticky; left:590px; z-index:25; width:140px; min-width:140px; max-width:140px; }
+    #studentTableWrap thead th:nth-child(2), #studentTableWrap thead th:nth-child(3), #studentTableWrap thead th:nth-child(6), #studentTableWrap thead th:nth-child(7), #studentTableWrap thead th:nth-child(8), #studentTableWrap thead th:nth-child(10) { z-index:40; background:#f9fafb; }
     #gradeLevelTableWrap { border-radius:0 0 14px 14px; max-height:620px; overflow:auto; }
     #gradeLevelTableWrap thead th { position:sticky; top:0; z-index:30; background:#f9fafb; }
     /* WM_GRADE_LEVEL_32_COLUMN_WIDTH_V1: 실제 데이터 최대 글자수 기준 32개 컬럼 폭 */
@@ -1132,8 +1132,6 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
         </div>
         <div class="wm-filter-grid">
           <label class="wm-required-field">비밀번호<span class="wm-required-star">*</span><input type="text" id="wmStudentRegisterPassword" maxlength="4" inputmode="numeric" placeholder="숫자 4자리" /><button type="button" class="wm-action-btn sub" onclick="wmResetStudentRegisterPassword()" style="margin-top:6px;padding:8px 10px;">초기화(1111)</button></label>
-          <label class="wm-required-field">출석약속<span class="wm-required-star">*</span><select id="wmStudentRegisterAttendancePromise"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option><option>6</option><option>7</option></select></label>
-          <label class="wm-required-field">세트약속<span class="wm-required-star">*</span><select id="wmStudentRegisterSetPromise"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option><option>6</option><option>7</option></select></label>
           <label class="wm-required-field">최초배정<span class="wm-required-star">*</span><select id="wmStudentRegisterLearningAssign"><option value="3레벨">3(초3)</option><option value="4레벨">4(초4)</option><option value="5레벨">5(초5)</option><option value="6레벨">6(초6)</option><option value="7레벨">7(중1)</option><option value="8레벨">8(중2)</option><option value="9레벨">9(중3)</option><option value="10레벨">10(고1)</option><option value="11레벨">11(고2)</option><option value="12레벨">12(고3)</option><option value="13레벨">13(수능)</option></select></label>
           <label class="wm-required-field">S4실루엣단계<span class="wm-required-star">*</span><select id="wmStudentRegisterS4"><option value="1단계">1단계('다보기'만, 100%)</option><option value="2단계">2단계('많이보기'까지, 70%)</option><option value="3단계">3단계('조금보기'까지, 30%)</option><option value="4단계" selected>4단계('스스로쓰기'까지, 0%)</option></select></label>
           <label class="wm-required-field">S6테스트모드<span class="wm-required-star">*</span><select id="wmStudentRegisterS6"><option>기본전체</option><option>객관식(2개)</option><option>객관식+영한</option><option>객관식+한영</option></select></label>
@@ -1172,7 +1170,7 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
         </div>
       </div>
 
-      <div class="wm-record-scroll-top" id="studentTopScroll"><div class="wm-record-scroll-inner" id="studentTopScrollInner"></div></div><div class="wm-table-wrap" id="studentTableWrap"><table id="studentManageTable"><thead><tr><th class="wm-student-seq-col">학생일련번호</th><th>학생ID</th><th>학생이름</th><th>비밀번호</th><th>출석약속</th><th>세트약속</th><th>최초배정</th><th>레벨완료조건</th><th>S4실루엣단계</th><th>S6테스트모드</th><th>현재세트</th><th>다음레벨완료조건</th><th>반명</th><th>교사명</th><th>학교</th><th>학년</th><th>학부모명</th><th>학부모연락처</th><th>최종결제</th><th>등록일</th><th>최초등록일</th><th>최근결제일</th><th>결제공백일수</th><th>재등록횟수</th><th>총등록기간</th><th>등록상태</th><th>활성상태</th><th>반ID</th><th>교사ID</th><th>현재세션</th><th>세션상태</th><th>최종로그인</th><th>접속기기</th><th>비고</th><th>저장</th></tr></thead><tbody id="studentManageTbody"><tr><td colspan="35">학생관리_DB 연결 대기 중입니다.</td></tr></tbody></table></div>
+      <div class="wm-record-scroll-top" id="studentTopScroll"><div class="wm-record-scroll-inner" id="studentTopScrollInner"></div></div><div class="wm-table-wrap" id="studentTableWrap"><table id="studentManageTable"><thead><tr><th class="wm-student-seq-col">학생일련번호</th><th>학생ID</th><th>학생이름</th><th>비밀번호</th><th>최초배정</th><th>레벨완료조건</th><th>S4실루엣단계</th><th>S6테스트모드</th><th>현재세트</th><th>다음레벨완료조건</th><th>반명</th><th>교사명</th><th>학교</th><th>학년</th><th>학부모명</th><th>학부모연락처</th><th>최종결제</th><th>등록일</th><th>최초등록일</th><th>최근결제일</th><th>결제공백일수</th><th>재등록횟수</th><th>총등록기간</th><th>등록상태</th><th>활성상태</th><th>반ID</th><th>교사ID</th><th>현재세션</th><th>세션상태</th><th>최종로그인</th><th>접속기기</th><th>비고</th><th>저장</th></tr></thead><tbody id="studentManageTbody"><tr><td colspan="33">학생관리_DB 연결 대기 중입니다.</td></tr></tbody></table></div>
     </section>
     <section class="wm-panel" id="panel-records">
       <div class="wm-panel-title-row"><h2 class="wm-panel-title">학습기록 센터</h2><p class="wm-panel-desc">연결 예정 DB: 학습기록_DB / 구글시트 현재 1행 컬럼명을 임의 수정 없이 그대로 반영했습니다.</p></div>
@@ -2402,21 +2400,9 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
         wmSetLmsLoginMessage((res && res.message) || '로그인 실패');
         return;
       }
-      const loginTeacher = res.teacher || {};
-      const normalizedTeacherId = String(
-        loginTeacher.교사ID ||
-        loginTeacher.teacherId ||
-        loginTeacher.teacherID ||
-        loginTeacher.Teacher_ID ||
-        loginTeacher.TeacherID ||
-        loginTeacher.ID ||
-        loginTeacher.id ||
-        ''
-      ).trim();
-      if(normalizedTeacherId && !loginTeacher.교사ID) loginTeacher.교사ID = normalizedTeacherId;
-      localStorage.setItem(WM_LMS_AUTH_STORAGE_KEY, JSON.stringify({ teacher:loginTeacher, loginAt:new Date().toISOString() }));
+      localStorage.setItem(WM_LMS_AUTH_STORAGE_KEY, JSON.stringify({ teacher:res.teacher, loginAt:new Date().toISOString() }));
       wmSetLmsLoginMessage('로그인 성공 · 대시보드 자료를 불러오는 중입니다.', true);
-      wmApplyLmsAuth(loginTeacher);
+      wmApplyLmsAuth(res.teacher);
       setTimeout(function(){ wmSetLmsLoginMessage('', true); }, 300);
     }
 
@@ -3054,21 +3040,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       return /^\d{4}-\d{2}-\d{2}$/.test(String(formatted)) ? String(formatted).replace(/-/g,'.') : formatted;
     }
 
-    function formatStudyDateMinute(value){
-      if(value === undefined || value === null || String(value).trim() === '') return value;
-      const raw=String(value).trim();
-      const normalized=raw.replace(/[.\/]/g,'-').replace(/T/,' ');
-      const match=normalized.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:\s+(\d{1,2}):(\d{1,2})(?::\d{1,2})?)?/);
-      if(!match) return value;
-      const yy=match[1].slice(-2);
-      const mm=String(Number(match[2])).padStart(2,'0');
-      const dd=String(Number(match[3])).padStart(2,'0');
-      if(match[4] === undefined || match[5] === undefined) return yy+'-'+mm+'-'+dd;
-      return yy+'-'+mm+'-'+dd+' '+Number(match[4])+':'+String(Number(match[5])).padStart(2,'0');
-    }
-
     function displayCellValue(value, header){
-      if(header === '학습날짜') return formatStudyDateMinute(value);
       if(['이전일','등록일','최근결제일'].includes(header)) return formatKoreaDateDot(value);
       return formatKoreaDate(value);
     }
@@ -3203,31 +3175,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
     }
 
     function wmOpenSelectedStudentMap(){
-      const student=window.WM_PROFILE_SELECTED_STUDENT || {};
-      const actorTeacherId=(typeof wmGetSettingActorTeacherId==='function')
-        ? String(wmGetSettingActorTeacherId() || '').trim()
-        : '';
-
-      const params=new URLSearchParams();
-      params.set('wmEntry','lmsPreview');
-      params.set('wmPreview','1');
-
-      const values={
-        studentId:cellValue(student,headerAliases('학생ID')),
-        studentName:cellValue(student,headerAliases('학생이름')),
-        school:cellValue(student,headerAliases('학교')),
-        grade:cellValue(student,headerAliases('학년')),
-        className:cellValue(student,headerAliases('반명')) || cellValue(student,headerAliases('Class')),
-        teacherName:cellValue(student,headerAliases('교사명')),
-        actorTeacherId:actorTeacherId
-      };
-
-      Object.keys(values).forEach(function(key){
-        const value=String(values[key] || '').trim();
-        if(value) params.set(key,value);
-      });
-
-      window.open(WM_MAP_URL+'?'+params.toString(),'_blank');
+      window.open(WM_MAP_URL+'?wmEntry=lmsPreview&wmPreview=1','_blank');
     }
 
     function wmBindProfileMapViewButton(){
@@ -4541,7 +4489,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
         [
           index+1,
           item.reportWeek||'-',
-          formatStudyDateMinute(item.learningDate)||'-',
+          item.learningDate||'-',
           item.learningLevel||'-',
           item.setId||'-',
           item.setLearningTime||'-',
@@ -4736,7 +4684,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       for(let rowIndex=0;rowIndex<10;rowIndex++){
         const item=detailSource[rowIndex]||{};
         const expected=[
-          rowIndex+1,item.reportWeek||'-',formatStudyDateMinute(item.learningDate)||'-',item.learningLevel||'-',
+          rowIndex+1,item.reportWeek||'-',item.learningDate||'-',item.learningLevel||'-',
           item.setId||'-',item.setLearningTime||'-',
           item.wordCount===0?0:(item.wordCount||'-'),item.score===0?0:(item.score||'-'),
           item.testTime||'-',item.device||'-'
@@ -5540,7 +5488,9 @@ function extractRecordRowsFromResponse(data){
       const raw = value === undefined || value === null ? '' : String(value).trim();
       if(!raw) return '';
       if(header === '학습날짜'){
-        return formatStudyDateMinute(raw);
+        const date = parseDateValue(raw);
+        if(date) return (date.getMonth()+1)+'/'+date.getDate();
+        return displayCellValue(raw, '학습날짜');
       }
       if(header === '단어수'){
         return /^\d+$/.test(raw) ? raw+'단어' : raw;
@@ -6461,45 +6411,8 @@ async function generateSettingTeacherId(){
 }
 
 function wmGetSettingActorTeacherId(){
-  const candidates = [];
-  const pushTeacherIds = function(teacher){
-    teacher = teacher || {};
-    [
-      teacher.교사ID,
-      teacher.teacherId,
-      teacher.teacherID,
-      teacher.Teacher_ID,
-      teacher.TeacherID,
-      teacher.ID,
-      teacher.id,
-      teacher.아이디
-    ].forEach(function(value){
-      const id = String(value || '').trim();
-      if(id) candidates.push(id);
-    });
-  };
-
-  pushTeacherIds(window.WM_LMS_AUTH_TEACHER);
-
-  try{
-    const saved = JSON.parse(localStorage.getItem(WM_LMS_AUTH_STORAGE_KEY) || '{}');
-    pushTeacherIds(saved.teacher);
-    pushTeacherIds(saved);
-  }catch(err){}
-
-  try{
-    const loginInput = document.getElementById('wmLmsTeacherId');
-    const loginId = String(loginInput && loginInput.value || '').trim();
-    if(loginId) candidates.push(loginId);
-  }catch(err){}
-
-  const actorTeacherId = String(candidates.find(Boolean) || '').trim();
-  if(actorTeacherId && window.WM_LMS_AUTH_TEACHER){
-    if(!window.WM_LMS_AUTH_TEACHER.교사ID){
-      window.WM_LMS_AUTH_TEACHER.교사ID = actorTeacherId;
-    }
-  }
-  return actorTeacherId;
+  const teacher = window.WM_LMS_AUTH_TEACHER || {};
+  return String(teacher.교사ID || '').trim();
 }
 
 
@@ -7582,8 +7495,6 @@ async function saveStudentCreateToDB(){
     '학생일련번호': nextSerial,
     '학생ID': issuedStudentId || '자동발급 대기',
     '학생이름': getValue('studentNameForCreate'),
-    '출석약속': getValue('studentAttendancePromiseForCreate') || '3',
-    '세트약속': getValue('studentSetPromiseForCreate') || '3',
     '최초배정': getValue('studentLearningAssignForCreate'),
     'S4실루엣단계': getValue('studentS4ForCreate') || '전체',
     'S6테스트모드': getValue('studentS6ForCreate') || '기본전체',
@@ -7846,8 +7757,6 @@ function wmCollectStudentRegisterPayload(){
     studentId:id,
     studentName:wmStudentRegisterValue('wmStudentRegisterName').trim(),
     password:wmStudentRegisterValue('wmStudentRegisterPassword').trim(),
-    attendancePromise:wmStudentRegisterValue('wmStudentRegisterAttendancePromise'),
-    setPromise:wmStudentRegisterValue('wmStudentRegisterSetPromise'),
     learningAssign:wmStudentRegisterValue('wmStudentRegisterLearningAssign'),
     s4:wmStudentRegisterValue('wmStudentRegisterS4'),
     s6:wmStudentRegisterValue('wmStudentRegisterS6'),
@@ -7882,8 +7791,6 @@ function wmCollectStudentRegisterPayload(){
     '학생ID':payload.studentId,
     '학생이름':payload.studentName,
     '비밀번호':payload.password,
-    '출석약속':payload.attendancePromise,
-    '세트약속':payload.setPromise,
     '최초배정':payload.learningAssign,
     'S4실루엣단계':payload.s4,
     'S6테스트모드':payload.s6,
@@ -7945,7 +7852,7 @@ async function wmApplyStudentRegister(){
     return;
   }
   const requiredFields = [
-    ['studentName','학생이름'], ['password','비밀번호'], ['attendancePromise','출석약속'], ['setPromise','세트약속'], ['learningAssign','최초배정'],
+    ['studentName','학생이름'], ['password','비밀번호'], ['learningAssign','최초배정'],
     ['s4','S4실루엣단계'], ['s6','S6테스트모드'], ['levelCompleteCondition','레벨완료조건']
   ];
   const missing = requiredFields.filter(([key])=>!String(payload[key] || '').trim()).map(([,label])=>label);
@@ -8083,15 +7990,6 @@ function wmCurrentProgressForStudentRow(row){
   ) || null;
 }
 
-/* ==========================================================
-   최초배정·레벨완료조건 비활성화 기준 (현재진행_DB 기준)
-
-   1. 학생ID로 학생관리_DB 행과 현재진행_DB 행을 연결한다.
-   2. 완료Step에 값이 한 글자라도 있으면 최초배정을 즉시 비활성화한다.
-   3. 현재레벨의 시작세트(Set_ID = WM현재레벨-1-1)에서
-      완료Step이 생성되면 레벨완료조건을 비활성화한다.
-   4. 비활성화된 값은 화면과 저장 모두 기존 값을 유지한다.
-========================================================== */
 function wmInitialLevelLockState(row){
   const progress = wmCurrentProgressForStudentRow(row);
   const completedStep = String(wmProgressField(progress, ['완료Step','완료 STEP','CompletedStep','completedStep']) || '').trim();
@@ -8130,8 +8028,6 @@ async function saveStudentLearningModeFromRow(studentId, skipLockAndToast){
   const params = new URLSearchParams({
     mode:'saveStudentLearningMode',
     studentId:String(studentId || '').trim(),
-    attendancePromise:getSel('출석약속'),
-    setPromise:getSel('세트약속'),
     learningAssign:getSel('최초배정'),
     s4:getSel('S4실루엣단계'),
     s6:getSel('S6테스트모드'),
@@ -8495,7 +8391,7 @@ function renderStudentManageRows(){
   if(WM_STUDENT_MANAGE_PAGE < 1) WM_STUDENT_MANAGE_PAGE = 1;
 
   if(!rows.length){
-    tbody.innerHTML = '<tr><td colspan="35">표시할 학생관리_DB 데이터가 없습니다.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="33">표시할 학생관리_DB 데이터가 없습니다.</td></tr>';
     wmUpdateManagePager('students', 0, 1, 1);
     setManageLoading('students', false);
     return;
@@ -8511,8 +8407,6 @@ function renderStudentManageRows(){
     const normalizedStudentId = wmStudentRegisterIdCompareKey(studentId);
     const duplicateBadge = duplicatedStudentIds.has(normalizedStudentId) ? '<span class="wm-duplicate-id-badge">중복</span>' : '';
     const studentName = row['학생이름'] || '';
-    const attendancePromise = String(row['출석약속'] || '3').replace(/[^1-7]/g, '').slice(0,1) || '3';
-    const setPromise = String(row['세트약속'] || '3').replace(/[^1-7]/g, '').slice(0,1) || '3';
     const s4Raw = wmNormalizeStudentModeValue(row, 'S4실루엣단계', '4단계');
     const s4 = (s4Raw === '전체' || s4Raw === '0단계') ? '1단계' : s4Raw;
     const s6 = wmNormalizeStudentModeValue(row, 'S6테스트모드', row['학습모드'] || '기본전체');
@@ -8525,8 +8419,6 @@ function renderStudentManageRows(){
       <td>${escapeHtml(studentId)}${duplicateBadge}</td>
       <td><span style="color:var(--wm-blue);font-weight:900;">${escapeHtml(studentName)}</span></td>
       <td>${escapeHtml(row['비밀번호'] || '')}</td>
-      <td>${wmModeSelectHtml(studentId, '출석약속', attendancePromise, ['1','2','3','4','5','6','7'])}</td>
-      <td>${wmModeSelectHtml(studentId, '세트약속', setPromise, ['1','2','3','4','5','6','7'])}</td>
       <td>${wmLearningAssignSelectHtml(studentId, row['최초배정'] || row['학습배정'] || '', initialLevelLock)}</td>
       <td>${wmModeSelectHtml(studentId, '레벨완료조건', complete, ['1회','2회','3회'], levelConditionLock)}</td>
       <td>${wmModeSelectHtml(studentId, 'S4실루엣단계', s4, [['1단계',"1단계('다보기'만, 100%)"],['2단계',"2단계('많이보기'까지, 70%)"],['3단계',"3단계('조금보기'까지, 30%)"],['4단계',"4단계('스스로쓰기'까지, 0%)"]])}</td>
@@ -9594,3 +9486,69 @@ document.addEventListener('keydown',function(e){
   </script>
 </body>
 </html>
+
+
+<!-- WM_LMS_STUDENT_REPORT_POPUP_BRIDGE_V1 -->
+<style>
+body.wm-student-report-mode{margin:0!important;background:#eaf0f8!important;overflow:auto!important;}
+body.wm-student-report-mode>.wm-lms-login-gate,
+body.wm-student-report-mode>.wm-admin-wrap,
+body.wm-student-report-mode>#wm-test-booth-banner{display:none!important;}
+body.wm-student-report-mode .wm-report-preview-modal{background:#eaf0f8!important;padding:12px!important;}
+body.wm-student-report-mode .wm-report-preview-modal-card{width:min(1120px,98vw)!important;}
+body.wm-student-report-mode .wm-report-preview-modal-head button{display:none!important;}
+</style>
+<script>
+(function wmLmsStudentReportPopupBridgeV1_(){
+  'use strict';
+  const params=new URLSearchParams(location.search||'');
+  if(params.get('wmStudentReport')!=='1') return;
+  document.documentElement.classList.add('wm-student-report-entry');
+
+  function fail_(message){
+    document.body.classList.add('wm-student-report-mode','wm-lms-authenticated');
+    document.body.innerHTML='<div style="max-width:620px;margin:80px auto;padding:28px;background:#fff;border-radius:18px;text-align:center;font-family:Pretendard,Arial,sans-serif;font-weight:900;box-shadow:0 16px 50px rgba(15,23,42,.15)">'+String(message||'성적표를 불러올 수 없습니다.')+'</div>';
+  }
+  async function boot_(){
+    const studentId=String(params.get('studentId')||'').trim();
+    const sessionToken=String(params.get('sessionToken')||'').trim();
+    const year=Number(params.get('year')||0);
+    const month=Number(params.get('month')||0);
+    const week=Number(params.get('week')||0);
+    if(!studentId || !sessionToken || !year || !month || !week){fail_('성적표 조회 정보가 부족합니다.');return;}
+
+    document.body.classList.add('wm-student-report-mode','wm-lms-authenticated');
+    try{
+      const verifyQ=new URLSearchParams({action:'studentReportList',mode:'studentReportList',studentId:studentId,sessionToken:sessionToken,t:String(Date.now())});
+      const verifyRes=await fetch(WM_APPS_SCRIPT_URL+'?'+verifyQ.toString(),{cache:'no-store'});
+      const verify=await verifyRes.json();
+      if(!verify.success || verify.sessionValid!==true) throw new Error(verify.message||'학생 세션 확인 실패');
+      const allowed=(verify.reports||[]).some(function(r){return Number(r.year)===year&&Number(r.month)===month&&Number(r.week)===week;});
+      if(!allowed) throw new Error('선택한 성적표가 실제 DB 목록에 없습니다.');
+
+      const recordsQ=new URLSearchParams({action:'learningRecords',mode:'learningRecords',studentId:studentId,sessionToken:sessionToken,t:String(Date.now())});
+      const recordsRes=await fetch(WM_APPS_SCRIPT_URL+'?'+recordsQ.toString(),{cache:'no-store'});
+      const raw=await recordsRes.json();
+      let rows=typeof wmExtractLearningRecordRows==='function' ? wmExtractLearningRecordRows(raw) : (raw.records||raw.rows||[]);
+      rows=(rows||[]).filter(function(row){
+        const sid=String(cellValue(row,headerAliases('학생ID'))||'').trim().toUpperCase();
+        return sid===studentId.toUpperCase();
+      });
+      WM_REPORT_MANAGE_ROWS=wmNormalizeCompletedSetRows(rows);
+      const candidates=(WM_REPORT_MANAGE_ROWS||[]).filter(function(row){
+        const d=parseDateValue(reportDetailDate(row));
+        return d&&d.getFullYear()===year&&(d.getMonth()+1)===month&&Math.min(5,Math.max(1,reportDetailWeek(row)||1))===week;
+      });
+      if(!candidates.length) throw new Error('선택한 주간의 완료 학습기록이 없습니다.');
+      const clicked=candidates.slice().sort(function(a,b){return (parseDateValue(reportDetailDate(b))||0)-(parseDateValue(reportDetailDate(a))||0);})[0];
+      const reportId=reportDetailReportId(clicked,(WM_REPORT_MANAGE_ROWS||[]).indexOf(clicked),WM_REPORT_MANAGE_ROWS||[]);
+      await openReportDetail(reportId);
+      const title=document.querySelector('.wm-report-preview-modal-title');
+      if(title) title.textContent=year+'년 '+month+'월 '+week+'주 성적표';
+    }catch(err){console.error('학생 성적표 팝업 연결 실패:',err);fail_(err&&err.message?err.message:err);}
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',function(){setTimeout(boot_,0);},{once:true});
+  else setTimeout(boot_,0);
+})();
+</script>
+<!-- WM_LMS_STUDENT_REPORT_POPUP_BRIDGE_V1 END -->
