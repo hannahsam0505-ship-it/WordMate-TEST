@@ -3042,7 +3042,21 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       return /^\d{4}-\d{2}-\d{2}$/.test(String(formatted)) ? String(formatted).replace(/-/g,'.') : formatted;
     }
 
+    function formatStudyDateMinute(value){
+      if(value === undefined || value === null || String(value).trim() === '') return value;
+      const raw=String(value).trim();
+      const normalized=raw.replace(/[.\/]/g,'-').replace(/T/,' ');
+      const match=normalized.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:\s+(\d{1,2}):(\d{1,2})(?::\d{1,2})?)?/);
+      if(!match) return value;
+      const yy=match[1].slice(-2);
+      const mm=String(Number(match[2])).padStart(2,'0');
+      const dd=String(Number(match[3])).padStart(2,'0');
+      if(match[4] === undefined || match[5] === undefined) return yy+'-'+mm+'-'+dd;
+      return yy+'-'+mm+'-'+dd+' '+Number(match[4])+':'+String(Number(match[5])).padStart(2,'0');
+    }
+
     function displayCellValue(value, header){
+      if(header === '학습날짜') return formatStudyDateMinute(value);
       if(['이전일','등록일','최근결제일'].includes(header)) return formatKoreaDateDot(value);
       return formatKoreaDate(value);
     }
@@ -4491,7 +4505,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
         [
           index+1,
           item.reportWeek||'-',
-          item.learningDate||'-',
+          formatStudyDateMinute(item.learningDate)||'-',
           item.learningLevel||'-',
           item.setId||'-',
           item.setLearningTime||'-',
@@ -4686,7 +4700,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       for(let rowIndex=0;rowIndex<10;rowIndex++){
         const item=detailSource[rowIndex]||{};
         const expected=[
-          rowIndex+1,item.reportWeek||'-',item.learningDate||'-',item.learningLevel||'-',
+          rowIndex+1,item.reportWeek||'-',formatStudyDateMinute(item.learningDate)||'-',item.learningLevel||'-',
           item.setId||'-',item.setLearningTime||'-',
           item.wordCount===0?0:(item.wordCount||'-'),item.score===0?0:(item.score||'-'),
           item.testTime||'-',item.device||'-'
@@ -5490,9 +5504,7 @@ function extractRecordRowsFromResponse(data){
       const raw = value === undefined || value === null ? '' : String(value).trim();
       if(!raw) return '';
       if(header === '학습날짜'){
-        const date = parseDateValue(raw);
-        if(date) return (date.getMonth()+1)+'/'+date.getDate();
-        return displayCellValue(raw, '학습날짜');
+        return formatStudyDateMinute(raw);
       }
       if(header === '단어수'){
         return /^\d+$/.test(raw) ? raw+'단어' : raw;
