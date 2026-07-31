@@ -4871,9 +4871,9 @@ wmForceHomeworkBottomFixedBarOnFirstView();
 </script>
 
 
-<!-- WM_MAP_ACTUAL_REPORT_DROPDOWN_V1 -->
+<!-- WM_MAP_ACTUAL_REPORT_DROPDOWN_V2 -->
 <script>
-(function wmMapActualReportDropdownV1_(){
+(function wmMapActualReportDropdownV2_(){
   'use strict';
   let reportRows=[];
 
@@ -4904,15 +4904,39 @@ wmForceHomeworkBottomFixedBarOnFirstView();
       const res=await fetch(apiBase_()+'?'+q.toString(),{cache:'no-store'});
       const data=await res.json();
       reportRows=Array.isArray(data.reports) ? data.reports : [];
-      if(!data.success || !reportRows.length){select.innerHTML='<option value="">생성된 성적표가 없습니다.</option>';return;}
-      select.innerHTML=reportRows.map(function(row,index){return '<option value="'+index+'">'+String(row.label||'성적표')+'</option>';}).join('');
-      select.value='0'; select.disabled=false; button.disabled=false;
-    }catch(err){select.innerHTML='<option value="">성적표 조회 실패</option>';console.error('Map 성적표 목록 조회 실패:',err);}
+      if(!data.success || !reportRows.length){
+        select.innerHTML='<option value="">성적표 기간 조회 실패</option>';
+        console.error('Map 성적표 기간 조회 실패:',data);
+        return;
+      }
+      select.innerHTML=reportRows.map(function(row,index){
+        return '<option value="'+index+'">'+String(row.label||'성적표')+'</option>';
+      }).join('');
+      select.value='0';
+      select.disabled=false;
+      button.disabled=false;
+    }catch(err){
+      select.innerHTML='<option value="">성적표 조회 실패</option>';
+      console.error('Map 성적표 목록 조회 실패:',err);
+    }
   }
   function open_(){
     const row=selected_();
-    if(!row){alert('표시할 성적표를 선택하세요.');return;}
-    const q=new URLSearchParams({wmStudentReport:'1',studentId:studentId_(),sessionToken:sessionToken_(),year:String(row.year||''),month:String(row.month||''),week:String(row.week||''),reportType:String(row.reportType||'주간'),learningDate:String(row.learningDate||''),reportId:String(row.reportId||''),t:String(Date.now())});
+    if(!row){alert('표시할 성적표 기간을 선택하세요.');return;}
+    const q=new URLSearchParams({
+      wmStudentReport:'1',
+      studentId:studentId_(),
+      sessionToken:sessionToken_(),
+      year:String(row.year||''),
+      month:String(row.month||''),
+      week:String(row.week||0),
+      reportType:String(row.reportType||'주간'),
+      learningDate:String(row.learningDate||''),
+      reportId:String(row.reportId||''),
+      available:row.available===false?'0':'1',
+      emptyMessage:String(row.emptyMessage||''),
+      t:String(Date.now())
+    });
     const popup=window.open(WM_LMS_URL+'?'+q.toString(),'wmStudentReportPopup','popup=yes,width=1180,height=900,resizable=yes,scrollbars=yes');
     if(!popup) alert('팝업이 차단되었습니다. 브라우저에서 팝업을 허용하세요.');
   }
@@ -4926,4 +4950,4 @@ wmForceHomeworkBottomFixedBarOnFirstView();
   window.addEventListener('load',function(){setTimeout(load_,900);},{once:true});
 })();
 </script>
-<!-- WM_MAP_ACTUAL_REPORT_DROPDOWN_V1 END -->
+<!-- WM_MAP_ACTUAL_REPORT_DROPDOWN_V2 END -->

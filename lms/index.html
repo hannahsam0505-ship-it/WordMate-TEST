@@ -9488,7 +9488,7 @@ document.addEventListener('keydown',function(e){
 </html>
 
 
-<!-- WM_LMS_STUDENT_REPORT_POPUP_BRIDGE_V1 -->
+<!-- WM_LMS_STUDENT_REPORT_POPUP_BRIDGE_V2 -->
 <style>
 body.wm-student-report-mode{margin:0!important;background:#eaf0f8!important;overflow:auto!important;}
 body.wm-student-report-mode>.wm-lms-login-gate,
@@ -9497,34 +9497,74 @@ body.wm-student-report-mode>#wm-test-booth-banner{display:none!important;}
 body.wm-student-report-mode .wm-report-preview-modal{background:#eaf0f8!important;padding:12px!important;}
 body.wm-student-report-mode .wm-report-preview-modal-card{width:min(1120px,98vw)!important;}
 body.wm-student-report-mode .wm-report-preview-modal-head button{display:none!important;}
+.wm-student-report-close{position:fixed;top:18px;right:22px;z-index:2147483647;border:0;border-radius:12px;padding:11px 18px;background:#173b75;color:#fff;font-size:15px;font-weight:900;cursor:pointer;box-shadow:0 8px 24px rgba(15,23,42,.22);}
+.wm-student-report-empty-wrap{width:min(794px,calc(100vw - 40px));min-height:1123px;margin:28px auto;background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 16px 50px rgba(15,23,42,.16);font-family:Pretendard,"Noto Sans KR",Arial,sans-serif;}
+.wm-student-report-empty-message{padding:40px;text-align:center;color:#173b75;font-size:24px;font-weight:900;line-height:1.6;}
 </style>
 <script>
-(function wmLmsStudentReportPopupBridgeV1_(){
+(function wmLmsStudentReportPopupBridgeV2_(){
   'use strict';
   const params=new URLSearchParams(location.search||'');
   if(params.get('wmStudentReport')!=='1') return;
   document.documentElement.classList.add('wm-student-report-entry');
 
+  function addCloseButton_(){
+    if(document.getElementById('wmStudentReportClose')) return;
+    const button=document.createElement('button');
+    button.id='wmStudentReportClose';
+    button.className='wm-student-report-close';
+    button.type='button';
+    button.textContent='닫기';
+    button.addEventListener('click',function(){window.close();});
+    document.body.appendChild(button);
+  }
+
   function fail_(message){
     document.body.classList.add('wm-student-report-mode','wm-lms-authenticated');
-    document.body.innerHTML='<div style="max-width:620px;margin:80px auto;padding:28px;background:#fff;border-radius:18px;text-align:center;font-family:Pretendard,Arial,sans-serif;font-weight:900;box-shadow:0 16px 50px rgba(15,23,42,.15)">'+String(message||'성적표를 불러올 수 없습니다.')+'</div>';
+    document.body.innerHTML='<button id="wmStudentReportClose" class="wm-student-report-close" type="button">닫기</button>'+
+      '<div class="wm-student-report-empty-wrap"><div class="wm-student-report-empty-message">'+
+      String(message||'성적표를 불러올 수 없습니다.')+'</div></div>';
+    const close=document.getElementById('wmStudentReportClose');
+    if(close) close.addEventListener('click',function(){window.close();});
   }
+
   async function boot_(){
     const studentId=String(params.get('studentId')||'').trim();
     const sessionToken=String(params.get('sessionToken')||'').trim();
     const year=Number(params.get('year')||0);
     const month=Number(params.get('month')||0);
     const week=Number(params.get('week')||0);
-    if(!studentId || !sessionToken || !year || !month || !week){fail_('성적표 조회 정보가 부족합니다.');return;}
+    const reportType=String(params.get('reportType')||'주간').trim()==='월간'?'월간':'주간';
+    const available=params.get('available')!=='0';
+    const emptyMessage=String(params.get('emptyMessage')||'').trim() ||
+      (reportType==='월간'?'해당 월 성적표가 없습니다.':'해당 주 성적표가 없습니다.');
+
+    if(!studentId || !sessionToken || !year || !month || (reportType==='주간'&&!week)){
+      fail_('성적표 조회 정보가 부족합니다.');
+      return;
+    }
 
     document.body.classList.add('wm-student-report-mode','wm-lms-authenticated');
+
+    if(!available){
+      fail_(emptyMessage);
+      return;
+    }
+
     try{
       const verifyQ=new URLSearchParams({action:'studentReportList',mode:'studentReportList',studentId:studentId,sessionToken:sessionToken,t:String(Date.now())});
       const verifyRes=await fetch(WM_APPS_SCRIPT_URL+'?'+verifyQ.toString(),{cache:'no-store'});
       const verify=await verifyRes.json();
       if(!verify.success || verify.sessionValid!==true) throw new Error(verify.message||'학생 세션 확인 실패');
-      const allowed=(verify.reports||[]).some(function(r){return Number(r.year)===year&&Number(r.month)===month&&Number(r.week)===week;});
-      if(!allowed) throw new Error('선택한 성적표가 실제 DB 목록에 없습니다.');
+
+      const allowed=(verify.reports||[]).some(function(r){
+        return String(r.reportType||'주간')===reportType &&
+          Number(r.year)===year &&
+          Number(r.month)===month &&
+          (reportType==='월간' || Number(r.week)===week) &&
+          r.available!==false;
+      });
+      if(!allowed) throw new Error(emptyMessage);
 
       const recordsQ=new URLSearchParams({action:'learningRecords',mode:'learningRecords',studentId:studentId,sessionToken:sessionToken,t:String(Date.now())});
       const recordsRes=await fetch(WM_APPS_SCRIPT_URL+'?'+recordsQ.toString(),{cache:'no-store'});
@@ -9535,20 +9575,38 @@ body.wm-student-report-mode .wm-report-preview-modal-head button{display:none!im
         return sid===studentId.toUpperCase();
       });
       WM_REPORT_MANAGE_ROWS=wmNormalizeCompletedSetRows(rows);
-      const candidates=(WM_REPORT_MANAGE_ROWS||[]).filter(function(row){
+
+      let candidates=(WM_REPORT_MANAGE_ROWS||[]).filter(function(row){
         const d=parseDateValue(reportDetailDate(row));
-        return d&&d.getFullYear()===year&&(d.getMonth()+1)===month&&Math.min(5,Math.max(1,reportDetailWeek(row)||1))===week;
+        if(!d || d.getFullYear()!==year || (d.getMonth()+1)!==month) return false;
+        if(reportType==='월간') return true;
+        return Math.min(5,Math.max(1,reportDetailWeek(row)||1))===week;
       });
-      if(!candidates.length) throw new Error('선택한 주간의 완료 학습기록이 없습니다.');
-      const clicked=candidates.slice().sort(function(a,b){return (parseDateValue(reportDetailDate(b))||0)-(parseDateValue(reportDetailDate(a))||0);})[0];
-      const reportId=reportDetailReportId(clicked,(WM_REPORT_MANAGE_ROWS||[]).indexOf(clicked),WM_REPORT_MANAGE_ROWS||[]);
+
+      if(!candidates.length) throw new Error(emptyMessage);
+
+      const clicked=candidates.slice().sort(function(a,b){
+        return (parseDateValue(reportDetailDate(b))||0)-(parseDateValue(reportDetailDate(a))||0);
+      })[0];
+
+      const reportId=String(params.get('reportId')||'').trim() ||
+        reportDetailReportId(clicked,(WM_REPORT_MANAGE_ROWS||[]).indexOf(clicked),WM_REPORT_MANAGE_ROWS||[]);
       await openReportDetail(reportId);
+
       const title=document.querySelector('.wm-report-preview-modal-title');
-      if(title) title.textContent=year+'년 '+month+'월 '+week+'주 성적표';
-    }catch(err){console.error('학생 성적표 팝업 연결 실패:',err);fail_(err&&err.message?err.message:err);}
+      if(title) title.textContent=reportType==='월간'
+        ? year+'년 '+month+'월 월간 성적표'
+        : year+'년 '+month+'월 '+week+'주 성적표';
+
+      addCloseButton_();
+    }catch(err){
+      console.error('학생 성적표 팝업 연결 실패:',err);
+      fail_(err&&err.message?err.message:err);
+    }
   }
+
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',function(){setTimeout(boot_,0);},{once:true});
   else setTimeout(boot_,0);
 })();
 </script>
-<!-- WM_LMS_STUDENT_REPORT_POPUP_BRIDGE_V1 END -->
+<!-- WM_LMS_STUDENT_REPORT_POPUP_BRIDGE_V2 END -->
