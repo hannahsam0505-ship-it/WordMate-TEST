@@ -4865,3 +4865,109 @@ wmInitHomeworkSearchEnterKey();
 wmInitLearningMap();
 wmForceHomeworkBottomFixedBarOnFirstView();
 </script>
+
+
+<!-- WM MAP REPORT POPUP V1: 학생ID → Code.gs 전용 API → 완성 HTML 내부 팝업 -->
+<style>
+  #wmMapReportModal{position:fixed;inset:0;z-index:2147482500;display:none;align-items:flex-start;justify-content:center;background:rgba(15,23,42,.72);padding:28px 18px;overflow:auto;box-sizing:border-box}
+  #wmMapReportModal.active{display:flex}
+  .wm-map-report-dialog{width:min(1180px,100%);background:#eef3fb;border-radius:18px;box-shadow:0 24px 70px rgba(0,0,0,.32);overflow:hidden}
+  .wm-map-report-toolbar{position:sticky;top:0;z-index:3;display:flex;align-items:center;gap:10px;padding:12px 14px;background:#073b8f;color:#fff}
+  .wm-map-report-toolbar strong{font-size:16px;white-space:nowrap}
+  .wm-map-report-toolbar select{min-width:240px;max-width:520px;flex:1;padding:10px;border:1px solid #9fbce8;border-radius:10px;background:#fff;color:#10213b;font-weight:800}
+  .wm-map-report-close{border:0;border-radius:10px;background:#fff;color:#073b8f;padding:10px 14px;font-weight:900;cursor:pointer}
+  #wmMapReportBody{padding:20px;min-height:240px}
+  .wm-map-report-status{display:flex;align-items:center;justify-content:center;min-height:220px;text-align:center;font-size:15px;font-weight:900;color:#334155}
+  @media(max-width:700px){#wmMapReportModal{padding:0}.wm-map-report-dialog{border-radius:0;min-height:100%}.wm-map-report-toolbar{flex-wrap:wrap}.wm-map-report-toolbar select{order:3;min-width:100%;max-width:100%}#wmMapReportBody{padding:10px}}
+</style>
+<div id="wmMapReportModal" role="dialog" aria-modal="true" aria-label="성적표 보기">
+  <div class="wm-map-report-dialog">
+    <div class="wm-map-report-toolbar">
+      <strong>성적표 보기</strong>
+      <select id="wmMapReportSelect" aria-label="성적표 선택"></select>
+      <button id="wmMapReportClose" class="wm-map-report-close" type="button">닫기</button>
+    </div>
+    <div id="wmMapReportBody"><div class="wm-map-report-status">성적표를 불러오는 중입니다.</div></div>
+  </div>
+</div>
+<script>
+(function(){
+  'use strict';
+
+  function wmMapReportStudentId_(){
+    return String(window.wmCurrentStudent && window.wmCurrentStudent.학생ID || '').trim().toUpperCase();
+  }
+
+  function wmMapReportEscape_(value){
+    return String(value == null ? '' : value).replace(/[&<>"']/g,function(ch){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch];
+    });
+  }
+
+  async function wmLoadMapReport_(reportId){
+    const body=document.getElementById('wmMapReportBody');
+    const select=document.getElementById('wmMapReportSelect');
+    const studentId=wmMapReportStudentId_();
+    if(!studentId){
+      body.innerHTML='<div class="wm-map-report-status">학생ID를 확인할 수 없습니다.</div>';
+      return;
+    }
+
+    body.innerHTML='<div class="wm-map-report-status">성적표를 불러오는 중입니다.</div>';
+    try{
+      const params=new URLSearchParams();
+      params.set('action','mapReportHtml');
+      params.set('mode','mapReportHtml');
+      params.set('studentId',studentId);
+      if(reportId) params.set('reportId',reportId);
+      params.set('ts',Date.now());
+      const response=await fetch(WM_APPS_SCRIPT_URL+'?'+params.toString(),{method:'GET',cache:'no-store'});
+      const text=await response.text();
+      if(!response.ok) throw new Error('HTTP '+response.status);
+      const data=JSON.parse(text);
+      if(!data || data.success!==true) throw new Error(data&&data.message?data.message:'성적표 조회 실패');
+      if(!data.found){
+        select.innerHTML='';
+        body.innerHTML='<div class="wm-map-report-status">발행된 성적표가 없습니다.</div>';
+        return;
+      }
+
+      select.innerHTML=(data.reports||[]).map(function(item){
+        const selected=String(item.reportId||'')===String(data.selectedReportId||'')?' selected':'';
+        return '<option value="'+wmMapReportEscape_(item.reportId||'')+'"'+selected+'>'+wmMapReportEscape_(item.label||'성적표')+'</option>';
+      }).join('');
+      body.innerHTML=data.html||'<div class="wm-map-report-status">성적표 HTML이 없습니다.</div>';
+    }catch(err){
+      console.error('학습맵 성적표 조회 오류:',err);
+      body.innerHTML='<div class="wm-map-report-status">성적표를 불러오지 못했습니다.<br>'+wmMapReportEscape_(err&&err.message?err.message:err)+'</div>';
+    }
+  }
+
+  function wmOpenMapReport_(){
+    const modal=document.getElementById('wmMapReportModal');
+    if(!modal) return;
+    modal.classList.add('active');
+    document.body.style.overflow='hidden';
+    wmLoadMapReport_('');
+  }
+
+  function wmCloseMapReport_(){
+    const modal=document.getElementById('wmMapReportModal');
+    if(modal) modal.classList.remove('active');
+    document.body.style.overflow='';
+  }
+
+  document.addEventListener('DOMContentLoaded',function(){
+    const openBtn=document.getElementById('wm-report-view-button');
+    const closeBtn=document.getElementById('wmMapReportClose');
+    const modal=document.getElementById('wmMapReportModal');
+    const select=document.getElementById('wmMapReportSelect');
+    if(openBtn) openBtn.addEventListener('click',wmOpenMapReport_);
+    if(closeBtn) closeBtn.addEventListener('click',wmCloseMapReport_);
+    if(modal) modal.addEventListener('click',function(event){if(event.target===modal) wmCloseMapReport_();});
+    if(select) select.addEventListener('change',function(){wmLoadMapReport_(select.value);});
+    document.addEventListener('keydown',function(event){if(event.key==='Escape') wmCloseMapReport_();});
+  });
+})();
+</script>
+
