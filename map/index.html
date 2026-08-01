@@ -700,12 +700,110 @@ const WM_LMS_URL = WM_CONFIG.LMS_URL;
       <span><i class="dot complete3"></i>3회 완료</span>
       <span><i class="dot leveldone"></i>레벨완료</span>
       <span class="wm-sequential-guide"><span style="color:#16a34a;font-weight:700;">레벨완료기준</span>에 따라 <span style="color:#2563eb;font-weight:700;">세트순차완주</span> 방식으로 학습이 진행됩니다.</span>
+      <select id="wm-report-period-select" class="wm-report-period-select" aria-label="성적표 기간 선택"></select>
       <button id="wm-report-view-button" class="wm-report-view-button" type="button">📄 성적표 보기</button>
     </div>
 
     <div id="setMap" class="set-map"></div>
 
   </div>
+
+
+    <script>
+    /* WM_REPORT_PERIOD_DROPDOWN_V1
+       표시 전용: 가장 최근 종료 기간을 기본으로 최근 4개 주차 슬롯 + 최근 3개 월간 = 총 7개.
+       DB 조회·성적표 팝업·학습맵 초기화·학습시작·나가기 로직과 연결하지 않습니다. */
+    (function(){
+      'use strict';
+
+      function pad2_(value){
+        return String(value).padStart(2, '0');
+      }
+
+      function dateKey_(date){
+        return date.getFullYear() + '-' + pad2_(date.getMonth() + 1) + '-' + pad2_(date.getDate());
+      }
+
+      function getWeekOfMonth_(date){
+        var firstDay = new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+        var mondayOffset = (firstDay + 6) % 7;
+        return Math.min(5, Math.floor((date.getDate() + mondayOffset - 1) / 7) + 1);
+      }
+
+      function getWeekPeriod_(date){
+        var day = date.getDay();
+        var mondayOffset = (day + 6) % 7;
+        var monday = new Date(date.getFullYear(), date.getMonth(), date.getDate() - mondayOffset);
+        var sunday = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + 6);
+        return {
+          type:'WEEKLY',
+          year:monday.getFullYear(),
+          month:monday.getMonth() + 1,
+          week:getWeekOfMonth_(monday),
+          startDate:dateKey_(monday),
+          endDate:dateKey_(sunday),
+          label:(monday.getMonth() + 1) + '월 ' + getWeekOfMonth_(monday) + '주 Weekly'
+        };
+      }
+
+      function getMonthlyPeriod_(year, monthIndex){
+        var month = monthIndex + 1;
+        return {
+          type:'MONTHLY',
+          year:year,
+          month:month,
+          week:'',
+          startDate:dateKey_(new Date(year, monthIndex, 1)),
+          endDate:dateKey_(new Date(year, monthIndex + 1, 0)),
+          label:month + '월 Monthly'
+        };
+      }
+
+      function buildPeriods_(){
+        var now = new Date();
+        var currentMondayOffset = (now.getDay() + 6) % 7;
+        var currentMonday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - currentMondayOffset);
+        var cursor = new Date(currentMonday.getFullYear(), currentMonday.getMonth(), currentMonday.getDate() - 1);
+        var periods = [];
+
+        while(periods.length < 4){
+          var weekly = getWeekPeriod_(cursor);
+          var monthEnd = new Date(weekly.year, weekly.month, 0);
+          var isLastWeek = weekly.endDate >= dateKey_(monthEnd);
+
+          periods.push(
+            isLastWeek
+              ? getMonthlyPeriod_(weekly.year, weekly.month - 1)
+              : weekly
+          );
+          cursor = new Date(cursor.getFullYear(), cursor.getMonth(), cursor.getDate() - 7);
+        }
+
+        var monthlyCursor = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        while(periods.length < 7){
+          var monthly = getMonthlyPeriod_(monthlyCursor.getFullYear(), monthlyCursor.getMonth());
+          var duplicate = periods.some(function(item){
+            return item.type === 'MONTHLY' && item.year === monthly.year && item.month === monthly.month;
+          });
+          if(!duplicate) periods.push(monthly);
+          monthlyCursor = new Date(monthlyCursor.getFullYear(), monthlyCursor.getMonth() - 1, 1);
+        }
+
+        return periods.slice(0, 7);
+      }
+
+      var select = document.getElementById('wm-report-period-select');
+      if(!select) return;
+
+      buildPeriods_().forEach(function(period, index){
+        var option = document.createElement('option');
+        option.value = JSON.stringify(period);
+        option.textContent = period.label + (index === 0 ? ' (기본)' : '');
+        select.appendChild(option);
+      });
+      select.selectedIndex = 0;
+    })();
+    </script>
 
 
   <!-- 3. 하단 학습기록_DB 구조 -->
@@ -1265,8 +1363,28 @@ body.wm-map-loading-active #wm-learning-record-widget{
   font-weight:800;
 }
 
-.wm-report-view-button{
+.wm-report-period-select{
   margin-left:auto;
+  width:170px;
+  height:55px;
+  padding:0 38px 0 14px;
+  border:1.5px solid #0066cc;
+  border-radius:10px;
+  background:#fff;
+  color:#173b75;
+  font-size:14px;
+  font-weight:900;
+  cursor:pointer;
+  box-sizing:border-box;
+}
+
+.wm-report-period-select:focus{
+  outline:3px solid rgba(37,99,235,.20);
+  outline-offset:2px;
+}
+
+.wm-report-view-button{
+  margin-left:0;
   width:180px;
   height:55px;
   padding:0 18px;
@@ -1649,6 +1767,7 @@ body.wm-map-loading-active #wm-learning-record-widget{
     grid-template-columns:1fr;
   }
 
+  .wm-report-period-select,
   .wm-report-view-button{
     width:100%;
     margin-left:0;
