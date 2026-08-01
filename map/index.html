@@ -700,11 +700,7 @@ const WM_LMS_URL = WM_CONFIG.LMS_URL;
       <span><i class="dot complete3"></i>3회 완료</span>
       <span><i class="dot leveldone"></i>레벨완료</span>
       <span class="wm-sequential-guide"><span style="color:#16a34a;font-weight:700;">레벨완료기준</span>에 따라 <span style="color:#2563eb;font-weight:700;">세트순차완주</span> 방식으로 학습이 진행됩니다.</span>
-      <span class="wm-report-period-control">
-        <button id="wm-report-view-button" class="wm-report-view-button" type="button" aria-controls="wm-report-period-select" aria-expanded="false">📄 성적표 보기</button>
-        <select id="wm-report-period-select" class="wm-report-period-select" aria-label="성적표 기간 선택" hidden></select>
-        <span id="wm-report-period-empty" class="wm-report-period-empty" hidden>성적 내용이 없습니다.</span>
-      </span>
+      <button id="wm-report-view-button" class="wm-report-view-button" type="button">📄 성적표 보기</button>
     </div>
 
     <div id="setMap" class="set-map"></div>
@@ -1293,38 +1289,6 @@ body.wm-map-loading-active #wm-learning-record-widget{
   outline:3px solid rgba(37,99,235,.28);
   outline-offset:2px;
 }
-
-.wm-report-period-control{
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
-  margin-left:auto;
-  flex-wrap:wrap;
-}
-.wm-report-period-select{
-  min-width:164px;
-  height:38px;
-  padding:0 34px 0 12px;
-  border:1px solid #2563eb;
-  border-radius:10px;
-  background:#fff;
-  color:#173b75;
-  font-size:13px;
-  font-weight:800;
-  cursor:pointer;
-}
-.wm-report-period-select:focus{
-  outline:2px solid rgba(37,99,235,.18);
-  outline-offset:1px;
-}
-.wm-report-period-empty{
-  width:100%;
-  color:#6b7280;
-  font-size:13px;
-  font-weight:800;
-  text-align:right;
-}
-
 
 .dot{
   width:11px;
@@ -4896,136 +4860,8 @@ function resetHomeworkFilters(){
 
 
 
-
-/* WM_MAP_REPORT_PERIOD_DROPDOWN_V1
- * 최근 종료된 4개 성적 기간을 구성하되 월의 마지막 주는 Weekly 대신 Monthly로 표시합니다.
- * 이후 이전 Monthly를 추가하여 드롭다운을 항상 총 7개로 유지합니다.
- * 이번 주·이번 달 진행 기간은 포함하지 않으며 첫 항목에 "(기본)" 문구를 붙이지 않습니다.
- */
-function wmReportSeoulTodayForMap_(){
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    timeZone:'Asia/Seoul', year:'numeric', month:'2-digit', day:'2-digit'
-  }).formatToParts(new Date());
-  const map = {};
-  parts.forEach(function(part){ map[part.type] = part.value; });
-  return new Date(Number(map.year), Number(map.month) - 1, Number(map.day));
-}
-
-function wmReportCalendarWeekForMap_(date){
-  const year = date.getFullYear();
-  const month = date.getMonth();
-  const day = date.getDate();
-  const firstDay = new Date(year, month, 1);
-  const mondayOffset = (firstDay.getDay() + 6) % 7;
-  return Math.max(1, Math.min(5, Math.floor((mondayOffset + day - 1) / 7) + 1));
-}
-
-function wmReportWeekRangeForMap_(year, monthIndex, week){
-  const lastDay = new Date(year, monthIndex + 1, 0).getDate();
-  const firstDay = new Date(year, monthIndex, 1);
-  const mondayOffset = (firstDay.getDay() + 6) % 7;
-  const lastWeek = wmReportCalendarWeekForMap_(new Date(year, monthIndex, lastDay));
-  const normalizedWeek = Math.max(1, Math.min(lastWeek, Number(week || 1)));
-  const startDay = normalizedWeek === 1 ? 1 : 1 + (7 - mondayOffset) + (normalizedWeek - 2) * 7;
-  const endDay = normalizedWeek === 1
-    ? Math.min(lastDay, 7 - mondayOffset)
-    : (normalizedWeek === lastWeek ? lastDay : Math.min(lastDay, startDay + 6));
-  return {
-    start:new Date(year, monthIndex, startDay),
-    end:new Date(year, monthIndex, endDay),
-    lastWeek:lastWeek,
-    isLastWeek:normalizedWeek === lastWeek
-  };
-}
-
-function wmBuildReportPeriodForMap_(date){
-  const year = date.getFullYear();
-  const monthIndex = date.getMonth();
-  const month = monthIndex + 1;
-  const week = wmReportCalendarWeekForMap_(date);
-  const range = wmReportWeekRangeForMap_(year, monthIndex, week);
-  const isMonthly = range.isLastWeek;
-  return {
-    year:year,
-    month:month,
-    week:week,
-    reportType:isMonthly ? 'Monthly' : 'Weekly',
-    key:isMonthly ? year + '-' + month + '-M' : year + '-' + month + '-W' + week,
-    label:isMonthly ? month + '월 Monthly' : month + '월 ' + week + '주',
-    start:range.start,
-    end:range.end
-  };
-}
-
-function wmBuildReportDropdownPeriodsForMap_(){
-  const today = wmReportSeoulTodayForMap_();
-  const cursor = new Date(today);
-  cursor.setDate(cursor.getDate() - 1);
-  const periods = [];
-  const used = {};
-
-  while(periods.length < 4){
-    const period = wmBuildReportPeriodForMap_(cursor);
-    if(!used[period.key] && period.end < today){
-      periods.push(period);
-      used[period.key] = true;
-    }
-    cursor.setTime(period.start.getTime());
-    cursor.setDate(cursor.getDate() - 1);
-  }
-
-  let monthCursor = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-  while(periods.length < 7){
-    const year = monthCursor.getFullYear();
-    const month = monthCursor.getMonth() + 1;
-    const key = year + '-' + month + '-M';
-    if(!used[key]){
-      periods.push({
-        year:year,
-        month:month,
-        week:wmReportCalendarWeekForMap_(new Date(year, month, 0)),
-        reportType:'Monthly',
-        key:key,
-        label:month + '월 Monthly'
-      });
-      used[key] = true;
-    }
-    monthCursor.setMonth(monthCursor.getMonth() - 1);
-  }
-  return periods.slice(0, 7);
-}
-
-function wmInitReportPeriodDropdownForMap_(){
-  const button = document.getElementById('wm-report-view-button');
-  const select = document.getElementById('wm-report-period-select');
-  const empty = document.getElementById('wm-report-period-empty');
-  if(!button || !select) return;
-
-  const periods = wmBuildReportDropdownPeriodsForMap_();
-  select.innerHTML = periods.map(function(period){
-    const value = [period.year, period.month, period.week, period.reportType].join('|');
-    return '<option value="' + value + '">' + period.label + '</option>';
-  }).join('');
-  if(select.options.length) select.selectedIndex = 0;
-
-  button.addEventListener('click', function(){
-    const willOpen = select.hidden;
-    select.hidden = !willOpen;
-    button.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
-    if(empty) empty.hidden = true;
-    if(willOpen) select.focus();
-  });
-
-  select.addEventListener('change', function(){
-    if(empty) empty.hidden = true;
-    const selected = periods[select.selectedIndex] || null;
-    window.dispatchEvent(new CustomEvent('wm-report-period-change', {detail:selected}));
-  });
-}
-
 wmForceHomeworkBottomFixedBarOnFirstView();
 wmInitHomeworkSearchEnterKey();
 wmInitLearningMap();
-wmInitReportPeriodDropdownForMap_();
 wmForceHomeworkBottomFixedBarOnFirstView();
 </script>
