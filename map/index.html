@@ -847,6 +847,20 @@ const WM_LMS_URL = WM_CONFIG.LMS_URL;
 </div>
 
 
+<!-- WM_MAP_REPORT_DB_MODAL_V2 -->
+<div id="wm-map-report-modal" class="wm-map-report-modal" aria-hidden="true">
+  <div class="wm-map-report-dialog" role="dialog" aria-modal="true" aria-labelledby="wm-map-report-title">
+    <div class="wm-map-report-head">
+      <strong id="wm-map-report-title">성적표 보기</strong>
+      <button id="wm-map-report-close" type="button" aria-label="성적표 닫기">×</button>
+    </div>
+    <div id="wm-map-report-message" class="wm-map-report-message">성적표를 불러오는 중입니다.</div>
+    <iframe id="wm-map-report-frame" class="wm-map-report-frame" title="학생 성적표" loading="eager"></iframe>
+  </div>
+</div>
+<!-- WM_MAP_REPORT_DB_MODAL_V2 END -->
+
+
 <!-- 4. 공통 CSS -->
 <style>
 html,
@@ -1646,6 +1660,41 @@ body.wm-map-loading-active #wm-learning-record-widget{
 .time{
   color:#0066cc;
   font-weight:900;
+}
+
+
+/* WM_MAP_REPORT_DB_MODAL_V2 */
+body.wm-map-report-modal-open{overflow:hidden !important;}
+.wm-map-report-modal{
+  display:none;position:fixed;inset:0;z-index:2147483400;
+  align-items:center;justify-content:center;padding:24px;
+  background:rgba(15,23,42,.72);box-sizing:border-box;
+}
+.wm-map-report-modal.active{display:flex;}
+.wm-map-report-dialog{
+  width:min(1180px,96vw);height:min(92vh,1120px);
+  display:flex;flex-direction:column;overflow:hidden;
+  background:#f4f6fb;border-radius:18px;box-shadow:0 24px 70px rgba(0,0,0,.35);
+}
+.wm-map-report-head{
+  min-height:58px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 18px;background:linear-gradient(135deg,#0066cc,#004a99);color:#fff;
+  font-size:19px;font-weight:900;box-sizing:border-box;
+}
+#wm-map-report-close{
+  width:40px;height:40px;border:0;border-radius:10px;background:#fff;color:#004a99;
+  font-size:30px;font-weight:900;line-height:1;cursor:pointer;
+}
+.wm-map-report-message{
+  flex:1;display:flex;align-items:center;justify-content:center;text-align:center;
+  padding:28px;background:#fff;color:#173b75;font-size:18px;font-weight:900;line-height:1.6;
+}
+.wm-map-report-message.hidden{display:none;}
+.wm-map-report-frame{display:none;flex:1;width:100%;border:0;background:#f4f6fb;}
+.wm-map-report-frame.active{display:block;}
+@media(max-width:768px){
+  .wm-map-report-modal{padding:8px;}
+  .wm-map-report-dialog{width:100%;height:96vh;border-radius:12px;}
 }
 
 @media(max-width:768px){
@@ -5015,6 +5064,201 @@ function wmInitReportPeriodDropdownForMap_(){
 }
 
 wmInitReportPeriodDropdownForMap_();
+
+/* WM_MAP_REPORT_DB_CONNECT_V2
+ * 선택 학생ID + 드롭다운 기간으로 4-1.성적표생성_DB를 조회합니다.
+ * 해당 기간 행이 없으면 기간 슬롯을 당기지 않고 "성적 내용이 없습니다."를 표시합니다.
+ * 행이 있으면 같은 출처를 사용하는 LMS 기존 성적표 렌더를 내부 iframe 팝업에서 실행합니다.
+ */
+function wmReportRowValue_(row, aliases){
+  if(!row || typeof row !== 'object') return '';
+  for(const key of aliases){
+    if(Object.prototype.hasOwnProperty.call(row,key)){
+      const value=String(row[key] == null ? '' : row[key]).trim();
+      if(value) return value;
+    }
+  }
+  return '';
+}
+
+function wmReportParseRowDate_(row){
+  const raw=wmReportRowValue_(row,['학습날짜','등록일','리포트주차','생성일시','수정일']);
+  const match=raw.match(/(\d{4})[-.\/년\s]+(\d{1,2})[-.\/월\s]+(\d{1,2})/);
+  if(!match) return null;
+  const date=new Date(Number(match[1]),Number(match[2])-1,Number(match[3]));
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function wmReportExtractRows_(payload){
+  if(!payload) return [];
+  if(Array.isArray(payload.reports)) return payload.reports;
+  if(Array.isArray(payload.reportRows)) return payload.reportRows;
+  if(Array.isArray(payload['4-1.성적표생성_DB'])) return payload['4-1.성적표생성_DB'];
+  if(Array.isArray(payload['4.성적표생성_DB'])) return payload['4.성적표생성_DB'];
+  if(Array.isArray(payload.rows)) return payload.rows;
+  if(Array.isArray(payload.data)) return payload.data;
+  return Array.isArray(payload) ? payload : [];
+}
+
+function wmGetSelectedReportPeriodForMap_(){
+  const select=document.getElementById('wm-report-period-select');
+  const option=select && select.options ? select.options[select.selectedIndex] : null;
+  if(!option) return null;
+  return {
+    value:String(option.value||''),label:String(option.textContent||'').trim(),
+    type:String(option.dataset.reportType||''),
+    year:Number(option.dataset.year||0),month:Number(option.dataset.month||0),week:Number(option.dataset.week||0)
+  };
+}
+
+function wmReportRowMatchesPeriod_(row,studentId,period){
+  const rowStudent=wmReportRowValue_(row,['학생ID','Student_ID','studentId']).toUpperCase();
+  if(rowStudent!==studentId) return false;
+  const date=wmReportParseRowDate_(row);
+  if(!date || date.getFullYear()!==period.year || date.getMonth()+1!==period.month) return false;
+  const rowType=wmReportRowValue_(row,['리포트유형','Report_Type','reportType']);
+  const week=wmReportCalendarWeekForMap_(date);
+  if(period.type==='monthly'){
+    return /월간|monthly/i.test(rowType) || week===wmReportLastCalendarWeekForMap_(date);
+  }
+  return week===period.week && !/월간|monthly/i.test(rowType);
+}
+
+function wmGetReportMonthRange_(period){
+  const start=new Date(period.year,period.month-1,1);
+  const end=new Date(period.year,period.month,0);
+  return {start:wmReportPeriodDateKey_(start),end:wmReportPeriodDateKey_(end)};
+}
+
+function wmEnsureReportModalForMap_(){
+  const modal=document.getElementById('wm-map-report-modal');
+  const close=document.getElementById('wm-map-report-close');
+  if(close && close.dataset.bound!=='1'){
+    close.dataset.bound='1';
+    close.addEventListener('click',wmCloseReportModalForMap_);
+  }
+  if(modal && modal.dataset.bound!=='1'){
+    modal.dataset.bound='1';
+    modal.addEventListener('click',function(event){if(event.target===modal) wmCloseReportModalForMap_();});
+  }
+  return modal;
+}
+
+function wmShowReportModalMessageForMap_(title,message){
+  const modal=wmEnsureReportModalForMap_();
+  const titleEl=document.getElementById('wm-map-report-title');
+  const messageEl=document.getElementById('wm-map-report-message');
+  const frame=document.getElementById('wm-map-report-frame');
+  if(titleEl) titleEl.textContent=title||'성적표 보기';
+  if(messageEl){messageEl.textContent=message||'';messageEl.classList.remove('hidden');}
+  if(frame){frame.classList.remove('active');frame.removeAttribute('src');}
+  if(modal){modal.classList.add('active');modal.setAttribute('aria-hidden','false');}
+  document.body.classList.add('wm-map-report-modal-open');
+}
+
+function wmCloseReportModalForMap_(){
+  const modal=document.getElementById('wm-map-report-modal');
+  const frame=document.getElementById('wm-map-report-frame');
+  if(modal){modal.classList.remove('active');modal.setAttribute('aria-hidden','true');}
+  if(frame){frame.classList.remove('active');frame.removeAttribute('src');}
+  document.body.classList.remove('wm-map-report-modal-open');
+}
+
+async function wmOpenSelectedReportInsideLms_(studentId,studentName,period,matchedRow){
+  const modal=wmEnsureReportModalForMap_();
+  const titleEl=document.getElementById('wm-map-report-title');
+  const messageEl=document.getElementById('wm-map-report-message');
+  const frame=document.getElementById('wm-map-report-frame');
+  if(!modal || !frame) return false;
+  if(titleEl) titleEl.textContent=period.label;
+  if(messageEl){messageEl.textContent='성적표를 불러오는 중입니다.';messageEl.classList.remove('hidden');}
+  frame.classList.remove('active');
+  modal.classList.add('active');modal.setAttribute('aria-hidden','false');
+  document.body.classList.add('wm-map-report-modal-open');
+
+  const reportUrl=WM_LMS_URL
+    +'?wmEntry=mapReportPreview&wmReportPreview=1'
+    +'&studentId='+encodeURIComponent(studentId)
+    +'&studentName='+encodeURIComponent(studentName)
+    +'&reportType='+encodeURIComponent(period.type)
+    +'&reportYear='+encodeURIComponent(period.year)
+    +'&reportMonth='+encodeURIComponent(period.month)
+    +'&reportWeek='+encodeURIComponent(period.week||'');
+
+  frame.onload=async function(){
+    try{
+      const child=frame.contentWindow;
+      let tries=0;
+      while(tries<100 && (!child || typeof child.openReportDetail!=='function' || typeof child.loadReports!=='function')){
+        await new Promise(function(resolve){setTimeout(resolve,50);});
+        tries+=1;
+      }
+      if(!child || typeof child.openReportDetail!=='function' || typeof child.loadReports!=='function') throw new Error('LMS 성적표 렌더 함수를 찾을 수 없습니다.');
+      const loaded=await child.loadReports();
+      const childRows=Array.isArray(loaded) ? loaded : wmReportExtractRows_(loaded);
+      const targetRows=(childRows||[]).filter(function(row){return wmReportRowMatchesPeriod_(row,studentId,period);});
+      const target=targetRows.length ? targetRows[targetRows.length-1] : matchedRow;
+      if(!target) throw new Error('선택 기간의 성적표 행을 찾을 수 없습니다.');
+      const allRows=(childRows||[]).length ? childRows : [target];
+      const index=Math.max(0,allRows.indexOf(target));
+      const reportId=wmReportRowValue_(target,['리포트ID','Report_ID','reportId'])
+        || (typeof child.getReportIdForDisplay==='function' ? child.getReportIdForDisplay(target,index,allRows) : '');
+      if(!reportId) throw new Error('성적표 ID를 확인할 수 없습니다.');
+      await child.openReportDetail(reportId);
+      if(messageEl) messageEl.classList.add('hidden');
+      frame.classList.add('active');
+    }catch(err){
+      console.error('Map 선택 성적표 LMS 렌더 실패:',err);
+      if(messageEl){messageEl.textContent='성적표를 불러오지 못했습니다.';messageEl.classList.remove('hidden');}
+      frame.classList.remove('active');
+    }
+  };
+  frame.src=reportUrl;
+  return true;
+}
+
+async function wmOpenSelectedReportFromDbForMap_(){
+  const student=wmCurrentStudent || wmStudentProfile || wmResolveStudentInfo() || {};
+  const studentId=String(student.학생ID || student.studentId || '').trim().toUpperCase();
+  const studentName=String(student.학생이름 || student.studentName || student.name || '').trim();
+  const period=wmGetSelectedReportPeriodForMap_();
+  if(!studentId){wmShowReportModalMessageForMap_('성적표 조회 오류','학생ID를 확인할 수 없습니다.');return false;}
+  if(!period){wmShowReportModalMessageForMap_('성적표 조회 오류','성적표 기간을 확인할 수 없습니다.');return false;}
+  wmShowReportModalMessageForMap_(period.label,'성적표를 불러오는 중입니다.');
+  try{
+    const range=wmGetReportMonthRange_(period);
+    const params=new URLSearchParams();
+    params.set('action','reports');params.set('mode','reports');
+    params.set('studentId',studentId);params.set('dateStart',range.start);params.set('dateEnd',range.end);params.set('t',String(Date.now()));
+    const response=await fetch(wmGetApiBaseUrl()+'?'+params.toString(),{cache:'no-store'});
+    const payload=await response.json();
+    const rows=wmReportExtractRows_(payload);
+    const matched=rows.filter(function(row){return wmReportRowMatchesPeriod_(row,studentId,period);});
+    if(!matched.length){
+      wmShowReportModalMessageForMap_(period.label,'성적 내용이 없습니다.');
+      return false;
+    }
+    matched.sort(function(a,b){
+      const ad=wmReportParseRowDate_(a),bd=wmReportParseRowDate_(b);
+      return (ad?ad.getTime():0)-(bd?bd.getTime():0);
+    });
+    return wmOpenSelectedReportInsideLms_(studentId,studentName,period,matched[matched.length-1]);
+  }catch(err){
+    console.error('Map 성적표 DB 조회 실패:',err);
+    wmShowReportModalMessageForMap_(period.label,'성적표를 불러오지 못했습니다.');
+    return false;
+  }
+}
+
+function wmBindReportDbButtonForMap_(){
+  const button=document.getElementById('wm-report-view-button');
+  if(!button || button.dataset.reportDbBound==='1') return false;
+  button.dataset.reportDbBound='1';
+  button.addEventListener('click',wmOpenSelectedReportFromDbForMap_);
+  document.addEventListener('keydown',function(event){if(event.key==='Escape') wmCloseReportModalForMap_();});
+  return true;
+}
+wmBindReportDbButtonForMap_();
 
 wmForceHomeworkBottomFixedBarOnFirstView();
 wmInitHomeworkSearchEnterKey();
