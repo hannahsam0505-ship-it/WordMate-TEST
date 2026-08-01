@@ -4242,7 +4242,8 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       const year=monthMatch?monthMatch[1]:(date?String(date.getFullYear()):'');
       const month=monthMatch?String(Number(monthMatch[2])):(date?String(date.getMonth()+1):'');
       const week=String(reportDetailWeek(clickedReportRow)||'');
-      const reportType=String(reportDetailFirst(clickedReportRow,['리포트유형','Report_Type','reportType'])||'주간').trim();
+      const reportMemo=String(reportDetailFirst(clickedReportRow,['비고','memo','Memo'])||'').trim();
+      const reportType=String(reportDetailFirst(clickedReportRow,['리포트유형','Report_Type','reportType'])||(/Monthly Report|월간/i.test(reportMemo)?'월간':'주간')).trim();
       const params=new URLSearchParams();
       params.set('mode','reportGradeComment');
       params.set('action','reportGradeComment');
@@ -6010,38 +6011,13 @@ function extractRecordRowsFromResponse(data){
         .map(item=>item.row);
     }
 
-    /* WM_REPORT_RECENT_COMPLETED_WEEK_POLICY_20260801_V1
-     * 최근 성적표는 진행 중인 이번 주를 제외하고 종료된 최종 주차까지만 표시합니다.
-     * 월요일~일요일 기준이며 월 경계 주차도 실제 일요일 종료 후 표시합니다.
-     */
-    function wmReportCompletedWeekInfo(value){
-      const raw=String(value||'').trim();
-      const match=raw.match(/^(\d{4})[-./](\d{1,2})[-./](\d{1,2})/);
-      if(!match) return {completed:false,weekKey:''};
-      const year=Number(match[1]), month=Number(match[2]), day=Number(match[3]);
-      const date=new Date(year,month-1,day);
-      if(Number.isNaN(date.getTime())) return {completed:false,weekKey:''};
-      date.setHours(0,0,0,0);
-      const weekEnd=new Date(date.getTime());
-      weekEnd.setDate(weekEnd.getDate()+((7-weekEnd.getDay())%7));
-      const today=new Date();
-      today.setHours(0,0,0,0);
-      const firstDay=new Date(year,month-1,1);
-      const mondayOffset=(firstDay.getDay()+6)%7;
-      const calendarWeek=Math.max(1,Math.min(5,Math.floor((mondayOffset+day-1)/7)+1));
-      return {completed:weekEnd.getTime()<today.getTime(),weekKey:year+'-'+String(month).padStart(2,'0')+'-'+calendarWeek+'주차'};
-    }
-
     function wmNormalizeCompletedSetRows(rows){
       return wmSelectFinalCompletedSetRows(rows).map(row=>{
-        const learningDate=cellValue(row, headerAliases('학습날짜')) || cellValue(row, ['학습일','날짜']);
-        const weekInfo=wmReportCompletedWeekInfo(learningDate);
-        if(!weekInfo.completed) return null;
         const setId = wmReportSetId(row);
         const level = wmReportLevelFromSetId(setId);
         return {
           '리포트ID': cellValue(row, headerAliases('학습기록ID')),
-          '리포트주차': weekInfo.weekKey,
+          '리포트주차': '',
           '학생ID': cellValue(row, headerAliases('학생ID')),
           '학교': cellValue(row, headerAliases('학교')),
           '학년': cellValue(row, headerAliases('학년')),
@@ -6049,7 +6025,7 @@ function extractRecordRowsFromResponse(data){
           '학습레벨': level ? 'Basic ' + level : '',
           'Set_ID': setId,
           '단어수': wmReportWordCount(setId),
-          '학습날짜': learningDate,
+          '학습날짜': cellValue(row, headerAliases('학습날짜')) || cellValue(row, ['학습일','날짜']),
           '점수': cellValue(row, headerAliases('점수')) || cellValue(row, ['한영주관식']),
           '총소요시간': cellValue(row, headerAliases('총소요시간')) || cellValue(row, ['총 소요시간']),
           '성적표보기': '',
@@ -6058,7 +6034,7 @@ function extractRecordRowsFromResponse(data){
           '로고URL': '',
           '비고': cellValue(row, headerAliases('비고'))
         };
-      }).filter(Boolean);
+      });
     }
 
 
