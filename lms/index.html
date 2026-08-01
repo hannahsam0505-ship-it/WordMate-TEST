@@ -843,26 +843,6 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
       .wm-report-preview-modal-body { padding:8px; overflow:auto; justify-content:flex-start; }
     }
 
-    /* WM_MAP_REPORT_PREVIEW_V1: Map에서 연 최신 성적표 전용 화면 */
-    body.wm-map-report-preview { margin:0 !important; background:#eaf0f8 !important; overflow:auto; }
-    body.wm-map-report-preview #wm-test-booth-banner,
-    body.wm-map-report-preview .wm-lms-login-gate,
-    body.wm-map-report-preview .wm-admin-wrap { display:none !important; }
-    body.wm-map-report-preview .wm-report-preview-modal {
-      display:flex !important;
-      position:relative !important;
-      inset:auto !important;
-      min-height:100vh;
-      padding:22px !important;
-      background:#eaf0f8 !important;
-    }
-    body.wm-map-report-preview .wm-report-preview-modal-card {
-      width:min(1120px,96vw) !important;
-      margin:0 auto;
-    }
-    body.wm-map-report-preview .wm-report-preview-modal-head { position:sticky; top:0; }
-    body.wm-map-report-preview .wm-report-preview-modal-head button { display:none !important; }
-
     /* WM_STUDENT_REGISTER_UI_260708_V1 */
     .wm-student-register-box { display:none; border:1px solid var(--wm-line); background:#fbfdff; border-radius:16px; padding:16px; margin:0 0 18px; }
     .wm-student-register-box.active { display:block; }
@@ -4253,73 +4233,6 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
     document.addEventListener('DOMContentLoaded',function(){
       renderReportDesignPreview();
     });
-    /* WM_MAP_LATEST_REPORT_PREVIEW_V1
-     Map에서 studentId만 전달받아 완료 학습기록 중 해당 학생의 최신 1건을 선택하고,
-     기존 LMS A4 성적표 렌더 구조를 그대로 실행합니다. */
-    function wmIsMapReportPreview_(){
-      const params=new URLSearchParams(window.location.search || '');
-      return String(params.get('wmEntry') || '').trim()==='mapReportPreview'
-        && String(params.get('wmReportPreview') || '').trim()==='1';
-    }
-
-    function wmShowMapReportPreviewMessage_(title,message){
-      const modal=document.getElementById('wmReportDesignPreviewModal');
-      const body=document.getElementById('wmReportDesignPreviewModalBody');
-      const titleEl=document.querySelector('.wm-report-preview-modal-title');
-      if(titleEl) titleEl.textContent=title || '성적표 조회';
-      if(body) body.innerHTML='<div class="wm-note">'+escapeHtml(message || '')+'</div>';
-      if(modal) modal.classList.add('active');
-    }
-
-    async function wmOpenLatestMapReportPreview_(){
-      if(!wmIsMapReportPreview_()) return false;
-
-      const params=new URLSearchParams(window.location.search || '');
-      const studentId=String(params.get('studentId') || '').trim().toUpperCase();
-      document.body.classList.add('wm-lms-authenticated','wm-map-report-preview','wm-report-preview-open');
-
-      if(!studentId){
-        wmShowMapReportPreviewMessage_('성적표 조회 오류','학생ID가 전달되지 않았습니다.');
-        return false;
-      }
-
-      wmShowMapReportPreviewMessage_('최신 성적표 조회 중',studentId+' 학생의 최신 성적표를 불러오는 중입니다.');
-
-      const loadedRows=await loadReports();
-      const sourceRows=(Array.isArray(loadedRows) ? loadedRows : WM_REPORT_MANAGE_ROWS || []).filter(isValidReportDbRow);
-      const studentRows=sourceRows.filter(function(row){
-        return String(reportDetailStudentId(row) || '').trim().toUpperCase()===studentId;
-      }).sort(function(a,b){
-        const aDate=parseDateValue(reportDetailDate(a));
-        const bDate=parseDateValue(reportDetailDate(b));
-        const aTime=aDate && !Number.isNaN(aDate.getTime()) ? aDate.getTime() : 0;
-        const bTime=bDate && !Number.isNaN(bDate.getTime()) ? bDate.getTime() : 0;
-        if(bTime!==aTime) return bTime-aTime;
-        return Number(reportDetailWeek(b)||0)-Number(reportDetailWeek(a)||0);
-      });
-
-      if(!studentRows.length){
-        wmShowMapReportPreviewMessage_('성적표 없음',studentId+' 학생의 완료 학습기록이 없어 성적표를 만들 수 없습니다.');
-        return false;
-      }
-
-      const latestRow=studentRows[0];
-      const sourceIndex=Math.max(0,sourceRows.indexOf(latestRow));
-      const reportId=getReportIdForDisplay(latestRow,sourceIndex,sourceRows);
-      await openReportDetail(reportId);
-      return true;
-    }
-
-    document.addEventListener('DOMContentLoaded',function(){
-      if(wmIsMapReportPreview_()){
-        window.setTimeout(function(){
-          wmOpenLatestMapReportPreview_().catch(function(err){
-            console.error('Map 최신 성적표 Preview 실패:',err);
-            wmShowMapReportPreviewMessage_('성적표 조회 오류',err && err.message ? err.message : String(err));
-          });
-        },0);
-      }
-    });
     async function fetchReportGradeComment(clickedReportRow){
       if(!clickedReportRow) return {success:false,found:false,message:'성적표 기준 행이 없습니다.'};
       const studentId=reportDetailStudentId(clickedReportRow);
@@ -6097,13 +6010,38 @@ function extractRecordRowsFromResponse(data){
         .map(item=>item.row);
     }
 
+    /* WM_REPORT_RECENT_COMPLETED_WEEK_POLICY_20260801_V1
+     * 최근 성적표는 진행 중인 이번 주를 제외하고 종료된 최종 주차까지만 표시합니다.
+     * 월요일~일요일 기준이며 월 경계 주차도 실제 일요일 종료 후 표시합니다.
+     */
+    function wmReportCompletedWeekInfo(value){
+      const raw=String(value||'').trim();
+      const match=raw.match(/^(\d{4})[-./](\d{1,2})[-./](\d{1,2})/);
+      if(!match) return {completed:false,weekKey:''};
+      const year=Number(match[1]), month=Number(match[2]), day=Number(match[3]);
+      const date=new Date(year,month-1,day);
+      if(Number.isNaN(date.getTime())) return {completed:false,weekKey:''};
+      date.setHours(0,0,0,0);
+      const weekEnd=new Date(date.getTime());
+      weekEnd.setDate(weekEnd.getDate()+((7-weekEnd.getDay())%7));
+      const today=new Date();
+      today.setHours(0,0,0,0);
+      const firstDay=new Date(year,month-1,1);
+      const mondayOffset=(firstDay.getDay()+6)%7;
+      const calendarWeek=Math.max(1,Math.min(5,Math.floor((mondayOffset+day-1)/7)+1));
+      return {completed:weekEnd.getTime()<today.getTime(),weekKey:year+'-'+String(month).padStart(2,'0')+'-'+calendarWeek+'주차'};
+    }
+
     function wmNormalizeCompletedSetRows(rows){
       return wmSelectFinalCompletedSetRows(rows).map(row=>{
+        const learningDate=cellValue(row, headerAliases('학습날짜')) || cellValue(row, ['학습일','날짜']);
+        const weekInfo=wmReportCompletedWeekInfo(learningDate);
+        if(!weekInfo.completed) return null;
         const setId = wmReportSetId(row);
         const level = wmReportLevelFromSetId(setId);
         return {
           '리포트ID': cellValue(row, headerAliases('학습기록ID')),
-          '리포트주차': '',
+          '리포트주차': weekInfo.weekKey,
           '학생ID': cellValue(row, headerAliases('학생ID')),
           '학교': cellValue(row, headerAliases('학교')),
           '학년': cellValue(row, headerAliases('학년')),
@@ -6111,7 +6049,7 @@ function extractRecordRowsFromResponse(data){
           '학습레벨': level ? 'Basic ' + level : '',
           'Set_ID': setId,
           '단어수': wmReportWordCount(setId),
-          '학습날짜': cellValue(row, headerAliases('학습날짜')) || cellValue(row, ['학습일','날짜']),
+          '학습날짜': learningDate,
           '점수': cellValue(row, headerAliases('점수')) || cellValue(row, ['한영주관식']),
           '총소요시간': cellValue(row, headerAliases('총소요시간')) || cellValue(row, ['총 소요시간']),
           '성적표보기': '',
@@ -6120,7 +6058,7 @@ function extractRecordRowsFromResponse(data){
           '로고URL': '',
           '비고': cellValue(row, headerAliases('비고'))
         };
-      });
+      }).filter(Boolean);
     }
 
 
