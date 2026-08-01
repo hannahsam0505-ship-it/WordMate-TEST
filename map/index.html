@@ -700,6 +700,7 @@ const WM_LMS_URL = WM_CONFIG.LMS_URL;
       <span><i class="dot complete3"></i>3회 완료</span>
       <span><i class="dot leveldone"></i>레벨완료</span>
       <span class="wm-sequential-guide"><span style="color:#16a34a;font-weight:700;">레벨완료기준</span>에 따라 <span style="color:#2563eb;font-weight:700;">세트순차완주</span> 방식으로 학습이 진행됩니다.</span>
+      <select id="wm-report-period-select" class="wm-report-period-select" aria-label="성적표 기간 선택"></select>
       <button id="wm-report-view-button" class="wm-report-view-button" type="button">📄 성적표 보기</button>
     </div>
 
@@ -1265,8 +1266,28 @@ body.wm-map-loading-active #wm-learning-record-widget{
   font-weight:800;
 }
 
-.wm-report-view-button{
+.wm-report-period-select{
   margin-left:auto;
+  width:170px;
+  height:55px;
+  padding:0 38px 0 14px;
+  border:1.5px solid #0066cc;
+  border-radius:10px;
+  background:#fff;
+  color:#173b75;
+  font-size:14px;
+  font-weight:900;
+  cursor:pointer;
+  box-sizing:border-box;
+}
+
+.wm-report-period-select:focus{
+  outline:3px solid rgba(37,99,235,.20);
+  outline-offset:2px;
+}
+
+.wm-report-view-button{
+  margin-left:0;
   width:180px;
   height:55px;
   padding:0 18px;
@@ -1649,6 +1670,7 @@ body.wm-map-loading-active #wm-learning-record-widget{
     grid-template-columns:1fr;
   }
 
+  .wm-report-period-select,
   .wm-report-view-button{
     width:100%;
     margin-left:0;
@@ -4859,6 +4881,140 @@ function resetHomeworkFilters(){
 })();
 
 
+
+/* WM_MAP_REPORT_PERIOD_DROPDOWN_V1
+ * DB 조회 전 1차 UI 작업: 종료된 최근 4개 주간 슬롯과 직전 3개월을 고정 7개로 표시합니다.
+ * 월의 마지막 주 슬롯은 Weekly 대신 해당 월 Monthly로 표시하며, 빈 기간도 삭제하거나 당기지 않습니다.
+ */
+function wmReportPeriodPad2_(value){
+  return String(value).padStart(2,'0');
+}
+
+function wmReportPeriodDateKey_(date){
+  return date.getFullYear() + '-' + wmReportPeriodPad2_(date.getMonth()+1) + '-' + wmReportPeriodPad2_(date.getDate());
+}
+
+function wmReportPeriodMonthKey_(date){
+  return date.getFullYear() + '-' + wmReportPeriodPad2_(date.getMonth()+1);
+}
+
+function wmReportCalendarWeekForMap_(date){
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  const day = date.getDate();
+  const firstDay = new Date(year, month, 1);
+  const mondayOffset = (firstDay.getDay() + 6) % 7;
+  const week = Math.floor((mondayOffset + day - 1) / 7) + 1;
+  return Math.max(1, Math.min(5, week));
+}
+
+function wmReportLastCalendarWeekForMap_(date){
+  const lastDay = new Date(date.getFullYear(), date.getMonth()+1, 0);
+  return wmReportCalendarWeekForMap_(lastDay);
+}
+
+function wmReportPreviousSundayForMap_(baseDate){
+  const date = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate());
+  const daysSinceSunday = date.getDay();
+  date.setDate(date.getDate() - (daysSinceSunday === 0 ? 7 : daysSinceSunday));
+  return date;
+}
+
+function wmReportMonthCandidatesForMap_(year,monthIndex,baseDate){
+  const monthStart = new Date(year,monthIndex,1);
+  const monthEnd = new Date(year,monthIndex+1,0);
+  const lastWeek = wmReportCalendarWeekForMap_(monthEnd);
+  const candidates = [];
+
+  if(monthEnd < baseDate){
+    candidates.push({
+      value:'monthly:' + wmReportPeriodMonthKey_(monthStart),
+      label:year + '년 ' + (monthIndex+1) + '월 성적표',
+      type:'monthly',
+      year:year,
+      month:monthIndex+1
+    });
+  }
+
+  const mondayOffset = (monthStart.getDay() + 6) % 7;
+  for(let week=lastWeek-1; week>=1; week-=1){
+    const startDay = week === 1 ? 1 : 1 + (7-mondayOffset) + (week-2)*7;
+    const endDay = week === 1
+      ? Math.min(monthEnd.getDate(),7-mondayOffset)
+      : Math.min(monthEnd.getDate(),startDay+6);
+    const periodEnd = new Date(year,monthIndex,endDay,23,59,59,999);
+    if(periodEnd >= baseDate) continue;
+    candidates.push({
+      value:'weekly:' + year + '-' + wmReportPeriodPad2_(monthIndex+1) + '-W' + week,
+      label:year + '년 ' + (monthIndex+1) + '월 ' + week + '주',
+      type:'weekly',
+      year:year,
+      month:monthIndex+1,
+      week:week
+    });
+  }
+  return candidates;
+}
+
+function wmBuildReportPeriodOptionsForMap_(baseDate){
+  const today = new Date(baseDate.getFullYear(),baseDate.getMonth(),baseDate.getDate());
+  const options = [];
+  const seenValues = new Set();
+
+  let cursor = new Date(today.getFullYear(),today.getMonth(),1);
+  while(options.length < 4){
+    const candidates = wmReportMonthCandidatesForMap_(cursor.getFullYear(),cursor.getMonth(),today);
+    candidates.forEach(function(item){
+      if(options.length >= 4 || seenValues.has(item.value)) return;
+      options.push(item);
+      seenValues.add(item.value);
+    });
+    cursor.setMonth(cursor.getMonth()-1);
+  }
+
+  let monthlyCursor = new Date(today.getFullYear(),today.getMonth()-1,1);
+  let extraMonthlyCount = 0;
+  while(extraMonthlyCount < 3){
+    const value = 'monthly:' + wmReportPeriodMonthKey_(monthlyCursor);
+    if(!seenValues.has(value)){
+      options.push({
+        value:value,
+        label:monthlyCursor.getFullYear() + '년 ' + (monthlyCursor.getMonth()+1) + '월 성적표',
+        type:'monthly',
+        year:monthlyCursor.getFullYear(),
+        month:monthlyCursor.getMonth()+1,
+        __extraMonthly:true
+      });
+      seenValues.add(value);
+      extraMonthlyCount += 1;
+    }
+    monthlyCursor.setMonth(monthlyCursor.getMonth()-1);
+  }
+
+  return options.slice(0,7);
+}
+
+function wmInitReportPeriodDropdownForMap_(){
+  const select = document.getElementById('wm-report-period-select');
+  if(!select) return false;
+  const options = wmBuildReportPeriodOptionsForMap_(new Date());
+  select.innerHTML = '';
+  options.forEach(function(item,index){
+    const option = document.createElement('option');
+    option.value = item.value;
+    option.textContent = item.label;
+    option.dataset.reportType = item.type;
+    option.dataset.year = String(item.year || '');
+    option.dataset.month = String(item.month || '');
+    option.dataset.week = String(item.week || '');
+    if(index === 0) option.selected = true;
+    select.appendChild(option);
+  });
+  select.dataset.ready = '1';
+  return options.length === 7;
+}
+
+wmInitReportPeriodDropdownForMap_();
 
 wmForceHomeworkBottomFixedBarOnFirstView();
 wmInitHomeworkSearchEnterKey();
