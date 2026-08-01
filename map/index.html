@@ -700,7 +700,10 @@ const WM_LMS_URL = WM_CONFIG.LMS_URL;
       <span><i class="dot complete3"></i>3회 완료</span>
       <span><i class="dot leveldone"></i>레벨완료</span>
       <span class="wm-sequential-guide"><span style="color:#16a34a;font-weight:700;">레벨완료기준</span>에 따라 <span style="color:#2563eb;font-weight:700;">세트순차완주</span> 방식으로 학습이 진행됩니다.</span>
-      <button id="wm-report-view-button" class="wm-report-view-button" type="button">📄 성적표 보기</button>
+      <span class="wm-report-dropdown-wrap">
+        <button id="wm-report-view-button" class="wm-report-view-button" type="button" aria-controls="wm-report-period-select" aria-expanded="false">📄 성적표 보기</button>
+        <select id="wm-report-period-select" class="wm-report-period-select" aria-label="성적표 기간 선택" hidden></select>
+      </span>
     </div>
 
     <div id="setMap" class="set-map"></div>
@@ -4864,4 +4867,118 @@ wmForceHomeworkBottomFixedBarOnFirstView();
 wmInitHomeworkSearchEnterKey();
 wmInitLearningMap();
 wmForceHomeworkBottomFixedBarOnFirstView();
+</script>
+
+
+<!-- WM_MAP_REPORT_DROPDOWN_ONLY_V2: 학습중·로그인·맵 초기화 함수와 완전 분리 -->
+<style>
+  .wm-report-dropdown-wrap{display:inline-flex;align-items:center;gap:8px;position:relative;}
+  .wm-report-period-select{min-width:150px;height:36px;padding:0 34px 0 12px;border:1px solid #93c5fd;border-radius:10px;background:#fff;color:#1e3a8a;font-weight:800;font-size:13px;cursor:pointer;}
+  .wm-report-period-select:focus{outline:2px solid rgba(37,99,235,.18);border-color:#2563eb;}
+  @media (max-width:640px){.wm-report-dropdown-wrap{width:100%;justify-content:flex-end;flex-wrap:wrap}.wm-report-period-select{min-width:145px;}}
+</style>
+<script>
+(function(){
+  'use strict';
+
+  function seoulDate_(){
+    var parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone:'Asia/Seoul', year:'numeric', month:'2-digit', day:'2-digit'
+    }).formatToParts(new Date());
+    var values = {};
+    parts.forEach(function(part){ values[part.type] = part.value; });
+    return new Date(Number(values.year), Number(values.month) - 1, Number(values.day));
+  }
+
+  function weekOfMonth_(date){
+    var first = new Date(date.getFullYear(), date.getMonth(), 1);
+    var mondayOffset = (first.getDay() + 6) % 7;
+    return Math.floor((mondayOffset + date.getDate() - 1) / 7) + 1;
+  }
+
+  function periodOf_(date){
+    var y = date.getFullYear();
+    var mIndex = date.getMonth();
+    var m = mIndex + 1;
+    var w = weekOfMonth_(date);
+    var first = new Date(y, mIndex, 1);
+    var mondayOffset = (first.getDay() + 6) % 7;
+    var lastDay = new Date(y, mIndex + 1, 0).getDate();
+    var lastWeek = weekOfMonth_(new Date(y, mIndex, lastDay));
+    var startDay = w === 1 ? 1 : 1 + (7 - mondayOffset) + (w - 2) * 7;
+    var endDay = w === 1 ? Math.min(lastDay, 7 - mondayOffset) : Math.min(lastDay, startDay + 6);
+    var monthly = w === lastWeek;
+    return {
+      year:y, month:m, week:w,
+      reportType:monthly ? 'Monthly' : 'Weekly',
+      key:monthly ? y + '-' + m + '-M' : y + '-' + m + '-W' + w,
+      label:monthly ? m + '월 Monthly' : m + '월 ' + w + '주',
+      start:new Date(y, mIndex, startDay),
+      end:new Date(y, mIndex, endDay)
+    };
+  }
+
+  function buildPeriods_(){
+    var today = seoulDate_();
+    var cursor = new Date(today);
+    cursor.setDate(cursor.getDate() - 1);
+    var periods = [];
+    var used = {};
+
+    while(periods.length < 4){
+      var period = periodOf_(cursor);
+      if(period.end < today && !used[period.key]){
+        periods.push(period);
+        used[period.key] = true;
+      }
+      cursor = new Date(period.start);
+      cursor.setDate(cursor.getDate() - 1);
+    }
+
+    var monthCursor = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+    while(periods.length < 7){
+      var y = monthCursor.getFullYear();
+      var m = monthCursor.getMonth() + 1;
+      var key = y + '-' + m + '-M';
+      if(!used[key]){
+        periods.push({year:y, month:m, week:'', reportType:'Monthly', key:key, label:m + '월 Monthly'});
+        used[key] = true;
+      }
+      monthCursor.setMonth(monthCursor.getMonth() - 1);
+    }
+    return periods.slice(0,7);
+  }
+
+  function init_(){
+    var button = document.getElementById('wm-report-view-button');
+    var select = document.getElementById('wm-report-period-select');
+    if(!button || !select || select.dataset.wmReady === '1') return;
+
+    var periods = buildPeriods_();
+    select.innerHTML = '';
+    periods.forEach(function(period){
+      var option = document.createElement('option');
+      option.value = [period.year, period.month, period.week, period.reportType].join('|');
+      option.textContent = period.label;
+      select.appendChild(option);
+    });
+    select.selectedIndex = 0;
+    select.dataset.wmReady = '1';
+
+    button.addEventListener('click', function(event){
+      event.preventDefault();
+      event.stopPropagation();
+      var opening = select.hidden;
+      select.hidden = !opening;
+      button.setAttribute('aria-expanded', opening ? 'true' : 'false');
+      if(opening) select.focus();
+    });
+  }
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', init_, {once:true});
+  }else{
+    init_();
+  }
+})();
 </script>
