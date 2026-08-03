@@ -4385,6 +4385,39 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       }));
     }
 
+    function wmFetchMapPublishedReports(params){
+      return new Promise((resolve,reject)=>{
+        const callbackName='__wmMapReportsJsonp_'+Date.now()+'_'+Math.floor(Math.random()*100000);
+        const script=document.createElement('script');
+        const requestParams=new URLSearchParams(params||{});
+        const actorId=wmGetSettingActorTeacherId();
+        if(actorId) requestParams.set('actorTeacherId',actorId);
+        requestParams.set('callback',callbackName);
+        let finished=false;
+        const cleanup=()=>{
+          if(finished) return;
+          finished=true;
+          clearTimeout(timer);
+          try{ delete window[callbackName]; }catch(ignore){ window[callbackName]=undefined; }
+          if(script.parentNode) script.parentNode.removeChild(script);
+        };
+        const timer=setTimeout(()=>{
+          cleanup();
+          reject(new Error('발행 성적표 서버 응답 시간 초과'));
+        },30000);
+        window[callbackName]=data=>{
+          cleanup();
+          resolve(data||{});
+        };
+        script.onerror=()=>{
+          cleanup();
+          reject(new Error('발행 성적표 서버 연결 실패'));
+        };
+        script.src=WM_APPS_SCRIPT_URL+'?'+requestParams.toString();
+        document.head.appendChild(script);
+      });
+    }
+
     async function openMapReportPreview(studentId){
       const modal=document.getElementById('wmMapReportPreviewModal');
       const body=document.getElementById('wmMapReportPreviewBody');
@@ -4407,9 +4440,8 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
         params.set('dateStart',toDateInputValue(start));
         params.set('dateEnd',toDateInputValue(now));
         params.set('ts',Date.now());
-        const response=await fetch(WM_APPS_SCRIPT_URL+'?'+params.toString()+wmLmsActorQuery(),{method:'GET',cache:'no-store'});
-        const data=await response.json();
-        if(!response.ok || data.success===false) throw new Error(data.message||'발행 성적표 조회 실패');
+        const data=await wmFetchMapPublishedReports(params);
+        if(data.success===false) throw new Error(data.message||'발행 성적표 조회 실패');
         WM_MAP_REPORT_PUBLISHED_ROWS=extractReportRowsFromResponse(data).filter(row=>
           String(reportDetailStudentId(row)||'').trim().toUpperCase()===targetId &&
           String(reportDetailFirst(row,['리포트ID','Report_ID','ReportID'])||'').trim()
