@@ -2899,7 +2899,6 @@ function wmApplyLearningMapFromCurrentProgressCache_(cacheData, data){
   setText('summaryRecentScore', wmCurrentProgressRecentScoreForMap_ ? wmCurrentProgressRecentScoreForMap_ + '점' : '-');
 
   renderHomeworkTable(wmLearningRecords, wmStudentProfile || wmCurrentStudent);
-  wmLoadLearningRecordsDirectForMap_('direct-full-refresh');
   wmShowLearningModeBanner();
   return true;
 }
