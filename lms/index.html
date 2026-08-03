@@ -829,6 +829,16 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
     .wm-report-preview-modal-body { padding:18px; background:#eaf0f8; display:flex; justify-content:center; }
     .wm-report-preview-modal-body .wmr-sheet { margin:0 auto; }
     body.wm-report-preview-open { overflow:hidden; }
+    .wm-map-report-modal { position:fixed; inset:0; z-index:121000; display:none; align-items:flex-start; justify-content:center; padding:18px; background:rgba(15,23,42,.76); overflow:auto; }
+    .wm-map-report-modal.active { display:flex; }
+    .wm-map-report-card { width:min(1120px,97vw); min-height:88vh; background:#fff; border-radius:18px; box-shadow:0 28px 80px rgba(0,0,0,.38); overflow:hidden; }
+    .wm-map-report-head { position:sticky; top:0; z-index:4; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 16px; border-bottom:1px solid var(--wm-line); background:#fff; }
+    .wm-map-report-title { font-size:16px; font-weight:950; color:#173b75; }
+    .wm-map-report-toolbar { display:flex; align-items:center; gap:9px; flex-wrap:wrap; padding:12px 16px; background:#f4f8ff; border-bottom:1px solid #d9e4f3; }
+    .wm-map-report-toolbar label { font-size:13px; font-weight:900; color:#173b75; }
+    .wm-map-report-select { min-width:270px; padding:9px 34px 9px 11px; border:1px solid #b9cbea; border-radius:9px; background:#fff; color:#173b75; font-weight:850; }
+    .wm-map-report-body { min-height:70vh; padding:18px; background:#eaf0f8; display:flex; justify-content:center; }
+    .wm-map-report-empty { margin:auto; padding:30px; color:#64748b; font-size:15px; font-weight:850; text-align:center; }
     @media (max-width:1150px) {
       #panel-reports .wm-report-workspace { grid-template-columns:1fr; }
       #panel-reports .wm-report-preview-side { margin-top:0; margin-bottom:0; }
@@ -1011,6 +1021,19 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
         <button type="button" class="wm-action-btn sub" onclick="closeReportDesignPreview()">닫기</button>
       </div>
       <div id="wmReportDesignPreviewModalBody" class="wm-report-preview-modal-body"></div>
+    </div>
+  </div>
+  <div id="wmMapReportPreviewModal" class="wm-map-report-modal" role="dialog" aria-modal="true" aria-label="학습맵 성적표 전용 미리보기" onclick="wmMapReportBackdropClose(event)">
+    <div class="wm-map-report-card">
+      <div class="wm-map-report-head">
+        <div id="wmMapReportPreviewTitle" class="wm-map-report-title">학습맵 성적표 전용 미리보기</div>
+        <button type="button" class="wm-action-btn sub" onclick="closeMapReportPreview()">닫기</button>
+      </div>
+      <div class="wm-map-report-toolbar">
+        <label for="wmMapReportSelect">발행 성적표</label>
+        <select id="wmMapReportSelect" class="wm-map-report-select" onchange="wmRenderSelectedMapReport(this.value)"></select>
+      </div>
+      <div id="wmMapReportPreviewBody" class="wm-map-report-body"><div class="wm-map-report-empty">성적표를 선택해 주세요.</div></div>
     </div>
   </div>
   <main class="wm-admin-wrap">
@@ -2061,7 +2084,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
         <button type="button" class="wm-action-btn" onclick="loadReports()">성적표조회</button>
       </div>
       
-      <div class="wm-record-scroll-top" id="reportTopScroll"><div class="wm-record-scroll-inner" id="reportTopScrollInner"></div></div><div class="wm-table-wrap" id="reportTableWrap"><table id="reportManageTable"><thead><tr><th>일련번호</th><th>리포트주차</th><th>학생ID</th><th>학교</th><th>학년</th><th>학생이름</th><th>학습레벨</th><th>Set_ID</th><th>단어수</th><th>학습날짜</th><th>점수</th><th>총소요시간</th><th>성적표보기</th><th>비고</th></tr></thead><tbody id="reportManageTbody"><tr><td colspan="14">4-1.성적표생성_DB 조회 대기 중입니다.</td></tr></tbody></table></div><div class="wm-current-progress-pager" id="reportManagePager" style="display:none;"><button type="button" id="reportManagePrevBtn" onclick="moveReportManagePage(-1)">이전</button><span class="wm-current-progress-page-info" id="reportManagePageInfo">1 / 1</span><button type="button" id="reportManageNextBtn" onclick="moveReportManagePage(1)">다음</button></div>
+      <div class="wm-record-scroll-top" id="reportTopScroll"><div class="wm-record-scroll-inner" id="reportTopScrollInner"></div></div><div class="wm-table-wrap" id="reportTableWrap"><table id="reportManageTable"><thead><tr><th>일련번호</th><th>리포트주차</th><th>학생ID</th><th>학교</th><th>학년</th><th>학생이름</th><th>학습레벨</th><th>Set_ID</th><th>단어수</th><th>학습날짜</th><th>점수</th><th>총소요시간</th><th>성적표보기</th><th>학습맵 성적표 보기</th><th>비고</th></tr></thead><tbody id="reportManageTbody"><tr><td colspan="15">4-1.성적표생성_DB 조회 대기 중입니다.</td></tr></tbody></table></div><div class="wm-current-progress-pager" id="reportManagePager" style="display:none;"><button type="button" id="reportManagePrevBtn" onclick="moveReportManagePage(-1)">이전</button><span class="wm-current-progress-page-info" id="reportManagePageInfo">1 / 1</span><button type="button" id="reportManageNextBtn" onclick="moveReportManagePage(1)">다음</button></div>
       <div id="wmReportStudentRecordDetail" class="wm-factory-box" style="display:none;"></div>
       <div id="wmReportManageDetail" class="wm-factory-box" style="display:none;"></div>
     </section>
@@ -4298,6 +4321,146 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       return true;
     }
 
+    /* WM_MAP_REPORT_PREVIEW_LMS_V1
+     * LMS 검증 전용 화면입니다. 4-1.성적표생성_DB의 실제 발행 행만 조회하며
+     * 학습기록/현재진행/성적등급 재집계 API는 호출하지 않습니다.
+     * 표시 공식: 최근 4주 Weekly + 최근 3개월 Monthly. Monthly 발행 월의 Weekly는 제외합니다.
+     */
+    let WM_MAP_REPORT_PUBLISHED_ROWS=[];
+    let WM_MAP_REPORT_OPTIONS=[];
+
+    function wmMapReportDate(row){
+      return parseDateValue(reportDetailFirst(row,['학습날짜','리포트주차','등록일']));
+    }
+
+    function wmMapReportMonthKey(row){
+      const date=wmMapReportDate(row);
+      return date ? date.getFullYear()+'-'+String(date.getMonth()+1).padStart(2,'0') : '';
+    }
+
+    function wmMapReportIsMonthly(row){
+      const type=String(reportDetailFirst(row,['리포트유형','유형','비고'])||'').trim();
+      return /월간|monthly/i.test(type);
+    }
+
+    function wmMapReportLabel(row){
+      const date=wmMapReportDate(row);
+      const month=date ? date.getMonth()+1 : '';
+      if(wmMapReportIsMonthly(row)) return month+'월 Monthly';
+      const raw=String(reportDetailFirst(row,['리포트주차','주차'])||'');
+      const match=raw.match(/(\d+)\s*주/);
+      const week=match ? Number(match[1]) : reportDetailWeek(row);
+      return month+'월 '+week+'주 Weekly';
+    }
+
+    function wmBuildMapReportOptions(rows){
+      const now=new Date();
+      now.setHours(23,59,59,999);
+      const weeklyCutoff=new Date(now);
+      weeklyCutoff.setDate(weeklyCutoff.getDate()-28);
+      weeklyCutoff.setHours(0,0,0,0);
+      const monthlyCutoff=new Date(now.getFullYear(),now.getMonth()-3,1);
+      const valid=(rows||[]).filter(row=>{
+        const reportId=String(reportDetailFirst(row,['리포트ID','Report_ID','ReportID'])||'').trim();
+        const date=wmMapReportDate(row);
+        return !!(reportId&&date&&date<=now);
+      });
+      const monthlyMonths={};
+      valid.forEach(row=>{ if(wmMapReportIsMonthly(row)) monthlyMonths[wmMapReportMonthKey(row)]=true; });
+      const selected=valid.filter(row=>{
+        const date=wmMapReportDate(row);
+        if(wmMapReportIsMonthly(row)) return date>=monthlyCutoff;
+        return date>=weeklyCutoff && !monthlyMonths[wmMapReportMonthKey(row)];
+      }).sort((a,b)=>wmMapReportDate(b)-wmMapReportDate(a));
+      const seen={};
+      return selected.filter(row=>{
+        const id=String(reportDetailFirst(row,['리포트ID','Report_ID','ReportID'])||'').trim();
+        if(seen[id]) return false;
+        seen[id]=true;
+        return true;
+      }).map(row=>({
+        reportId:String(reportDetailFirst(row,['리포트ID','Report_ID','ReportID'])||'').trim(),
+        label:wmMapReportLabel(row),
+        row:row
+      }));
+    }
+
+    async function openMapReportPreview(studentId){
+      const modal=document.getElementById('wmMapReportPreviewModal');
+      const body=document.getElementById('wmMapReportPreviewBody');
+      const select=document.getElementById('wmMapReportSelect');
+      const title=document.getElementById('wmMapReportPreviewTitle');
+      const targetId=String(studentId||'').trim().toUpperCase();
+      if(!modal||!body||!select) return;
+      modal.classList.add('active');
+      document.body.classList.add('wm-report-preview-open');
+      if(title) title.textContent='학습맵 성적표 전용 미리보기 · '+targetId;
+      select.innerHTML='<option value="">발행본 조회 중</option>';
+      select.disabled=true;
+      body.innerHTML='<div class="wm-report-empty"><span class="wm-loading-spinner"></span> 실제 발행 성적표를 불러오는 중입니다.</div>';
+      try{
+        const now=new Date();
+        const start=new Date(now.getFullYear(),now.getMonth()-3,1);
+        const params=new URLSearchParams();
+        params.set('mode','reports');
+        params.set('studentId',targetId);
+        params.set('dateStart',toDateInputValue(start));
+        params.set('dateEnd',toDateInputValue(now));
+        params.set('ts',Date.now());
+        const response=await fetch(WM_APPS_SCRIPT_URL+'?'+params.toString()+wmLmsActorQuery(),{method:'GET',cache:'no-store'});
+        const data=await response.json();
+        if(!response.ok || data.success===false) throw new Error(data.message||'발행 성적표 조회 실패');
+        WM_MAP_REPORT_PUBLISHED_ROWS=extractReportRowsFromResponse(data).filter(row=>
+          String(reportDetailStudentId(row)||'').trim().toUpperCase()===targetId &&
+          String(reportDetailFirst(row,['리포트ID','Report_ID','ReportID'])||'').trim()
+        );
+        WM_MAP_REPORT_OPTIONS=wmBuildMapReportOptions(WM_MAP_REPORT_PUBLISHED_ROWS);
+        if(!WM_MAP_REPORT_OPTIONS.length){
+          select.innerHTML='<option value="">발행 성적표 없음</option>';
+          body.innerHTML='<div class="wm-map-report-empty">성적 내용이 없습니다.</div>';
+          return;
+        }
+        select.innerHTML=WM_MAP_REPORT_OPTIONS.map((item,index)=>
+          '<option value="'+escapeHtml(item.reportId)+'"'+(index===0?' selected':'')+'>'+escapeHtml(item.label)+'</option>'
+        ).join('');
+        select.disabled=false;
+        wmRenderSelectedMapReport(WM_MAP_REPORT_OPTIONS[0].reportId);
+      }catch(err){
+        select.innerHTML='<option value="">조회 실패</option>';
+        body.innerHTML='<div class="wm-map-report-empty">'+escapeHtml(err&&err.message?err.message:String(err))+'</div>';
+      }
+    }
+
+    function wmRenderSelectedMapReport(reportId){
+      const body=document.getElementById('wmMapReportPreviewBody');
+      const template=document.getElementById('wmReportTemplate');
+      const item=WM_MAP_REPORT_OPTIONS.find(option=>option.reportId===String(reportId||''));
+      if(!body||!template||!item){
+        if(body) body.innerHTML='<div class="wm-map-report-empty">성적 내용이 없습니다.</div>';
+        return;
+      }
+      const previousRows=WM_REPORT_MANAGE_ROWS;
+      const previousGrade=WM_REPORT_ACTIVE_GRADE_COMMENT;
+      try{
+        WM_REPORT_MANAGE_ROWS=WM_MAP_REPORT_PUBLISHED_ROWS.slice();
+        WM_REPORT_ACTIVE_GRADE_COMMENT=null;
+        body.innerHTML=buildMonthlyCumulativeReportHtml(item.reportId,template.innerHTML);
+      }finally{
+        WM_REPORT_MANAGE_ROWS=previousRows;
+        WM_REPORT_ACTIVE_GRADE_COMMENT=previousGrade;
+      }
+    }
+
+    function closeMapReportPreview(){
+      const modal=document.getElementById('wmMapReportPreviewModal');
+      if(modal) modal.classList.remove('active');
+      document.body.classList.remove('wm-report-preview-open');
+    }
+
+    function wmMapReportBackdropClose(event){
+      if(event&&event.target&&event.target.id==='wmMapReportPreviewModal') closeMapReportPreview();
+    }
+
     async function openReportDetail(reportId){
       wmLockStatusMessage('ReportDB_V2_LOCK','성적표조회 상세 성적표 열기');
       closeReportStudentRecords();
@@ -5256,7 +5419,7 @@ function extractRecordRowsFromResponse(data){
     }
 
 
-    const WM_REPORT_HEADERS = ['일련번호','리포트주차','학생ID','학교','학년','학생이름','학습레벨','Set_ID','단어수','학습날짜','점수','총소요시간','성적표보기','비고'];
+    const WM_REPORT_HEADERS = ['일련번호','리포트주차','학생ID','학교','학년','학생이름','학습레벨','Set_ID','단어수','학습날짜','점수','총소요시간','성적표보기','학습맵 성적표 보기','비고'];
     let WM_REPORT_ACTIVE_GRADE_COMMENT = null;
 
 
@@ -6227,7 +6390,7 @@ function extractRecordRowsFromResponse(data){
       wmLockStatusMessage('ReportDB_V2_LOCK','성적표조회 완료 세트 조회');
       const tbody = document.getElementById('reportManageTbody');
       setManageLoading('reports', true);
-      if(tbody) tbody.innerHTML = '<tr><td colspan="14"><div class="wm-report-detail-loading"><span class="wm-loading-spinner"></span><span>완료 세트 조회 중입니다.</span></div></td></tr>';
+      if(tbody) tbody.innerHTML = '<tr><td colspan="15"><div class="wm-report-detail-loading"><span class="wm-loading-spinner"></span><span>완료 세트 조회 중입니다.</span></div></td></tr>';
 
       try{
         let rows = [];
@@ -6253,7 +6416,7 @@ function extractRecordRowsFromResponse(data){
         return WM_REPORT_MANAGE_ROWS;
       }catch(err){
         console.error('성적표 완료세트 조회 실패', err);
-        if(tbody) tbody.innerHTML = '<tr><td colspan="14">완료 세트 조회 실패: '+escapeHtml(err && err.message ? err.message : err)+'</td></tr>';
+        if(tbody) tbody.innerHTML = '<tr><td colspan="15">완료 세트 조회 실패: '+escapeHtml(err && err.message ? err.message : err)+'</td></tr>';
         setManageLoading('reports', false);
         return [];
       }
@@ -6270,7 +6433,7 @@ function extractRecordRowsFromResponse(data){
       if(WM_REPORT_MANAGE_PAGE > totalPages) WM_REPORT_MANAGE_PAGE = totalPages;
       if(WM_REPORT_MANAGE_PAGE < 1) WM_REPORT_MANAGE_PAGE = 1;
       if(!rows.length){
-        tbody.innerHTML = '<tr><td colspan="14">표시할 완료 세트가 없습니다.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="15">표시할 완료 세트가 없습니다.</td></tr>';
         updateReportManagePager(0, 1, 1);
         setManageLoading('reports', false);
         return;
@@ -6291,6 +6454,10 @@ function extractRecordRowsFromResponse(data){
           }
           if(header === '성적표보기'){
             return '<td><button type="button" class="wm-action-btn" onclick="openReportDetail(\''+reportId+'\')">성적표보기</button></td>';
+          }
+          if(header === '학습맵 성적표 보기'){
+            const mapStudentId=String(reportDetailStudentId(row)||'').trim();
+            return '<td><button type="button" class="wm-action-btn" onclick="openMapReportPreview(\''+escapeHtml(mapStudentId)+'\')">학습맵 성적표 보기</button></td>';
           }
           if(header === 'Teacher’s Comment' || header === '격려메시지'){
             return '<td></td>';
