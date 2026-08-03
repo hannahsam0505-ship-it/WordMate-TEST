@@ -4217,6 +4217,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       params.set('studentId',studentId);
       params.set('yearMonth',item.yearMonth);
       params.set('reportWeek',item.yearMonth+'-'+Number(item.selectedWeek||0)+'주차');
+      params.set('reportType','월간');
       const actorId=(typeof wmGetSettingActorTeacherId==='function')?wmGetSettingActorTeacherId():'';
       if(actorId) params.set('actorTeacherId',actorId);
       params.set('ts',Date.now());
@@ -4239,10 +4240,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       body.innerHTML='<div class="wm-report-detail-loading"><span class="wm-loading-spinner"></span><span>성적표를 불러오는 중입니다.</span></div>';
       try{
         const data=await wmFetchRecentReportData(WM_RECENT_REPORT_STUDENT_ID,item);
-        const parser=document.createElement('div');
-        parser.innerHTML=bindMonthlyReportSingleValues(template.innerHTML,data);
-        bindReportGradeComment(parser.querySelector('.wmr-sheet'),data.grade||{});
-        body.innerHTML=parser.innerHTML;
+        body.innerHTML=wmBuildSharedActualReportHtml(template.innerHTML,data);
       }catch(err){
         body.innerHTML='<div class="wm-note">'+escapeHtml(err&&err.message?err.message:'성적 내용이 없습니다.')+'</div>';
       }
@@ -4446,6 +4444,13 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       return true;
     }
 
+    function wmBuildSharedActualReportHtml(templateHtml,reportData){
+      const parser=document.createElement('div');
+      parser.innerHTML=bindMonthlyReportSingleValues(templateHtml,reportData);
+      bindReportGradeComment(parser.querySelector('.wmr-sheet'),reportData&&reportData.grade||{});
+      return parser.innerHTML;
+    }
+
     async function openReportDetail(reportId){
       wmLockStatusMessage('ReportDB_V2_LOCK','성적표조회 상세 성적표 열기');
       closeReportStudentRecords();
@@ -4466,12 +4471,11 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
         }
         const reportSourceRows=(WM_REPORT_MANAGE_ROWS || []).filter(isValidReportDbRow);
         const clickedReportRow=findReportDetailRow(reportId, reportSourceRows);
-        WM_REPORT_ACTIVE_GRADE_COMMENT=await fetchReportGradeComment(clickedReportRow);
-        if(!WM_REPORT_ACTIVE_GRADE_COMMENT || !WM_REPORT_ACTIVE_GRADE_COMMENT.found){
-          console.warn('6.성적등급_DB 성적표 하단 일치 행 없음:',WM_REPORT_ACTIVE_GRADE_COMMENT);
+        const reportResult=await fetchMonthlyReportSingleData(clickedReportRow);
+        if(!reportResult || !reportResult.success || !reportResult.data){
+          throw new Error(reportResult&&reportResult.message?reportResult.message:'성적표 실제 데이터 조회 실패');
         }
-
-        const reportHtml=buildMonthlyCumulativeReportHtml(reportId, template.innerHTML);
+        const reportHtml=wmBuildSharedActualReportHtml(template.innerHTML,reportResult.data);
         setReportActualPreview(reportHtml,reportId,clickedReportRow);
         openReportDesignPreview();
       }catch(err){
@@ -4491,12 +4495,15 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
         const studentId=reportDetailStudentId(clickedReportRow);
         const yearMonth=reportDetailMonthKey(clickedReportRow);
         const week=reportDetailWeek(clickedReportRow);
+        const reportMemo=String(reportDetailFirst(clickedReportRow,['비고','memo','Memo'])||'').trim();
+        const reportType=String(reportDetailFirst(clickedReportRow,['리포트유형','Report_Type','reportType'])||(/Monthly Report|월간/i.test(reportMemo)?'월간':'주간')).trim();
         const params=new URLSearchParams();
         params.set('mode','monthlyReportData');
         params.set('action','monthlyReportData');
         params.set('studentId',studentId);
         params.set('yearMonth',yearMonth);
         params.set('reportWeek',yearMonth+'-'+week+'주차');
+        params.set('reportType',reportType);
         const actorId=(typeof wmGetSettingActorTeacherId==='function') ? wmGetSettingActorTeacherId() : '';
         if(actorId) params.set('actorTeacherId',actorId);
         params.set('ts',Date.now());
