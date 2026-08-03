@@ -4450,6 +4450,13 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       return true;
     }
 
+    function wmBuildSharedActualReportHtml(templateHtml,reportData){
+      const parser=document.createElement('div');
+      parser.innerHTML=bindMonthlyReportSingleValues(templateHtml,reportData);
+      bindReportGradeComment(parser.querySelector('.wmr-sheet'),reportData&&reportData.grade||{});
+      return parser.innerHTML;
+    }
+
     async function openReportDetail(reportId){
       wmLockStatusMessage('ReportDB_V2_LOCK','성적표조회 상세 성적표 열기');
       closeReportStudentRecords();
@@ -4470,6 +4477,16 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
         }
         const reportSourceRows=(WM_REPORT_MANAGE_ROWS || []).filter(isValidReportDbRow);
         const clickedReportRow=findReportDetailRow(reportId, reportSourceRows);
+        if(wmReportDetailIsClosedMonth(clickedReportRow)){
+          const reportResult=await fetchMonthlyReportSingleData(clickedReportRow);
+          if(!reportResult || !reportResult.success || !reportResult.data){
+            throw new Error(reportResult&&reportResult.message?reportResult.message:'월간성적표 조회 실패');
+          }
+          const reportHtml=wmBuildSharedActualReportHtml(template.innerHTML,reportResult.data);
+          setReportActualPreview(reportHtml,reportId,clickedReportRow);
+          openReportDesignPreview();
+          return;
+        }
         WM_REPORT_ACTIVE_GRADE_COMMENT=await fetchReportGradeComment(clickedReportRow);
         if(!WM_REPORT_ACTIVE_GRADE_COMMENT || !WM_REPORT_ACTIVE_GRADE_COMMENT.found){
           console.warn('6.성적등급_DB 성적표 하단 일치 행 없음:',WM_REPORT_ACTIVE_GRADE_COMMENT);
@@ -4501,6 +4518,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
         params.set('studentId',studentId);
         params.set('yearMonth',yearMonth);
         params.set('reportWeek',yearMonth+'-'+week+'주차');
+        params.set('reportType','월간');
         const actorId=(typeof wmGetSettingActorTeacherId==='function') ? wmGetSettingActorTeacherId() : '';
         if(actorId) params.set('actorTeacherId',actorId);
         params.set('ts',Date.now());
@@ -5488,12 +5506,20 @@ function extractRecordRowsFromResponse(data){
     }
 
     function reportDetailWeek(row){
-      const date = parseDateValue(reportDetailDate(row));
-      if(date) return reportCalendarWeekOfMonth(date);
       const weekRaw = String(reportDetailFirst(row, ['리포트주차','Report_Week','주차','Week']) || '').trim();
       const match = weekRaw.match(/(\d+)\s*주/);
-      if(match) return Number(match[1]);
+      if(match) return Math.max(1,Math.min(5,Number(match[1])));
+      const date = parseDateValue(reportDetailDate(row));
+      if(date) return reportCalendarWeekOfMonth(date);
       return 1;
+    }
+
+    function wmReportDetailIsClosedMonth(row){
+      const monthKey=reportDetailMonthKey(row);
+      if(!monthKey) return false;
+      const now=new Date();
+      const currentMonth=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+      return monthKey<currentMonth;
     }
 
     function reportDetailMonthKey(row){
