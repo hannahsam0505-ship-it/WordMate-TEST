@@ -725,8 +725,7 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
     .wm-recent-report-btn { border:1px solid #0d55c8; background:#fff; color:#0d55c8; border-radius:9px; padding:8px 10px; font-size:12px; font-weight:900; cursor:pointer; white-space:nowrap; }
     .wm-recent-report-btn:hover { background:#eef4ff; }
     .wm-recent-report-select { min-width:150px; border:1px solid #9fbce8; border-radius:9px; background:#fff; color:#173b75; padding:8px 10px; font-size:13px; font-weight:900; }
-    #wmRecentReportModal { padding-top:88px; }
-    #wmRecentReportModal .wm-report-preview-modal-card { max-height:calc(100vh - 110px); display:flex; flex-direction:column; }
+    #wmRecentReportModal .wm-report-preview-modal-card { display:flex; flex-direction:column; }
     #wmRecentReportModal .wm-report-preview-modal-head { position:relative; top:auto; flex:0 0 auto; }
     #wmRecentReportModal .wm-report-preview-modal-body { flex:1 1 auto; min-height:140px; overflow:auto; }
     .wm-current-progress-pager { display:flex; justify-content:center; align-items:center; gap:10px; margin:12px 0 0; flex-wrap:wrap; }
@@ -830,12 +829,12 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
     .wm-report-preview-btn:hover { border-color:var(--wm-blue); color:var(--wm-blue); background:#f8fbff; }
     .wm-report-preview-frame { position:relative; flex:0 0 526px; height:526px; min-height:0; overflow-x:hidden; overflow-y:auto; border:1px solid #cbd9ed; border-radius:12px; background:#dfe8f5; display:flex; justify-content:center; align-items:flex-start; padding:8px; }
     .wm-report-preview-canvas { width:210mm; min-width:210mm; height:163.35mm; min-height:163.35mm; transform:scale(.55); transform-origin:top center; pointer-events:none; }
-    .wm-report-preview-modal { position:fixed; inset:0; z-index:120000; display:none; align-items:flex-start; justify-content:center; padding:22px; background:rgba(15,23,42,.72); overflow:auto; }
+    .wm-report-preview-modal { position:fixed; inset:0; z-index:120000; display:none; align-items:flex-start; justify-content:center; padding:72px 22px 22px; background:rgba(15,23,42,.72); overflow:auto; }
     .wm-report-preview-modal.active { display:flex; }
-    .wm-report-preview-modal-card { width:min(1120px,96vw); background:#fff; border-radius:18px; box-shadow:0 28px 80px rgba(0,0,0,.35); overflow:hidden; }
+    .wm-report-preview-modal-card { width:min(1120px,96vw); max-height:calc(100vh - 94px); background:#fff; border-radius:18px; box-shadow:0 28px 80px rgba(0,0,0,.35); overflow:hidden; display:flex; flex-direction:column; }
     .wm-report-preview-modal-head { position:sticky; top:0; z-index:5; display:flex; align-items:center; justify-content:space-between; gap:10px; background:#fff; border-bottom:1px solid var(--wm-line); padding:12px 16px; }
     .wm-report-preview-modal-title { font-size:16px; font-weight:950; color:#173b75; }
-    .wm-report-preview-modal-body { padding:18px; background:#eaf0f8; display:flex; justify-content:center; }
+    .wm-report-preview-modal-body { padding:18px; background:#eaf0f8; display:flex; justify-content:center; overflow:auto; }
     .wm-report-preview-modal-body .wmr-sheet { margin:0 auto; }
     body.wm-report-preview-open { overflow:hidden; }
     @media (max-width:1150px) {
@@ -848,7 +847,7 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
       #panel-reports .wm-report-filter-grid { grid-template-columns:1fr; }
       .wm-report-preview-frame { min-height:430px; }
       .wm-report-preview-canvas { height:118.8mm; min-height:118.8mm; transform:scale(.40); }
-      .wm-report-preview-modal { padding:8px; }
+      .wm-report-preview-modal { padding:64px 8px 8px; }
       .wm-report-preview-modal-body { padding:8px; overflow:auto; justify-content:flex-start; }
     }
 
@@ -4200,6 +4199,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
 
     let WM_RECENT_REPORT_MONTHS=[];
     let WM_RECENT_REPORT_STUDENT_ID='';
+    let WM_RECENT_REPORT_STUDENT_NAME='';
 
     async function wmFetchRecentReportMonths(){
       const response=await fetch(WM_APPS_SCRIPT_URL+'?mode=recentReportMonths&ts='+Date.now()+wmLmsActorQuery(),{method:'GET',cache:'no-store'});
@@ -4236,11 +4236,16 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       const template=document.getElementById('wmReportTemplate');
       const item=WM_RECENT_REPORT_MONTHS.find(month=>month.yearMonth===String(select&&select.value||''));
       if(!item||!body||!template) return;
-      if(title) title.textContent='최근성적표보기 · '+WM_RECENT_REPORT_STUDENT_ID+' · '+item.label;
+      if(title) title.textContent='최근성적표보기 · '+(WM_RECENT_REPORT_STUDENT_NAME||'조회 중')+' · '+item.label;
       body.innerHTML='<div class="wm-report-detail-loading"><span class="wm-loading-spinner"></span><span>성적표를 불러오는 중입니다.</span></div>';
       try{
         const data=await wmFetchRecentReportData(WM_RECENT_REPORT_STUDENT_ID,item);
-        body.innerHTML=wmBuildSharedActualReportHtml(template.innerHTML,data);
+        WM_RECENT_REPORT_STUDENT_NAME=String(data&&data.student&&data.student.studentName||'').trim();
+        if(title) title.textContent='최근성적표보기 · '+(WM_RECENT_REPORT_STUDENT_NAME||'이름 없음')+' · '+item.label;
+        const parser=document.createElement('div');
+        parser.innerHTML=bindMonthlyReportSingleValues(template.innerHTML,data);
+        bindReportGradeComment(parser.querySelector('.wmr-sheet'),data.grade||{});
+        body.innerHTML=parser.innerHTML;
       }catch(err){
         body.innerHTML='<div class="wm-note">'+escapeHtml(err&&err.message?err.message:'성적 내용이 없습니다.')+'</div>';
       }
@@ -4252,10 +4257,11 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       const title=document.getElementById('wmRecentReportModalTitle');
       const select=document.getElementById('wmRecentReportMonthSelect');
       WM_RECENT_REPORT_STUDENT_ID=String(studentId||'').trim();
+      WM_RECENT_REPORT_STUDENT_NAME='';
       if(!WM_RECENT_REPORT_STUDENT_ID||!modal||!body||!select) return;
       modal.classList.add('active');
       document.body.classList.add('wm-report-preview-open');
-      if(title) title.textContent='최근성적표보기 · '+WM_RECENT_REPORT_STUDENT_ID;
+      if(title) title.textContent='최근성적표보기 · 학생 조회 중';
       body.innerHTML='<div class="wm-report-detail-loading"><span class="wm-loading-spinner"></span><span>최근 4개월을 불러오는 중입니다.</span></div>';
       try{
         const result=await wmFetchRecentReportMonths();
@@ -4444,13 +4450,6 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       return true;
     }
 
-    function wmBuildSharedActualReportHtml(templateHtml,reportData){
-      const parser=document.createElement('div');
-      parser.innerHTML=bindMonthlyReportSingleValues(templateHtml,reportData);
-      bindReportGradeComment(parser.querySelector('.wmr-sheet'),reportData&&reportData.grade||{});
-      return parser.innerHTML;
-    }
-
     async function openReportDetail(reportId){
       wmLockStatusMessage('ReportDB_V2_LOCK','성적표조회 상세 성적표 열기');
       closeReportStudentRecords();
@@ -4471,11 +4470,12 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
         }
         const reportSourceRows=(WM_REPORT_MANAGE_ROWS || []).filter(isValidReportDbRow);
         const clickedReportRow=findReportDetailRow(reportId, reportSourceRows);
-        const reportResult=await fetchMonthlyReportSingleData(clickedReportRow);
-        if(!reportResult || !reportResult.success || !reportResult.data){
-          throw new Error(reportResult&&reportResult.message?reportResult.message:'성적표 실제 데이터 조회 실패');
+        WM_REPORT_ACTIVE_GRADE_COMMENT=await fetchReportGradeComment(clickedReportRow);
+        if(!WM_REPORT_ACTIVE_GRADE_COMMENT || !WM_REPORT_ACTIVE_GRADE_COMMENT.found){
+          console.warn('6.성적등급_DB 성적표 하단 일치 행 없음:',WM_REPORT_ACTIVE_GRADE_COMMENT);
         }
-        const reportHtml=wmBuildSharedActualReportHtml(template.innerHTML,reportResult.data);
+
+        const reportHtml=buildMonthlyCumulativeReportHtml(reportId, template.innerHTML);
         setReportActualPreview(reportHtml,reportId,clickedReportRow);
         openReportDesignPreview();
       }catch(err){
@@ -4495,15 +4495,12 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
         const studentId=reportDetailStudentId(clickedReportRow);
         const yearMonth=reportDetailMonthKey(clickedReportRow);
         const week=reportDetailWeek(clickedReportRow);
-        const reportMemo=String(reportDetailFirst(clickedReportRow,['비고','memo','Memo'])||'').trim();
-        const reportType=String(reportDetailFirst(clickedReportRow,['리포트유형','Report_Type','reportType'])||(/Monthly Report|월간/i.test(reportMemo)?'월간':'주간')).trim();
         const params=new URLSearchParams();
         params.set('mode','monthlyReportData');
         params.set('action','monthlyReportData');
         params.set('studentId',studentId);
         params.set('yearMonth',yearMonth);
         params.set('reportWeek',yearMonth+'-'+week+'주차');
-        params.set('reportType',reportType);
         const actorId=(typeof wmGetSettingActorTeacherId==='function') ? wmGetSettingActorTeacherId() : '';
         if(actorId) params.set('actorTeacherId',actorId);
         params.set('ts',Date.now());
