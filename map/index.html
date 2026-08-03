@@ -710,17 +710,18 @@ const WM_LMS_URL = WM_CONFIG.LMS_URL;
 
   <!-- 3. 하단 학습기록_DB 구조 -->
 <style id="wm-map-report-modal-style">
-.wm-map-report-modal{position:fixed;inset:0;z-index:120000;display:none;align-items:flex-start;justify-content:center;padding:18px;background:rgba(15,23,42,.72);overflow:auto}
+.wm-map-report-modal{position:fixed;left:0;right:0;top:0;bottom:0;z-index:120000;display:none;align-items:flex-start;justify-content:center;padding:18px;background:rgba(15,23,42,.72);overflow:hidden;box-sizing:border-box}
+body.wm-test-booth-active .wm-map-report-modal{top:var(--wm-test-booth-height);padding-top:12px}
 .wm-map-report-modal.active{display:flex}
-.wm-map-report-card{width:min(1120px,96vw);background:#fff;border-radius:18px;box-shadow:0 28px 80px rgba(0,0,0,.35);overflow:hidden}
+.wm-map-report-card{width:min(1120px,96vw);height:100%;max-height:100%;display:flex;flex-direction:column;background:#fff;border-radius:18px;box-shadow:0 28px 80px rgba(0,0,0,.35);overflow:hidden}
 .wm-map-report-head{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:12px;background:#fff;border-bottom:1px solid #d8e1ee;padding:12px 16px}
 .wm-map-report-title{font-size:16px;font-weight:950;color:#173b75;white-space:nowrap}
 .wm-map-report-select{min-width:220px;height:40px;border:1px solid #8fb3e8;border-radius:10px;padding:0 12px;background:#fff;color:#173b75;font-weight:800}
 .wm-map-report-close{margin-left:auto;border:0;border-radius:10px;background:#173b75;color:#fff;padding:10px 16px;font-weight:900;cursor:pointer}
-.wm-map-report-body{padding:18px;background:#eaf0f8;display:flex;justify-content:center;min-height:280px}
+.wm-map-report-body{padding:18px;background:#eaf0f8;display:flex;justify-content:center;min-height:0;flex:1 1 auto;overflow:auto}
 .wm-map-report-message{margin:auto;padding:36px 24px;color:#334155;font-size:18px;font-weight:900;text-align:center}
 body.wm-map-report-open{overflow:hidden}
-@media(max-width:768px){.wm-map-report-modal{padding:6px}.wm-map-report-head{flex-wrap:wrap}.wm-map-report-select{order:3;width:100%}.wm-map-report-body{padding:6px;overflow:auto;justify-content:flex-start}}
+@media(max-width:768px){.wm-map-report-modal{padding:6px}.wm-map-report-head{flex-wrap:wrap}.wm-map-report-select{order:3;width:100%}.wm-map-report-body{padding:6px;justify-content:flex-start}}
 </style>
 <div id="wmMapReportModal" class="wm-map-report-modal" role="dialog" aria-modal="true" aria-label="성적표 보기">
   <div class="wm-map-report-card">
@@ -5675,7 +5676,50 @@ function wmMapReportRenderA4_(period){
   const logo=sheet.querySelector('[data-wmr-logo]');const logoUrl=wmMapReportCell_(first,['로고URL','Logo_URL']);if(logo){if(logoUrl){logo.src=String(logoUrl);logo.style.visibility='visible';}else{logo.removeAttribute('src');logo.style.visibility='hidden';}}
   sheet.setAttribute('data-wmr-map-report-db-only','true');body.innerHTML=parser.innerHTML;
 }
-function wmMapReportSelect_(key){const period=(wmMapPublishedReportState.periods||[]).find(p=>p.key===key);if(period)wmMapReportRenderA4_(period);}
+async function wmMapReportBindGradeComment_(period){
+  const rows=wmMapReportRowsForPeriod_(period);
+  const first=rows[0]||{};
+  const sheet=document.querySelector('#wmMapReportBody .wmr-sheet');
+  if(!sheet||!rows.length)return;
+  const studentId=String(wmMapReportCell_(first,['학생ID','Student_ID'])||'').trim();
+  if(!studentId)return;
+  const params=new URLSearchParams();
+  params.set('mode','reportGradeComment');
+  params.set('action','reportGradeComment');
+  params.set('studentId',studentId);
+  params.set('year',String(period.year||''));
+  params.set('month',String(period.month||''));
+  params.set('week',String(period.week||''));
+  params.set('reportType',period.type==='monthly'?'월간':'주간');
+  params.set('ts',String(Date.now()));
+  try{
+    const response=await fetch(wmGetApiBaseUrl()+'?'+params.toString(),{method:'GET',cache:'no-store'});
+    const data=await response.json();
+    const gradeData=data&&data.found&&data.gradeComment?data.gradeComment:null;
+    if(!gradeData)return;
+    const setText=(selector,value)=>{const el=sheet.querySelector(selector);if(el)el.textContent=value==null?'':String(value);};
+    const grade=String(gradeData['Grade']||'').trim();
+    const classValue=String(gradeData['Class']||'').trim();
+    setText('[data-wmr-grade-final]',grade&&classValue?grade+'.'+classValue+'등급':'');
+    setText('[data-wmr-grade-attendance]',gradeData['출석점수']!==undefined?gradeData['출석점수']+'점':'');
+    setText('[data-wmr-grade-focus]',gradeData['참여집중도']!==undefined?gradeData['참여집중도']+'점':'');
+    setText('[data-wmr-grade-trend]',gradeData['점수추이']!==undefined?gradeData['점수추이']+'점':'');
+    const commentEl=sheet.querySelector('[data-wmr-auto-comment]');
+    if(commentEl){
+      const lines=String(gradeData['자동코멘트']||'').split(/\r?\n/).map(v=>v.trim()).filter(Boolean).slice(0,5);
+      commentEl.innerHTML=lines.map(line=>'<span class="wmr-auto-comment-line">'+escapeHtml(line)+'</span>').join('');
+    }
+    sheet.setAttribute('data-wmr-grade-db-connected','true');
+  }catch(err){
+    console.warn('성적표 하단 기존 성적등급 조회 실패:',err);
+  }
+}
+async function wmMapReportSelect_(key){
+  const period=(wmMapPublishedReportState.periods||[]).find(p=>p.key===key);
+  if(!period)return;
+  wmMapReportRenderA4_(period);
+  await wmMapReportBindGradeComment_(period);
+}
 function wmMapReportFillSelect_(){const select=document.getElementById('wmMapReportPeriodSelect');if(!select)return;select.innerHTML=(wmMapPublishedReportState.periods||[]).map(p=>'<option value="'+escapeHtml(p.key)+'">'+escapeHtml(p.label)+'</option>').join('');select.value=wmMapPublishedReportState.defaultKey||((wmMapPublishedReportState.periods[0]||{}).key||'');wmMapReportSelect_(select.value);}
 async function wmOpenPublishedReportModal_(){
   const modal=document.getElementById('wmMapReportModal'),body=document.getElementById('wmMapReportBody');if(!modal||!body)return;
