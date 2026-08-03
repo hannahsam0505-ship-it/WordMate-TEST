@@ -8285,8 +8285,40 @@ function wmNextLevelFromCurrentSet(value){
   return match ? Number(match[1]) + 1 : '';
 }
 
-function wmNextLevelSaveMessage(studentName, nextLevel, repeatCount){
-  return String(studentName || '') + ' 학생의 다음(' + String(nextLevel || '') + ')레벨 학습을 ' + String(repeatCount || '') + '로 저장합니다.';
+function wmStudentEditableValues(row, safeId){
+  const read = key => String(document.getElementById(`wmMode_${key}_${safeId}`)?.value || '').trim();
+  const s4Raw = wmNormalizeStudentModeValue(row, 'S4실루엣단계', '4단계');
+  return {
+    previous:{
+      '학습시작일':wmStudentDateInputValue(row['학습시작일'] || row['등록일'] || ''),
+      '학습종료일':wmStudentDateInputValue(row['학습종료일'] || ''),
+      '출석약속':String(row['출석약속'] || '3').replace(/[^1-7]/g, '').slice(0,1) || '3',
+      '세트약속':String(row['세트약속'] || '3').replace(/[^1-7]/g, '').slice(0,1) || '3',
+      '최초배정':wmNormalizeLearningAssignForDisplay(row['최초배정'] || row['학습배정'] || '3레벨'),
+      '레벨완료조건':wmNormalizeStudentModeValue(row, '레벨완료조건', '2회'),
+      'S4실루엣단계':(s4Raw === '전체' || s4Raw === '0단계') ? '1단계' : s4Raw,
+      'S6테스트모드':wmNormalizeStudentModeValue(row, 'S6테스트모드', row['학습모드'] || '기본전체'),
+      '다음레벨완료조건':wmNormalizeStudentModeValue(row, '다음레벨완료조건', '2회')
+    },
+    current:{
+      '학습시작일':read('학습시작일'),
+      '학습종료일':read('학습종료일'),
+      '출석약속':read('출석약속'),
+      '세트약속':read('세트약속'),
+      '최초배정':read('최초배정'),
+      '레벨완료조건':read('레벨완료조건'),
+      'S4실루엣단계':read('S4실루엣단계'),
+      'S6테스트모드':read('S6테스트모드'),
+      '다음레벨완료조건':read('다음레벨완료조건')
+    }
+  };
+}
+
+function wmStudentChangedItems(row, safeId){
+  const values = wmStudentEditableValues(row, safeId);
+  return Object.keys(values.previous)
+    .filter(key => values.previous[key] !== values.current[key])
+    .map(key => ({key:key, before:values.previous[key] || '미설정', after:values.current[key] || '미설정'}));
 }
 
 function confirmNextLevelCompleteCondition(button, studentId){
@@ -8295,8 +8327,11 @@ function confirmNextLevelCompleteCondition(button, studentId){
   const safeId = String(studentId || '').replace(/[^A-Za-z0-9_-]/g, '');
   const row = (WM_STUDENT_MANAGE_ROWS || []).find(r => String(r['학생ID'] || '').trim() === String(studentId || '').trim()) || {};
   const studentName = String(row['학생이름'] || '').trim();
-  const nextLevel = wmNextLevelFromCurrentSet(row['현재세트']);
-  const repeatCount = document.getElementById(`wmMode_다음레벨완료조건_${safeId}`)?.value || '';
+  const changes = wmStudentChangedItems(row, safeId);
+  if(!changes.length){
+    alert('변경된 항목이 없습니다.');
+    return;
+  }
   const box = document.createElement('div');
   const rect = button.getBoundingClientRect();
 
@@ -8304,14 +8339,25 @@ function confirmNextLevelCompleteCondition(button, studentId){
   box.style.cssText =
     'position:fixed;z-index:99999;background:#fff;border:1px solid #bfdbfe;border-radius:10px;' +
     'padding:12px 14px;box-shadow:0 8px 22px rgba(0,0,0,.16);font-size:13px;line-height:1.5;' +
-    'font-weight:700;color:#111827;white-space:nowrap;';
+    'font-weight:700;color:#111827;min-width:360px;max-width:520px;';
   box.style.right = Math.max(12, window.innerWidth - rect.right) + 'px';
-  box.style.top = Math.min(window.innerHeight - 100, rect.bottom + 6) + 'px';
+  box.style.top = Math.max(12, Math.min(window.innerHeight - 120 - (changes.length * 30), rect.bottom + 6)) + 'px';
+  const changeLines = changes.map(change =>
+    '<div style="margin-top:6px;"><strong>' + escapeHtml(change.key) + '</strong>: ' +
+    escapeHtml(change.before) + ' → <span style="color:#0b5ed7;">' + escapeHtml(change.after) + '</span></div>'
+  ).join('');
   box.innerHTML =
-    '<div>' + escapeHtml(wmNextLevelSaveMessage(studentName, nextLevel, repeatCount)) + '</div>' +
-    '<button type="button" class="wm-mode-save-btn" style="margin-top:8px;">확인</button>';
+    '<div style="font-size:14px;">' + escapeHtml(studentName || studentId) + ' 학생의 다음 변경사항을 적용합니다.</div>' +
+    '<div style="margin-top:8px;padding:8px 10px;background:#f8fbff;border-radius:8px;">' + changeLines + '</div>' +
+    '<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px;">' +
+      '<button type="button" class="wm-action-btn sub" data-confirm-action="cancel">취소</button>' +
+      '<button type="button" class="wm-mode-save-btn" data-confirm-action="save">확인</button>' +
+    '</div>';
   document.body.appendChild(box);
-  box.querySelector('button').onclick = async function(){
+  box.querySelector('[data-confirm-action="cancel"]').onclick = function(){
+    box.remove();
+  };
+  box.querySelector('[data-confirm-action="save"]').onclick = async function(){
     box.remove();
     await saveStudentLearningModeFromRow(studentId);
   };
