@@ -4236,7 +4236,10 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       body.innerHTML='<div class="wm-report-detail-loading"><span class="wm-loading-spinner"></span><span>성적표를 불러오는 중입니다.</span></div>';
       try{
         const data=await wmFetchRecentReportData(WM_RECENT_REPORT_STUDENT_ID,item);
-        body.innerHTML=bindMonthlyReportSingleValues(template.innerHTML,data);
+        const parser=document.createElement('div');
+        parser.innerHTML=bindMonthlyReportSingleValues(template.innerHTML,data);
+        bindReportGradeComment(parser.querySelector('.wmr-sheet'),data.grade||{});
+        body.innerHTML=parser.innerHTML;
       }catch(err){
         body.innerHTML='<div class="wm-note">'+escapeHtml(err&&err.message?err.message:'성적 내용이 없습니다.')+'</div>';
       }
