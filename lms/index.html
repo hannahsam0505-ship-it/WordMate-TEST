@@ -720,6 +720,10 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
     #reportManageTable tbody tr:nth-child(odd) { background:#fff; }
     #reportManageTable tbody tr:nth-child(even) { background:#eef4ff; }
     #reportManageTable tbody td { background-color:inherit; }
+    .wm-report-button-group { display:flex; align-items:center; gap:7px; }
+    .wm-recent-report-btn { border:1px solid #0d55c8; background:#fff; color:#0d55c8; border-radius:9px; padding:8px 10px; font-size:12px; font-weight:900; cursor:pointer; white-space:nowrap; }
+    .wm-recent-report-btn:hover { background:#eef4ff; }
+    .wm-recent-report-select { min-width:150px; border:1px solid #9fbce8; border-radius:9px; background:#fff; color:#173b75; padding:8px 10px; font-size:13px; font-weight:900; }
     .wm-current-progress-pager { display:flex; justify-content:center; align-items:center; gap:10px; margin:12px 0 0; flex-wrap:wrap; }
     .wm-current-progress-pager button { border:1px solid var(--wm-line); background:#fff; color:var(--wm-dark); border-radius:10px; padding:8px 13px; font-size:13px; font-weight:900; cursor:pointer; }
     .wm-current-progress-pager button:disabled { opacity:.45; cursor:not-allowed; }
@@ -826,9 +830,6 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
     .wm-report-preview-modal-card { width:min(1120px,96vw); background:#fff; border-radius:18px; box-shadow:0 28px 80px rgba(0,0,0,.35); overflow:hidden; }
     .wm-report-preview-modal-head { position:sticky; top:0; z-index:5; display:flex; align-items:center; justify-content:space-between; gap:10px; background:#fff; border-bottom:1px solid var(--wm-line); padding:12px 16px; }
     .wm-report-preview-modal-title { font-size:16px; font-weight:950; color:#173b75; }
-    .wm-recent-report-controls { display:none; align-items:center; gap:8px; margin-left:auto; }
-    .wm-recent-report-controls.active { display:flex; }
-    .wm-recent-report-controls select { min-width:150px; border:1px solid #9fbce8; border-radius:9px; background:#fff; color:#173b75; padding:8px 10px; font-size:13px; font-weight:900; }
     .wm-report-preview-modal-body { padding:18px; background:#eaf0f8; display:flex; justify-content:center; }
     .wm-report-preview-modal-body .wmr-sheet { margin:0 auto; }
     body.wm-report-preview-open { overflow:hidden; }
@@ -1011,10 +1012,19 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
     <div class="wm-report-preview-modal-card">
       <div class="wm-report-preview-modal-head">
         <div class="wm-report-preview-modal-title">영어잡는 Word Mate Monthly Report · 디자인 샘플</div>
-        <div id="wmRecentReportControls" class="wm-recent-report-controls"><label for="wmRecentReportMonthSelect">성적표 월</label><select id="wmRecentReportMonthSelect" onchange="changeRecentReportMonth()"></select></div>
         <button type="button" class="wm-action-btn sub" onclick="closeReportDesignPreview()">닫기</button>
       </div>
       <div id="wmReportDesignPreviewModalBody" class="wm-report-preview-modal-body"></div>
+    </div>
+  </div>
+  <div id="wmRecentReportModal" class="wm-report-preview-modal" role="dialog" aria-modal="true" aria-label="최근 4개월 성적표 보기" onclick="wmRecentReportBackdropClose(event)">
+    <div class="wm-report-preview-modal-card">
+      <div class="wm-report-preview-modal-head">
+        <div id="wmRecentReportModalTitle" class="wm-report-preview-modal-title">최근성적표보기</div>
+        <select id="wmRecentReportMonthSelect" class="wm-recent-report-select" aria-label="최근성적표 월 선택" onchange="changeRecentReportMonth()"></select>
+        <button type="button" class="wm-action-btn sub" onclick="closeRecentReportModal()">닫기</button>
+      </div>
+      <div id="wmRecentReportModalBody" class="wm-report-preview-modal-body"></div>
     </div>
   </div>
   <main class="wm-admin-wrap">
@@ -1030,7 +1040,7 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
       <button type="button" class="wm-lms-logout-btn" id="wmLmsLogoutBtn">LMS 로그아웃</button>
     </section>
     <nav class="wm-menu-grid">
-      <button class="wm-menu-btn active" data-panel="dashboard">대시보드</button><button class="wm-menu-btn" data-panel="students">1. 학생관리</button><button class="wm-menu-btn" data-panel="records">2. 학습기록</button><button class="wm-menu-btn" data-panel="profile">3. 프로필센터</button><button class="wm-menu-btn" data-panel="reports">4. 성적표생성</button><button type="button" class="wm-menu-btn" onclick="openRecentReports()">최근성적표 보기</button><button class="wm-menu-btn" data-panel="sendLog">5. 발송기록</button><button class="wm-menu-btn" data-panel="gradeLevel">6. 성적등급</button><button class="wm-menu-btn" data-panel="classes">7. 설정센터</button><button class="wm-menu-btn" data-panel="currentProgress">8. 현재진행</button><button class="wm-menu-btn" data-panel="counsel">9. 상담카페</button><button class="wm-menu-btn wm-learning-btn" data-panel="learning">학습화면</button>
+      <button class="wm-menu-btn active" data-panel="dashboard">대시보드</button><button class="wm-menu-btn" data-panel="students">1. 학생관리</button><button class="wm-menu-btn" data-panel="records">2. 학습기록</button><button class="wm-menu-btn" data-panel="profile">3. 프로필센터</button><button class="wm-menu-btn" data-panel="reports">4. 성적표생성</button><button class="wm-menu-btn" data-panel="sendLog">5. 발송기록</button><button class="wm-menu-btn" data-panel="gradeLevel">6. 성적등급</button><button class="wm-menu-btn" data-panel="classes">7. 설정센터</button><button class="wm-menu-btn" data-panel="currentProgress">8. 현재진행</button><button class="wm-menu-btn" data-panel="counsel">9. 상담카페</button><button class="wm-menu-btn wm-learning-btn" data-panel="learning">학습화면</button>
       <button class="wm-menu-btn wm-dev-btn" id="devCenterBtn" data-panel="dev">DEV CENTER</button>
     </nav>
     <section class="wm-panel active" id="panel-dashboard">
@@ -4184,20 +4194,6 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
     let WM_RECENT_REPORT_MONTHS=[];
     let WM_RECENT_REPORT_STUDENT_ID='';
 
-    function wmRecentReportControls(show){
-      const controls=document.getElementById('wmRecentReportControls');
-      if(controls) controls.classList.toggle('active',!!show);
-    }
-
-    function wmRecentReportStudentId(){
-      const input=document.querySelector('[data-filter-scope="reports"] [data-filter="studentId"]');
-      let studentId=String(input&&input.value||'').trim();
-      if(studentId) return studentId;
-      const filtered=typeof getReportManageFilteredRows==='function' ? getReportManageFilteredRows(WM_REPORT_MANAGE_ROWS||[]) : [];
-      const ids=[...new Set(filtered.map(reportDetailStudentId).filter(Boolean))];
-      return ids.length===1?ids[0]:'';
-    }
-
     async function wmFetchRecentReportMonths(){
       const response=await fetch(WM_APPS_SCRIPT_URL+'?mode=recentReportMonths&ts='+Date.now()+wmLmsActorQuery(),{method:'GET',cache:'no-store'});
       const text=await response.text();
@@ -4227,39 +4223,32 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
 
     async function renderRecentReportMonth(){
       const select=document.getElementById('wmRecentReportMonthSelect');
-      const modalBody=document.getElementById('wmReportDesignPreviewModalBody');
-      const modalTitle=document.querySelector('.wm-report-preview-modal-title');
+      const body=document.getElementById('wmRecentReportModalBody');
+      const title=document.getElementById('wmRecentReportModalTitle');
       const template=document.getElementById('wmReportTemplate');
       const item=WM_RECENT_REPORT_MONTHS.find(month=>month.yearMonth===String(select&&select.value||''));
-      if(!item||!modalBody||!template) return;
-      if(modalTitle) modalTitle.textContent='최근성적표 보기 · '+WM_RECENT_REPORT_STUDENT_ID+' · '+item.label;
-      modalBody.innerHTML='<div class="wm-report-detail-loading"><span class="wm-loading-spinner"></span><span>성적표를 불러오는 중입니다.</span></div>';
+      if(!item||!body||!template) return;
+      if(title) title.textContent='최근성적표보기 · '+WM_RECENT_REPORT_STUDENT_ID+' · '+item.label;
+      body.innerHTML='<div class="wm-report-detail-loading"><span class="wm-loading-spinner"></span><span>성적표를 불러오는 중입니다.</span></div>';
       try{
         const data=await wmFetchRecentReportData(WM_RECENT_REPORT_STUDENT_ID,item);
-        modalBody.innerHTML=bindMonthlyReportSingleValues(template.innerHTML,data);
+        body.innerHTML=bindMonthlyReportSingleValues(template.innerHTML,data);
       }catch(err){
-        modalBody.innerHTML='<div class="wm-note">'+escapeHtml(err&&err.message?err.message:'성적 내용이 없습니다.')+'</div>';
+        body.innerHTML='<div class="wm-note">'+escapeHtml(err&&err.message?err.message:'성적 내용이 없습니다.')+'</div>';
       }
     }
 
-    async function changeRecentReportMonth(){
-      await renderRecentReportMonth();
-    }
-
-    async function openRecentReports(){
-      const studentId=wmRecentReportStudentId();
-      if(!studentId){alert('성적표생성 검색조건에 학생ID를 입력한 후 최근성적표 보기를 눌러주세요.');return;}
-      const modal=document.getElementById('wmReportDesignPreviewModal');
-      const modalBody=document.getElementById('wmReportDesignPreviewModalBody');
-      const modalTitle=document.querySelector('.wm-report-preview-modal-title');
+    async function openRecentReportDetail(studentId){
+      const modal=document.getElementById('wmRecentReportModal');
+      const body=document.getElementById('wmRecentReportModalBody');
+      const title=document.getElementById('wmRecentReportModalTitle');
       const select=document.getElementById('wmRecentReportMonthSelect');
-      if(!modal||!modalBody||!select) return;
-      WM_RECENT_REPORT_STUDENT_ID=studentId;
-      wmRecentReportControls(true);
+      WM_RECENT_REPORT_STUDENT_ID=String(studentId||'').trim();
+      if(!WM_RECENT_REPORT_STUDENT_ID||!modal||!body||!select) return;
       modal.classList.add('active');
       document.body.classList.add('wm-report-preview-open');
-      if(modalTitle) modalTitle.textContent='최근성적표 4개월 조회 중';
-      modalBody.innerHTML='<div class="wm-report-detail-loading"><span class="wm-loading-spinner"></span><span>최근성적표 목록을 불러오는 중입니다.</span></div>';
+      if(title) title.textContent='최근성적표보기 · '+WM_RECENT_REPORT_STUDENT_ID;
+      body.innerHTML='<div class="wm-report-detail-loading"><span class="wm-loading-spinner"></span><span>최근 4개월을 불러오는 중입니다.</span></div>';
       try{
         const result=await wmFetchRecentReportMonths();
         WM_RECENT_REPORT_MONTHS=result.months;
@@ -4267,8 +4256,22 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
         select.value=result.defaultYearMonth||WM_RECENT_REPORT_MONTHS[0].yearMonth;
         await renderRecentReportMonth();
       }catch(err){
-        modalBody.innerHTML='<div class="wm-note">최근성적표 조회 오류: '+escapeHtml(err&&err.message?err.message:err)+'</div>';
+        body.innerHTML='<div class="wm-note">최근성적표 조회 오류: '+escapeHtml(err&&err.message?err.message:err)+'</div>';
       }
+    }
+
+    async function changeRecentReportMonth(){
+      await renderRecentReportMonth();
+    }
+
+    function closeRecentReportModal(){
+      const modal=document.getElementById('wmRecentReportModal');
+      if(modal) modal.classList.remove('active');
+      document.body.classList.remove('wm-report-preview-open');
+    }
+
+    function wmRecentReportBackdropClose(event){
+      if(event&&event.target&&event.target.id==='wmRecentReportModal') closeRecentReportModal();
     }
 
     function renderReportDesignPreview(){
@@ -4283,7 +4286,6 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
     }
 
     function openReportDesignPreview(){
-      wmRecentReportControls(false);
       const modal=document.getElementById('wmReportDesignPreviewModal');
       const body=document.getElementById('wmReportDesignPreviewModalBody');
       if(!modal || !body) return;
@@ -4322,7 +4324,10 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
     }
 
     document.addEventListener('keydown',function(event){
-      if(event.key==='Escape') closeReportDesignPreview();
+      if(event.key==='Escape'){
+        closeReportDesignPreview();
+        closeRecentReportModal();
+      }
     });
 
     document.addEventListener('DOMContentLoaded',function(){
@@ -4395,7 +4400,6 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
 
     async function openReportDetail(reportId){
       wmLockStatusMessage('ReportDB_V2_LOCK','성적표조회 상세 성적표 열기');
-      wmRecentReportControls(false);
       closeReportStudentRecords();
       closeReportDetail();
       const template=document.getElementById('wmReportTemplate');
@@ -6378,6 +6382,7 @@ function extractRecordRowsFromResponse(data){
       tbody.innerHTML = pageRows.map((row, index)=>{
         const rowIndex = start + index;
         const reportId = String(getReportIdForDisplay(row, rowIndex, rows) || row['리포트ID'] || '').trim();
+        const studentId = reportDetailStudentId(row);
         return '<tr data-report-id="'+escapeHtml(reportId)+'">'+WM_REPORT_HEADERS.map(header=>{
           if(header === '일련번호'){
             return '<td>'+(rowIndex + 1)+'</td>';
@@ -6386,7 +6391,7 @@ function extractRecordRowsFromResponse(data){
             return '<td><button type="button" class="wm-action-btn sub" disabled aria-disabled="true">리포트주차</button></td>';
           }
           if(header === '성적표보기'){
-            return '<td><button type="button" class="wm-action-btn" onclick="openReportDetail(\''+reportId+'\')">성적표보기</button></td>';
+            return '<td><div class="wm-report-button-group"><button type="button" class="wm-action-btn" onclick="openReportDetail(\''+reportId+'\')">성적표보기</button><button type="button" class="wm-recent-report-btn" onclick="openRecentReportDetail(\''+escapeJs(studentId)+'\')">최근성적표보기</button></div></td>';
           }
           if(header === 'Teacher’s Comment' || header === '격려메시지'){
             return '<td></td>';
