@@ -829,9 +829,9 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
     .wm-report-preview-modal-body { padding:18px; background:#eaf0f8; display:flex; justify-content:center; }
     .wm-report-preview-modal-body .wmr-sheet { margin:0 auto; }
     body.wm-report-preview-open { overflow:hidden; }
-    .wm-map-report-modal { position:fixed; inset:0; z-index:121000; display:none; align-items:flex-start; justify-content:center; padding:18px; background:rgba(15,23,42,.76); overflow:auto; }
+    .wm-map-report-modal { position:fixed; left:0; right:0; top:var(--wm-test-booth-height,64px); bottom:0; z-index:121000; display:none; align-items:flex-start; justify-content:center; padding:14px 18px 18px; background:rgba(15,23,42,.76); overflow:auto; }
     .wm-map-report-modal.active { display:flex; }
-    .wm-map-report-card { width:min(1120px,97vw); min-height:88vh; background:#fff; border-radius:18px; box-shadow:0 28px 80px rgba(0,0,0,.38); overflow:hidden; }
+    .wm-map-report-card { width:min(1120px,97vw); min-height:calc(100vh - var(--wm-test-booth-height,64px) - 28px); background:#fff; border-radius:18px; box-shadow:0 28px 80px rgba(0,0,0,.38); overflow:hidden; }
     .wm-map-report-head { position:sticky; top:0; z-index:4; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 16px; border-bottom:1px solid var(--wm-line); background:#fff; }
     .wm-map-report-title { font-size:16px; font-weight:950; color:#173b75; }
     .wm-map-report-toolbar { display:flex; align-items:center; gap:9px; flex-wrap:wrap; padding:12px 16px; background:#f4f8ff; border-bottom:1px solid #d9e4f3; }
@@ -4321,99 +4321,69 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       return true;
     }
 
-    /* WM_MAP_REPORT_PREVIEW_LMS_V1
-     * LMS 검증 전용 화면입니다. 4-1.성적표생성_DB의 실제 발행 행만 조회하며
-     * 학습기록/현재진행/성적등급 재집계 API는 호출하지 않습니다.
-     * 표시 공식: 최근 4주 Weekly + 최근 3개월 Monthly. Monthly 발행 월의 Weekly는 제외합니다.
+    /* WM_MAP_PUBLISHED_REPORT_PREVIEW_V1
+     * 예약 생성 시 저장된 리포트ID별 고정 스냅샷만 표시합니다.
+     * 조회 시 학습기록·현재진행·성적등급 재집계 API를 호출하지 않습니다.
      */
-    let WM_MAP_REPORT_PUBLISHED_ROWS=[];
+    let WM_MAP_PUBLISHED_REPORTS=[];
     let WM_MAP_REPORT_OPTIONS=[];
 
-    function wmMapReportDate(row){
-      return parseDateValue(reportDetailFirst(row,['학습날짜','리포트주차','등록일']));
+    function wmMapPublishedDate(item){
+      const parsed=parseDateValue(item&&item.studyDate);
+      return parsed || new Date(0);
     }
 
-    function wmMapReportMonthKey(row){
-      const date=wmMapReportDate(row);
-      return date ? date.getFullYear()+'-'+String(date.getMonth()+1).padStart(2,'0') : '';
+    function wmMapPublishedMonthKey(item){
+      const d=wmMapPublishedDate(item);
+      return d.getTime() ? d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0') : '';
     }
 
-    function wmMapReportIsMonthly(row){
-      const type=String(reportDetailFirst(row,['리포트유형','유형','비고'])||'').trim();
-      return /월간|monthly/i.test(type);
+    function wmMapPublishedIsMonthly(item){
+      return /월간|monthly/i.test(String(item&&item.reportType||''));
     }
 
-    function wmMapReportLabel(row){
-      const date=wmMapReportDate(row);
-      const month=date ? date.getMonth()+1 : '';
-      if(wmMapReportIsMonthly(row)) return month+'월 Monthly';
-      const raw=String(reportDetailFirst(row,['리포트주차','주차'])||'');
-      const match=raw.match(/(\d+)\s*주/);
-      const week=match ? Number(match[1]) : reportDetailWeek(row);
-      return month+'월 '+week+'주 Weekly';
+    function wmMapPublishedLabel(item){
+      const d=wmMapPublishedDate(item);
+      const month=d.getTime()?d.getMonth()+1:'';
+      if(wmMapPublishedIsMonthly(item)) return month+'월 Monthly';
+      const match=String(item&&item.reportWeek||'').match(/(\d+)\s*주/);
+      return month+'월 '+(match?Number(match[1]):1)+'주 Weekly';
     }
 
-    function wmBuildMapReportOptions(rows){
-      const now=new Date();
-      now.setHours(23,59,59,999);
-      const weeklyCutoff=new Date(now);
-      weeklyCutoff.setDate(weeklyCutoff.getDate()-28);
-      weeklyCutoff.setHours(0,0,0,0);
+    function wmBuildPublishedReportOptions(items){
+      const now=new Date(); now.setHours(23,59,59,999);
+      const weeklyCutoff=new Date(now); weeklyCutoff.setDate(weeklyCutoff.getDate()-28); weeklyCutoff.setHours(0,0,0,0);
       const monthlyCutoff=new Date(now.getFullYear(),now.getMonth()-3,1);
-      const valid=(rows||[]).filter(row=>{
-        const reportId=String(reportDetailFirst(row,['리포트ID','Report_ID','ReportID'])||'').trim();
-        const date=wmMapReportDate(row);
-        return !!(reportId&&date&&date<=now);
-      });
       const monthlyMonths={};
-      valid.forEach(row=>{ if(wmMapReportIsMonthly(row)) monthlyMonths[wmMapReportMonthKey(row)]=true; });
-      const selected=valid.filter(row=>{
-        const date=wmMapReportDate(row);
-        if(wmMapReportIsMonthly(row)) return date>=monthlyCutoff;
-        return date>=weeklyCutoff && !monthlyMonths[wmMapReportMonthKey(row)];
-      }).sort((a,b)=>wmMapReportDate(b)-wmMapReportDate(a));
-      const seen={};
-      return selected.filter(row=>{
-        const id=String(reportDetailFirst(row,['리포트ID','Report_ID','ReportID'])||'').trim();
-        if(seen[id]) return false;
-        seen[id]=true;
-        return true;
-      }).map(row=>({
-        reportId:String(reportDetailFirst(row,['리포트ID','Report_ID','ReportID'])||'').trim(),
-        label:wmMapReportLabel(row),
-        row:row
-      }));
+      (items||[]).forEach(item=>{ if(wmMapPublishedIsMonthly(item)) monthlyMonths[wmMapPublishedMonthKey(item)]=true; });
+      return (items||[]).filter(item=>{
+        const date=wmMapPublishedDate(item);
+        if(!date.getTime()||date>now||!item.snapshot) return false;
+        if(wmMapPublishedIsMonthly(item)) return date>=monthlyCutoff;
+        return date>=weeklyCutoff&&!monthlyMonths[wmMapPublishedMonthKey(item)];
+      }).sort((a,b)=>wmMapPublishedDate(b)-wmMapPublishedDate(a));
     }
 
-    function wmFetchMapPublishedReports(params){
+    function wmFetchMapPublishedReports(studentId){
       return new Promise((resolve,reject)=>{
-        const callbackName='__wmMapReportsJsonp_'+Date.now()+'_'+Math.floor(Math.random()*100000);
+        const callbackName='__wmPublishedReports_'+Date.now()+'_'+Math.floor(Math.random()*100000);
         const script=document.createElement('script');
-        const requestParams=new URLSearchParams(params||{});
+        const params=new URLSearchParams({mode:'mapPublishedReports',studentId:String(studentId||''),ts:String(Date.now())});
         const actorId=wmGetSettingActorTeacherId();
-        if(actorId) requestParams.set('actorTeacherId',actorId);
-        requestParams.set('callback',callbackName);
-        let finished=false;
-        const cleanup=()=>{
-          if(finished) return;
-          finished=true;
-          clearTimeout(timer);
-          try{ delete window[callbackName]; }catch(ignore){ window[callbackName]=undefined; }
+        if(actorId) params.set('actorTeacherId',actorId);
+        params.set('callback',callbackName);
+        let done=false;
+        const finish=()=>{
+          if(done) return false;
+          done=true; clearTimeout(timer);
+          try{delete window[callbackName];}catch(ignore){window[callbackName]=undefined;}
           if(script.parentNode) script.parentNode.removeChild(script);
+          return true;
         };
-        const timer=setTimeout(()=>{
-          cleanup();
-          reject(new Error('발행 성적표 서버 응답 시간 초과'));
-        },30000);
-        window[callbackName]=data=>{
-          cleanup();
-          resolve(data||{});
-        };
-        script.onerror=()=>{
-          cleanup();
-          reject(new Error('발행 성적표 서버 연결 실패'));
-        };
-        script.src=WM_APPS_SCRIPT_URL+'?'+requestParams.toString();
+        const timer=setTimeout(()=>{if(finish()) reject(new Error('서버 응답 시간 초과'));},30000);
+        window[callbackName]=data=>{if(finish()) resolve(data||{});};
+        script.onerror=()=>{if(finish()) reject(new Error('서버 연결 실패'));};
+        script.src=WM_APPS_SCRIPT_URL+'?'+params.toString();
         document.head.appendChild(script);
       });
     }
@@ -4425,40 +4395,25 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       const title=document.getElementById('wmMapReportPreviewTitle');
       const targetId=String(studentId||'').trim().toUpperCase();
       if(!modal||!body||!select) return;
-      modal.classList.add('active');
-      document.body.classList.add('wm-report-preview-open');
+      modal.classList.add('active'); document.body.classList.add('wm-report-preview-open');
       if(title) title.textContent='학습맵 성적표 전용 미리보기 · '+targetId;
-      select.innerHTML='<option value="">발행본 조회 중</option>';
-      select.disabled=true;
-      body.innerHTML='<div class="wm-report-empty"><span class="wm-loading-spinner"></span> 실제 발행 성적표를 불러오는 중입니다.</div>';
+      select.disabled=true; select.innerHTML='<option>발행본 조회 중</option>';
+      body.innerHTML='<div class="wm-map-report-empty"><span class="wm-loading-spinner"></span> 발행 성적표를 불러오는 중입니다.</div>';
       try{
-        const now=new Date();
-        const start=new Date(now.getFullYear(),now.getMonth()-3,1);
-        const params=new URLSearchParams();
-        params.set('mode','reports');
-        params.set('studentId',targetId);
-        params.set('dateStart',toDateInputValue(start));
-        params.set('dateEnd',toDateInputValue(now));
-        params.set('ts',Date.now());
-        const data=await wmFetchMapPublishedReports(params);
+        const data=await wmFetchMapPublishedReports(targetId);
         if(data.success===false) throw new Error(data.message||'발행 성적표 조회 실패');
-        WM_MAP_REPORT_PUBLISHED_ROWS=extractReportRowsFromResponse(data).filter(row=>
-          String(reportDetailStudentId(row)||'').trim().toUpperCase()===targetId &&
-          String(reportDetailFirst(row,['리포트ID','Report_ID','ReportID'])||'').trim()
-        );
-        WM_MAP_REPORT_OPTIONS=wmBuildMapReportOptions(WM_MAP_REPORT_PUBLISHED_ROWS);
+        WM_MAP_PUBLISHED_REPORTS=Array.isArray(data.reports)?data.reports:[];
+        WM_MAP_REPORT_OPTIONS=wmBuildPublishedReportOptions(WM_MAP_PUBLISHED_REPORTS);
         if(!WM_MAP_REPORT_OPTIONS.length){
-          select.innerHTML='<option value="">발행 성적표 없음</option>';
+          select.innerHTML='<option>발행 성적표 없음</option>';
           body.innerHTML='<div class="wm-map-report-empty">성적 내용이 없습니다.</div>';
           return;
         }
-        select.innerHTML=WM_MAP_REPORT_OPTIONS.map((item,index)=>
-          '<option value="'+escapeHtml(item.reportId)+'"'+(index===0?' selected':'')+'>'+escapeHtml(item.label)+'</option>'
-        ).join('');
+        select.innerHTML=WM_MAP_REPORT_OPTIONS.map((item,index)=>'<option value="'+escapeHtml(item.reportId)+'"'+(index===0?' selected':'')+'>'+escapeHtml(wmMapPublishedLabel(item))+'</option>').join('');
         select.disabled=false;
         wmRenderSelectedMapReport(WM_MAP_REPORT_OPTIONS[0].reportId);
       }catch(err){
-        select.innerHTML='<option value="">조회 실패</option>';
+        select.innerHTML='<option>조회 실패</option>';
         body.innerHTML='<div class="wm-map-report-empty">'+escapeHtml(err&&err.message?err.message:String(err))+'</div>';
       }
     }
@@ -4466,16 +4421,17 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
     function wmRenderSelectedMapReport(reportId){
       const body=document.getElementById('wmMapReportPreviewBody');
       const template=document.getElementById('wmReportTemplate');
-      const item=WM_MAP_REPORT_OPTIONS.find(option=>option.reportId===String(reportId||''));
-      if(!body||!template||!item){
+      const item=WM_MAP_REPORT_OPTIONS.find(entry=>String(entry.reportId)===String(reportId));
+      const snapshot=item&&item.snapshot;
+      if(!body||!template||!snapshot||!Array.isArray(snapshot.rows)||!snapshot.rows.length){
         if(body) body.innerHTML='<div class="wm-map-report-empty">성적 내용이 없습니다.</div>';
         return;
       }
       const previousRows=WM_REPORT_MANAGE_ROWS;
       const previousGrade=WM_REPORT_ACTIVE_GRADE_COMMENT;
       try{
-        WM_REPORT_MANAGE_ROWS=WM_MAP_REPORT_PUBLISHED_ROWS.slice();
-        WM_REPORT_ACTIVE_GRADE_COMMENT=null;
+        WM_REPORT_MANAGE_ROWS=snapshot.rows.slice();
+        WM_REPORT_ACTIVE_GRADE_COMMENT=snapshot.gradeComment||null;
         body.innerHTML=buildMonthlyCumulativeReportHtml(item.reportId,template.innerHTML);
       }finally{
         WM_REPORT_MANAGE_ROWS=previousRows;
