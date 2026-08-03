@@ -4376,6 +4376,37 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       return m[1].slice(-2)+'.'+String(m[2]).padStart(2,'0')+'.'+String(m[3]).padStart(2,'0')+' '+String(m[4]).padStart(2,'0')+':'+String(m[5]).padStart(2,'0');
     }
 
+    function wmBuildGradeCommentFromRow(data){
+      const studentName=String(data['학생이름']||data['학생명']||'').trim();
+      const year=String(data['연도']||'').trim();
+      const month=String(data['월']||'').trim();
+      const week=String(data['주차']||data['리포트주차']||'').replace(/[^0-9]/g,'');
+      const reportType=String(data['리포트유형']||data['유형']||'').trim();
+      const monthly=/월간|monthly/i.test(reportType);
+      const attendancePromise=String(data['출석약속']||'').replace(/[^0-9.]/g,'');
+      const setPromise=String(data['세트약속']||'').replace(/[^0-9.]/g,'');
+      const attendanceScore=String(data['출석점수']||'').replace(/점/g,'').trim();
+      const focusScore=String(data['참여집중도']||data['학업집중도']||'').replace(/점/g,'').trim();
+      const trendScore=String(data['점수추이']||'').replace(/점/g,'').trim();
+      const finalScore=String(data['최종점수']||'').replace(/점/g,'').trim();
+      const grade=String(data['Grade']||'').trim();
+      const classValue=String(data['Class']||'').trim();
+      const periodTitle=year+'년 '+month+'월'+(monthly?'':' '+week+'주');
+      const currentPeriod=monthly?'이번 달':'이번 주';
+      const nextPeriod=monthly?'다음 달':'다음 주';
+      let goal='';
+      if(Number(grade)===1) goal=nextPeriod+'에도 현재 학습 리듬을 유지하며 최고 등급에 도전해 보세요.';
+      else if(Number(grade)===2) goal=nextPeriod+'에는 출석과 세트학습을 꾸준히 실천하여 1등급에 도전해 보세요.';
+      else if(Number(grade)===3) goal=nextPeriod+'에는 약속한 학습계획을 꾸준히 실천하여 더 높은 등급에 도전해 보세요.';
+      return [
+        studentName+' 학생의 '+periodTitle+' 학습결과 보고서입니다.',
+        studentName+' 학생의 학습약속은 출석 주 '+attendancePromise+'회, 세트 '+setPromise+'세트로',
+        '학습 결과는 출석점수 '+attendanceScore+'점 · 학업집중도 '+focusScore+'점 · 점수추이 '+trendScore+'점입니다.',
+        '이에 따라 '+currentPeriod+' 성적은 최종점수 '+finalScore+'점('+finalScore+'/30), 등급은 '+grade+'.'+classValue+'등급입니다.',
+        goal
+      ].filter(Boolean).join('\n');
+    }
+
     function bindReportGradeComment(sheet,gradeData){
       const data=gradeData&&gradeData.found&&gradeData.gradeComment?gradeData.gradeComment:null;
       if(!sheet || !data) return false;
@@ -4383,10 +4414,16 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       const score=String(data['최종점수']||'').trim();
       const grade=String(data['Grade']||'').trim();
       const classValue=String(data['Class']||'').trim();
+      const attendanceScore=String(data['출석점수']||'').replace(/점/g,'').trim();
+      const focusScore=String(data['참여집중도']||data['학업집중도']||'').replace(/점/g,'').trim();
+      const trendScore=String(data['점수추이']||'').replace(/점/g,'').trim();
+      setText('[data-wmr-grade-attendance]',attendanceScore?attendanceScore+'점':'');
+      setText('[data-wmr-grade-focus]',focusScore?focusScore+'점':'');
+      setText('[data-wmr-grade-trend]',trendScore?trendScore+'점':'');
       setText('[data-wmr-grade-final]',(grade&&classValue)?grade+'.'+classValue+'등급':'');
       const commentEl=sheet.querySelector('[data-wmr-auto-comment]');
       if(commentEl){
-        const lines=String(data['자동코멘트']||'').split(/\r?\n/).map(v=>v.trim()).filter(Boolean).slice(0,5);
+        const lines=wmBuildGradeCommentFromRow(data).split(/\r?\n/).map(v=>v.trim()).filter(Boolean).slice(0,5);
         commentEl.innerHTML=lines.map(function(line){
           var html=escapeHtml(line);
           html=html.replace(/\(([-+]?\d+(?:\.\d+)?)\/30\)/g,'<span class="wmr-auto-comment-score-sub">($1/30)</span>');
@@ -4402,6 +4439,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       if(created) created.textContent=formatGradeCommentCreatedAt(data['생성일시']);
       sheet.setAttribute('data-wmr-grade-db-connected','true');
       sheet.setAttribute('data-wmr-grade-final-score',score);
+      sheet.setAttribute('data-wmr-grade-left-right-verified','true');
       return true;
     }
 
