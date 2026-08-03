@@ -1708,6 +1708,7 @@ let wmMapLoadingStartAt = 0;
 let wmMapDataReady = false;
 let wmCurrentProgressHistoryCache = null;
 let wmBottomRecordsDirectLoading = false;
+let wmBottomRecordsDetailedLoaded = false;
 let wmCurrentProgressRecentScoreForMap_ = '';
 let wmCurrentProgressDisplayOverride = null;
 const WM_HOMEWORK_PAGE_SIZE = 15;
@@ -2750,6 +2751,7 @@ function wmLoadLearningRecordsDirectForMap_(reason){
     const directRecords = wmSortLearningRecordsDesc_(wmPickLearningRecordsFromPayload_(payload || {}, null));
     if(!directRecords.length) return;
 
+    wmBottomRecordsDetailedLoaded = payload && payload.learningRecordDbDirect === true;
     wmLearningRecords = directRecords;
     if(wmLastLearningMapData){
       wmLastLearningMapData.records = directRecords;
@@ -2820,7 +2822,10 @@ function wmApplyLearningMapFromCurrentProgressCache_(cacheData, data){
 
   wmApplyStudentLearningMap(wmCurrentStudent, { skipMapRender:true });
 
-  wmLearningRecords = wmSortLearningRecordsDesc_(wmPickLearningRecordsFromPayload_(data, cacheData));
+  const receivedLearningRecords = wmSortLearningRecordsDesc_(wmPickLearningRecordsFromPayload_(data, cacheData));
+  if(!wmBottomRecordsDetailedLoaded && receivedLearningRecords.length){
+    wmLearningRecords = receivedLearningRecords;
+  }
   wmServerLevelHistoryLevels = Array.isArray(data && data.levelHistoryLevels) ? data.levelHistoryLevels.slice() : [];
   wmCurrentProgressHistoryCache = cacheData.historyCache || null;
 
