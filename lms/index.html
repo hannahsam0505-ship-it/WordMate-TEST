@@ -3338,6 +3338,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       }else{
         host.innerHTML=pageRows.map((row,pageIndex)=>{
           const reportId=String(getReportIdForDisplay(row,start+pageIndex,wmProfileReportRows) || row['리포트ID'] || '').trim();
+          const studentId=String(cellValue(row,headerAliases('학생ID')) || '').trim();
           return '<tr data-report-id="'+wmProfileEscapeHtml(reportId)+'">'+
             WM_REPORT_HEADERS.map(header=>{
               if(header==='일련번호') return '<td>'+(start+pageIndex+1)+'</td>';
@@ -3345,8 +3346,9 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
                 return '<td><button type="button" class="wm-action-btn sub" disabled aria-disabled="true">리포트주차</button></td>';
               }
               if(header==='성적표보기'){
-                return '<td><button type="button" class="wm-action-btn" onclick="openReportDetail(\''+
-                  wmProfileEscapeHtml(reportId)+'\')">성적표보기</button></td>';
+                return '<td><div class="wm-report-button-group"><button type="button" class="wm-action-btn" onclick="openReportDetail(\''+
+                  wmProfileEscapeHtml(reportId)+'\')">성적표보기</button><button type="button" class="wm-recent-report-btn" onclick="openRecentReportDetail(\''+
+                  wmProfileEscapeHtml(studentId)+'\')">최근성적표보기</button></div></td>';
               }
               return '<td>'+wmProfileEscapeHtml(displayCellValue(row[header],header))+'</td>';
             }).join('')+
