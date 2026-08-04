@@ -660,8 +660,8 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
     #studentTableWrap thead th:nth-child(2), #studentTableWrap thead th:nth-child(3), #studentTableWrap thead th:nth-child(8), #studentTableWrap thead th:nth-child(9), #studentTableWrap thead th:nth-child(10), #studentTableWrap thead th:nth-child(12) { z-index:40; background:#f9fafb; }
     #gradeLevelTableWrap { border-radius:0 0 14px 14px; max-height:620px; overflow:auto; }
     #gradeLevelTableWrap thead th { position:sticky; top:0; z-index:30; background:#f9fafb; }
-    /* WM_GRADE_LEVEL_32_COLUMN_WIDTH_V1: 실제 데이터 최대 글자수 기준 32개 컬럼 폭 */
-    #gradeLevelManageTable { width:2877px; min-width:2877px; table-layout:fixed; }
+    /* WM_GRADE_LEVEL_34_COLUMN_WIDTH_V1: 실제 데이터 최대 글자수 기준 34개 컬럼 폭 */
+    #gradeLevelManageTable { width:3097px; min-width:3097px; table-layout:fixed; }
     #gradeLevelManageTable tbody tr:nth-child(odd) { background:#fff; }
     #gradeLevelManageTable tbody tr:nth-child(even) { background:#eef4ff; }
     #gradeLevelManageTable tbody td { background-color:inherit; overflow:hidden; text-overflow:ellipsis; }
@@ -1985,7 +1985,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
 
       <div class="wm-factory-box">
         <div class="wm-profile-section-title"><h3>4. 성적등급</h3><span>6.성적등급_DB 실제 연결 · 선택 학생의 기록을 15행씩 표시합니다.</span></div>
-        <div class="wm-table-wrap"><table class="wm-profile-table"><thead><tr><th>일련번호</th><th>학생ID</th><th>학생이름</th><th>반명</th><th>교사명</th><th>연도</th><th>월</th><th>주차</th><th>리포트유형</th><th>출석약속</th><th>세트약속</th><th class="wm-grade-yellow-col">출석점수</th><th class="wm-grade-yellow-col">참여집중도</th><th class="wm-grade-yellow-col">점수추이</th><th class="wm-grade-green-col">최종점수</th><th class="wm-grade-green-col">Grade</th><th class="wm-grade-green-col">Class</th><th>자동코멘트</th><th>실제출석일수</th><th>완료세트수</th><th>학습단어수</th><th>총학습시간</th><th>평균원점수</th><th>출석률</th><th>세트진행률</th><th>1세트평균시간</th><th>원점수환산점수</th><th>표준점수</th><th>성적표반영상태</th><th>생성일시</th><th>등록일</th><th>수정일</th></tr></thead><tbody id="profileGradeRowHost"><tr id="profileGradeRow"><td colspan="32">학생을 선택하면 표시됩니다.</td></tr></tbody></table></div>
+        <div class="wm-table-wrap"><table class="wm-profile-table"><thead><tr><th>일련번호</th><th>학생ID</th><th>학생이름</th><th>반명</th><th>교사명</th><th>연도</th><th>월</th><th>주차</th><th>리포트유형</th><th>출석약속</th><th>세트약속</th><th class="wm-grade-yellow-col">출석점수</th><th class="wm-grade-yellow-col">참여집중도</th><th class="wm-grade-yellow-col">점수추이</th><th class="wm-grade-green-col">최종점수</th><th class="wm-grade-green-col">Grade</th><th class="wm-grade-green-col">Class</th><th>자동코멘트</th><th>학습시작일</th><th>학습종료일</th><th>실제출석일수</th><th>완료세트수</th><th>학습단어수</th><th>총학습시간</th><th>평균원점수</th><th>출석률</th><th>세트진행률</th><th>1세트평균시간</th><th>원점수환산점수</th><th>표준점수</th><th>성적표반영상태</th><th>생성일시</th><th>등록일</th><th>수정일</th></tr></thead><tbody id="profileGradeRowHost"><tr id="profileGradeRow"><td colspan="34">학생을 선택하면 표시됩니다.</td></tr></tbody></table></div>
         <div id="profileGradePager" class="wm-profile-record-pager" style="display:none;">
           <button id="profileGradePrevBtn" class="wm-profile-record-page-btn" type="button">이전</button>
           <span id="profileGradePageInfo" class="wm-profile-record-page-info">1 / 1</span>
@@ -2319,8 +2319,8 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       <div class="wm-table-wrap" id="gradeLevelTableWrap">
         <table id="gradeLevelManageTable">
           <colgroup><col style="width:72px"><col style="width:120px"><col style="width:90px"><col style="width:110px"><col style="width:90px"><col style="width:68px"><col style="width:50px"><col style="width:60px"><col style="width:90px"><col style="width:78px"><col style="width:78px"><col style="width:78px"><col style="width:88px"><col style="width:78px"><col style="width:78px"><col style="width:70px"><col style="width:65px"><col style="width:105px"><col style="width:96px"><col style="width:88px"><col style="width:88px"><col style="width:110px"><col style="width:88px"><col style="width:78px"><col style="width:92px"><col style="width:112px"><col style="width:112px"><col style="width:78px"><col style="width:112px"><col style="width:145px"><col style="width:105px"><col style="width:105px"></colgroup>
-          <thead><tr><th>일련번호</th><th>학생ID</th><th>학생이름</th><th>반명</th><th>교사명</th><th>연도</th><th>월</th><th>주차</th><th>리포트유형</th><th>출석약속</th><th>세트약속</th><th class="wm-grade-yellow-col">출석점수</th><th class="wm-grade-yellow-col">참여집중도</th><th class="wm-grade-yellow-col">점수추이</th><th class="wm-grade-green-col">최종점수</th><th class="wm-grade-green-col">Grade</th><th class="wm-grade-green-col">Class</th><th>자동코멘트</th><th>실제출석일수</th><th>완료세트수</th><th>학습단어수</th><th>총학습시간</th><th>평균원점수</th><th>출석률</th><th>세트진행률</th><th>1세트평균시간</th><th>원점수환산점수</th><th>표준점수</th><th>성적표반영상태</th><th>생성일시</th><th>등록일</th><th>수정일</th></tr></thead>
-          <tbody><tr><td colspan="32">6.성적등급_DB 조회 준비 중입니다.</td></tr></tbody>
+          <thead><tr><th>일련번호</th><th>학생ID</th><th>학생이름</th><th>반명</th><th>교사명</th><th>연도</th><th>월</th><th>주차</th><th>리포트유형</th><th>출석약속</th><th>세트약속</th><th class="wm-grade-yellow-col">출석점수</th><th class="wm-grade-yellow-col">참여집중도</th><th class="wm-grade-yellow-col">점수추이</th><th class="wm-grade-green-col">최종점수</th><th class="wm-grade-green-col">Grade</th><th class="wm-grade-green-col">Class</th><th>자동코멘트</th><th>학습시작일</th><th>학습종료일</th><th>실제출석일수</th><th>완료세트수</th><th>학습단어수</th><th>총학습시간</th><th>평균원점수</th><th>출석률</th><th>세트진행률</th><th>1세트평균시간</th><th>원점수환산점수</th><th>표준점수</th><th>성적표반영상태</th><th>생성일시</th><th>등록일</th><th>수정일</th></tr></thead>
+          <tbody><tr><td colspan="34">6.성적등급_DB 조회 준비 중입니다.</td></tr></tbody>
         </table>
       </div>
       <div class="wm-grade-level-pager" id="wmGradeLevelPager">
@@ -3404,7 +3404,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       const pageRows=wmProfileGradeRows.slice(start,start+WM_PROFILE_GRADE_PAGE_SIZE);
 
       if(!pageRows.length){
-        host.innerHTML='<tr><td colspan="32">6.성적등급_DB에 해당 학생 기록이 없습니다.</td></tr>';
+        host.innerHTML='<tr><td colspan="34">6.성적등급_DB에 해당 학생 기록이 없습니다.</td></tr>';
       }else{
         host.innerHTML=pageRows.map((row,pageIndex)=>{
           return '<tr>'+WM_GRADE_LEVEL_HEADERS.map(header=>{
@@ -4411,6 +4411,8 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
     }
 
     function wmBuildGradeCommentFromRow(data){
+      const serverComment=String(data&&data['자동코멘트']||'').trim();
+      if(serverComment) return serverComment;
       const studentName=String(data['학생이름']||data['학생명']||'').trim();
       const year=String(data['연도']||'').trim();
       const month=String(data['월']||'').trim();
@@ -6248,12 +6250,12 @@ function extractRecordRowsFromResponse(data){
 
 
     /* WM_GRADE_LEVEL_DB_LMS_CONNECTION_V1
-     * 6.성적등급_DB 값을 LMS 지정 32개 컬럼 순서로 강제 재배열하여 표시합니다.
+     * 6.성적등급_DB 값을 LMS 지정 34개 컬럼 순서로 강제 재배열하여 표시합니다.
      * 탭 진입 시 1회 조회하며 학생관리/학습기록과 같은 Apps Script URL·권한 파라미터를 사용합니다.
      */
     const WM_GRADE_LEVEL_HEADERS = [
       '일련번호','학생ID','학생이름','반명','교사명','연도','월','주차','리포트유형',
-      '출석약속','세트약속','출석점수','참여집중도','점수추이','최종점수','Grade','Class','자동코멘트',
+      '출석약속','세트약속','출석점수','참여집중도','점수추이','최종점수','Grade','Class','자동코멘트','학습시작일','학습종료일',
       '실제출석일수','완료세트수','학습단어수','총학습시간','평균원점수','출석률','세트진행률',
       '1세트평균시간','원점수환산점수','표준점수','성적표반영상태','생성일시','등록일','수정일'
     ];
@@ -6274,7 +6276,7 @@ function extractRecordRowsFromResponse(data){
 
     async function loadGradeLevelRows(){
       const tbody = document.querySelector('#gradeLevelManageTable tbody');
-      if(tbody) tbody.innerHTML='<tr><td colspan="32">6.성적등급_DB 조회 중입니다.</td></tr>';
+      if(tbody) tbody.innerHTML='<tr><td colspan="34">6.성적등급_DB 조회 중입니다.</td></tr>';
       try{
         let rows=[];
         const urls=[
@@ -6297,7 +6299,7 @@ function extractRecordRowsFromResponse(data){
         return WM_GRADE_LEVEL_ROWS;
       }catch(err){
         console.error('6.성적등급_DB 조회 실패',err);
-        if(tbody) tbody.innerHTML='<tr><td colspan="32">6.성적등급_DB 조회 실패: '+escapeHtml(err && err.message ? err.message : err)+'</td></tr>';
+        if(tbody) tbody.innerHTML='<tr><td colspan="34">6.성적등급_DB 조회 실패: '+escapeHtml(err && err.message ? err.message : err)+'</td></tr>';
         return [];
       }
     }
