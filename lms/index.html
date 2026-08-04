@@ -2117,7 +2117,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
           <div class="wm-filter-actions">
             <button class="wm-action-btn" onclick="wmFilterSendCenterLog()">검색</button>
             <button class="wm-action-btn sub" onclick="wmResetSendCenterFilter()">초기화</button>
-            <button class="wm-action-btn sub" onclick="wmLoadSendCenterData(true)">새로고침</button>
+            <button class="wm-action-btn sub" onclick="wmLoadSendLogs(true)">새로고침</button>
           </div>
         </div>
         <div class="wm-table-wrap"><table id="wmSendLogTable"><thead><tr><th>발송내역ID</th><th>발송ID</th><th>학생ID</th><th>학생이름</th><th>반ID</th><th>반명</th><th>교사명</th><th>리포트유형</th><th>리포트월</th><th>리포트주차</th><th>수신자구분</th><th>학부모명</th><th>학부모연락처</th><th>발송채널</th><th>예약발송일시</th><th>실제발송일시</th><th>발송상태</th><th>성적표링크</th><th>실패사유</th><th>API메시지ID</th><th>비고</th><th>등록일시</th><th>수정일시</th></tr></thead><tbody id="wmSendLogTbody"><tr><td colspan="23">5-1.발송내역_DB 조회 대기 중입니다.</td></tr></tbody></table></div>
@@ -2143,7 +2143,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
             <label>자동발송상태<select id="wmSendAutoStatus"><option value="사용">사용</option><option value="중지">중지</option></select></label>
             <label>비고<input type="text" id="wmSendNote" /></label>
           </div>
-          <div class="wm-filter-actions"><button type="button" class="wm-action-btn" onclick="wmSaveSendSetting()">저장</button><button type="button" class="wm-action-btn sub" onclick="wmResetSendSettingForm()">신규입력</button><button type="button" class="wm-action-btn sub" onclick="wmLoadSendCenterData(true)">새로고침</button><span id="wmSendSettingStatus" class="wm-note"></span></div>
+          <div class="wm-filter-actions"><button type="button" class="wm-action-btn" onclick="wmSaveSendSetting()">저장</button><button type="button" class="wm-action-btn sub" onclick="wmResetSendSettingForm()">신규입력</button><button type="button" class="wm-action-btn sub" onclick="wmLoadSendSettings(true)">새로고침</button><span id="wmSendSettingStatus" class="wm-note"></span></div>
         </div>
         <div class="wm-note">목록 행을 선택하면 수정할 수 있습니다. 자동발송 실행·문자/알림톡 API 연결은 추후 단계에서 적용합니다.</div>
         <div class="wm-table-wrap"><table id="wmSendSettingTable"><thead><tr><th>설정ID</th><th>대상구분</th><th>대상ID</th><th>대상명</th><th>리포트유형</th><th>발송주기</th><th>발송요일</th><th>발송일</th><th>발송시간</th><th>발송채널</th><th>알림톡템플릿ID</th><th>문자대체발송</th><th>자동발송상태</th><th>비고</th><th>등록일시</th><th>수정일시</th></tr></thead><tbody id="wmSendSettingTbody"><tr><td colspan="16">5-2.자동발송설정_DB 조회 대기 중입니다.</td></tr></tbody></table></div>
@@ -2672,7 +2672,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       }
       if(panelName === 'sendLog'){
         setTimeout(function(){
-          if(typeof wmLoadSendCenterData === 'function') wmLoadSendCenterData(false);
+          if(typeof wmLoadSendLogs === 'function') wmLoadSendLogs(false);
         }, 0);
       }
       if(panelName === 'gradeLevel'){
@@ -8831,8 +8831,10 @@ let WM_SEND_LOG_ROWS=[];
 let WM_SEND_SETTING_ROWS=[];
 let WM_SEND_TARGET_STUDENTS=[];
 let WM_SEND_TARGET_CLASSES=[];
-let WM_SEND_CENTER_LOADED=false;
-let WM_SEND_CENTER_LOADING=false;
+let WM_SEND_LOG_LOADED=false;
+let WM_SEND_SETTING_LOADED=false;
+let WM_SEND_LOG_LOADING=false;
+let WM_SEND_SETTING_LOADING=false;
 
 function wmSwitchSendCenterTab(type){
   const logMode=type!=='setting';
@@ -8844,6 +8846,7 @@ function wmSwitchSendCenterTab(type){
   if(settingTab){settingTab.classList.toggle('active',!logMode);settingTab.setAttribute('aria-selected',!logMode?'true':'false');}
   if(logView)logView.classList.toggle('wm-setting-db-hidden',!logMode);
   if(settingView)settingView.classList.toggle('wm-setting-db-hidden',logMode);
+  if(logMode)wmLoadSendLogs(false);else wmLoadSendSettings(false);
 }
 
 function wmRenderSendCenterRows(tbodyId,headers,rows,emptyText){
@@ -8874,31 +8877,48 @@ function wmRenderSendSettingRows(){
   tbody.innerHTML=WM_SEND_SETTING_ROWS.map((row,index)=>'<tr role="button" tabindex="0" onclick="wmEditSendSetting('+index+')">'+WM_SEND_SETTING_HEADERS.map(header=>'<td>'+escapeHtml(displayCellValue(row[header]||'',header))+'</td>').join('')+'</tr>').join('');
 }
 
-async function wmLoadSendCenterData(force){
-  if(WM_SEND_CENTER_LOADING)return;
-  if(WM_SEND_CENTER_LOADED&&!force){wmRenderSendCenterData();return;}
-  WM_SEND_CENTER_LOADING=true;
-  wmRenderSendCenterRows('wmSendLogTbody',WM_SEND_LOG_HEADERS,[],'발송센터 DB를 조회 중입니다.');
-  wmRenderSendCenterRows('wmSendSettingTbody',WM_SEND_SETTING_HEADERS,[],'발송센터 DB를 조회 중입니다.');
+async function wmLoadSendLogs(force){
+  if(WM_SEND_LOG_LOADING)return;
+  if(WM_SEND_LOG_LOADED&&!force){wmRenderSendCenterRows('wmSendLogTbody',WM_SEND_LOG_HEADERS,WM_SEND_LOG_ROWS,'5-1.발송내역_DB에 표시할 기록이 없습니다.');return;}
+  WM_SEND_LOG_LOADING=true;
+  wmRenderSendCenterRows('wmSendLogTbody',WM_SEND_LOG_HEADERS,[],'5-1.발송내역_DB를 조회 중입니다.');
   try{
     const actorQuery=String(typeof wmLmsActorQuery==='function'?wmLmsActorQuery():'');
-    const response=await fetch(WM_APPS_SCRIPT_URL+'?mode=sendCenterData&action=sendCenterData&ts='+Date.now()+actorQuery,{cache:'no-store'});
+    const response=await fetch(WM_APPS_SCRIPT_URL+'?mode=sendLogs&action=sendLogs&ts='+Date.now()+actorQuery,{cache:'no-store'});
     const data=await response.json();
-    if(!response.ok||!data||data.success!==true)throw new Error(data&&(data.message||data.error)||'발송센터 DB 조회 실패');
-    WM_SEND_LOG_ROWS=normalizeRows(data.logRows||[]);
-    WM_SEND_SETTING_ROWS=normalizeRows(data.settingRows||[]);
+    if(!response.ok||!data||data.success!==true)throw new Error(data&&(data.message||data.error)||'5-1.발송내역_DB 조회 실패');
+    WM_SEND_LOG_ROWS=normalizeRows(data.sendLogs||data.rows||[]);
+    WM_SEND_LOG_LOADED=true;
+    wmRenderSendCenterRows('wmSendLogTbody',WM_SEND_LOG_HEADERS,WM_SEND_LOG_ROWS,'5-1.발송내역_DB에 표시할 기록이 없습니다.');
+  }catch(err){
+    wmRenderSendCenterRows('wmSendLogTbody',WM_SEND_LOG_HEADERS,[],'조회 실패: '+String(err&&err.message||err));
+  }finally{WM_SEND_LOG_LOADING=false;}
+}
+
+async function wmLoadSendSettings(force){
+  if(WM_SEND_SETTING_LOADING)return;
+  if(WM_SEND_SETTING_LOADED&&!force){wmRenderSendSettingRows();wmFillSendTargetOptions();return;}
+  WM_SEND_SETTING_LOADING=true;
+  wmRenderSendCenterRows('wmSendSettingTbody',WM_SEND_SETTING_HEADERS,[],'5-2.자동발송설정_DB를 조회 중입니다.');
+  try{
+    const actorQuery=String(typeof wmLmsActorQuery==='function'?wmLmsActorQuery():'');
+    const response=await fetch(WM_APPS_SCRIPT_URL+'?mode=sendSettings&action=sendSettings&ts='+Date.now()+actorQuery,{cache:'no-store'});
+    const data=await response.json();
+    if(!response.ok||!data||data.success!==true)throw new Error(data&&(data.message||data.error)||'5-2.자동발송설정_DB 조회 실패');
+    WM_SEND_SETTING_ROWS=normalizeRows(data.sendSettings||data.rows||[]);
     WM_SEND_TARGET_STUDENTS=Array.isArray(data.targetStudents)?data.targetStudents:[];
     WM_SEND_TARGET_CLASSES=Array.isArray(data.targetClasses)?data.targetClasses:[];
-    WM_SEND_CENTER_LOADED=true;
-    wmRenderSendCenterData();
+    WM_SEND_SETTING_LOADED=true;
+    wmRenderSendSettingRows();
     wmFillSendTargetOptions();
   }catch(err){
-    const message=String(err&&err.message||err);
-    wmRenderSendCenterRows('wmSendLogTbody',WM_SEND_LOG_HEADERS,[],'조회 실패: '+message);
-    wmRenderSendCenterRows('wmSendSettingTbody',WM_SEND_SETTING_HEADERS,[],'조회 실패: '+message);
-  }finally{
-    WM_SEND_CENTER_LOADING=false;
-  }
+    wmRenderSendCenterRows('wmSendSettingTbody',WM_SEND_SETTING_HEADERS,[],'조회 실패: '+String(err&&err.message||err));
+  }finally{WM_SEND_SETTING_LOADING=false;}
+}
+
+async function wmLoadSendCenterData(force){
+  await wmLoadSendLogs(force);
+  await wmLoadSendSettings(force);
 }
 
 function wmSendCenterFilterValue(name){
@@ -8986,8 +9006,8 @@ async function wmSaveSendSetting(){
     const data=await response.json();
     if(!response.ok||!data||data.success!==true)throw new Error(data&&(data.message||data.error)||'저장 실패');
     if(status)status.textContent=data.message||'구글시트 저장완료';
-    WM_SEND_CENTER_LOADED=false;
-    await wmLoadSendCenterData(true);
+    WM_SEND_SETTING_LOADED=false;
+    await wmLoadSendSettings(true);
     wmResetSendSettingForm();
   }catch(err){if(status)status.textContent='저장 실패: '+String(err&&err.message||err);}
 }
