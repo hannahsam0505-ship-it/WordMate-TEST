@@ -5763,6 +5763,176 @@ async function wmMapRecentRender_(){const select=document.getElementById('wmMapR
 async function wmOpenLmsRecentReportModal_(){const modal=document.getElementById('wmMapReportModal'),body=document.getElementById('wmMapReportBody'),select=document.getElementById('wmMapReportPeriodSelect'),studentId=String(wmCurrentStudent&&wmCurrentStudent.학생ID||'').trim().toUpperCase(),sessionToken=wmGetCurrentSessionToken();if(!modal||!body||!select)return;modal.classList.add('active');document.body.classList.add('wm-map-report-open');if(!studentId||!sessionToken){body.innerHTML='<div class="wm-map-report-message">학생 로그인 정보를 확인할 수 없습니다.</div>';return;}wmMapRecentReportState_.studentId=studentId;if(wmMapRecentReportState_.loaded){await wmMapRecentRender_();return;}if(wmMapRecentReportState_.loading)return;wmMapRecentReportState_.loading=true;body.innerHTML='<div class="wm-map-report-message">최근 4개월을 불러오는 중입니다.</div>';try{const data=await wmMapRecentMonths_();wmMapRecentReportState_.months=data.months;wmMapRecentReportState_.defaultYearMonth=data.defaultYearMonth||data.months[0].yearMonth;wmMapRecentReportState_.loaded=true;select.innerHTML=data.months.map(item=>'<option value="'+escapeHtml(item.yearMonth)+'">'+escapeHtml(item.label)+'</option>').join('');select.value=wmMapRecentReportState_.defaultYearMonth;await wmMapRecentRender_();}catch(err){body.innerHTML='<div class="wm-map-report-message">'+escapeHtml(String(err&&err.message||err))+'</div>';}finally{wmMapRecentReportState_.loading=false;}}
 function wmInitPublishedReportModal_(){const open=document.getElementById('wm-report-view-button'),close=document.getElementById('wmMapReportClose'),select=document.getElementById('wmMapReportPeriodSelect'),modal=document.getElementById('wmMapReportModal');if(open)open.addEventListener('click',wmOpenLmsRecentReportModal_);if(close)close.addEventListener('click',wmClosePublishedReportModal_);if(select)select.addEventListener('change',wmMapRecentRender_);if(modal)modal.addEventListener('click',e=>{if(e.target===modal)wmClosePublishedReportModal_();});document.addEventListener('keydown',e=>{if(e.key==='Escape')wmClosePublishedReportModal_();});}
 
+/* ==========================================================
+   🔒 MAP APPROVED UI·FUNCTION LOCK V1.0 / 수정 금지
+
+   [승인 LOCK 8개]
+   1) 상단 학생정보·현재레벨·진행률·완료레벨 탭 블루 디자인
+   2) 완료레벨·완료세트 그린 처리 및 전체 상태별 색상
+   3) 세트 순차 학습·학습 진입 규칙
+   4) 성적표 보기 최근 4개월·드롭다운·모달·월 누적 공식·학생 세션
+   5) 숙제검사/학습기록 자세히 보기 블루 디자인·검색·요약정보
+   6) 하단 학습기록 15행·이전/다음·가로 스크롤·표 구조
+   7) 직접진입 차단·세션만료·LMS 학습맵 읽기전용 Preview
+   8) 조회 중·자료 없음·오류 표시 처리
+
+   Registry·그룹·함수 참조는 동결하며 전역 재할당·삭제를 차단합니다.
+   F12 Console의 WORD MATE MAP APPROVED LOCK STATUS에서 실제 상태를 확인합니다.
+   ========================================================== */
+(function wmMapApprovedLockV1_(){
+  'use strict';
+
+  var VERSION = 'WM_MAP_APPROVED_UI_FUNCTION_LOCK_V1.0';
+  var DATE = '2026-08-04';
+
+  var RAW_GROUPS = {
+    topBlueDesign:{
+      label:'상단 학생정보·레벨·진행률·완료레벨 블루 디자인',
+      functions:['wmApplyStudentLearningMap','wmApplyLearningMapStatus','wmRenderRecordLevelHistoryBoard_','wmUpdateStudentLevelHeaderLabel_','updateProgress'],
+      selectors:['.student-top-card','.level-bar','#mainProgressText','#progressFill']
+    },
+    levelSetColors:{
+      label:'완료레벨·완료세트 그린 및 전체 상태별 색상',
+      functions:['renderSetMap','getBlockClass','getBlockContent','wmGetLevelHistoryClassForLevel_'],
+      selectors:['#setMap','.dot.leveldone']
+    },
+    sequentialStudy:{
+      label:'세트 순차 학습·학습 진입 규칙',
+      functions:['wmBuildSequentialDisplayRoundMapForMap_','renderSetMap','startStudy','showSetDetail'],
+      selectors:['#setMap']
+    },
+    recentReport:{
+      label:'성적표 최근 4개월·드롭다운·모달·월 누적·학생 세션',
+      functions:['wmMapRecentMonths_','wmMapRecentData_','wmMapRecentRender_','wmOpenLmsRecentReportModal_','wmMapBindRecentReport_','wmInitPublishedReportModal_','wmGetCurrentSessionToken'],
+      selectors:['#wm-report-view-button','#wmMapReportModal','#wmMapReportPeriodSelect','#wmMapReportBody']
+    },
+    homeworkBlueDesign:{
+      label:'숙제검사·학습기록 블루 디자인·검색·요약정보',
+      functions:['renderHomeworkTable','filterHomeworkRecords','resetHomeworkFilters','wmRenderHomeworkRow'],
+      selectors:['.wm-homework-control-box','.detail-header','.filter-box','#summaryProgress']
+    },
+    homeworkTable:{
+      label:'학습기록 15행·이전/다음·가로 스크롤·표 구조',
+      functions:['renderHomeworkTable','wmUpdateHomeworkPager_','wmMoveHomeworkPage_','wmInitHomeworkTopScrollbar'],
+      selectors:['.homework-table','#homeworkTableBody','#homeworkPager','#homeworkPageInfo','#homeworkTableScroll'],
+      pageSize:15
+    },
+    accessSessionPreview:{
+      label:'직접진입 차단·세션만료·LMS 읽기전용 Preview',
+      functions:['wmAuthorizeMapEntry_','wmRedirectToLogin_','wmShowSessionExpiredModal','wmIsLmsMapPreview_','wmApplyLmsPreviewReadOnly_','wmWatchLmsPreviewReadOnly_','wmRenderLmsMapPreview_'],
+      selectors:['#wm-map-root']
+    },
+    loadingEmptyError:{
+      label:'조회 중·자료 없음·오류 표시 처리',
+      functions:['wmShowMapLoadingState_','wmStopMapLoadingState_','wmShowMapMessage','wmShowMapUnavailable_','wmMapRecentRender_'],
+      selectors:['#setMap','#wmMapReportBody','#homeworkTableBody']
+    }
+  };
+
+  function freezeGroup_(group){
+    return Object.freeze({
+      label:String(group.label || ''),
+      functions:Object.freeze((group.functions || []).slice()),
+      selectors:Object.freeze((group.selectors || []).slice()),
+      pageSize:group.pageSize || 0
+    });
+  }
+
+  var GROUPS = {};
+  Object.keys(RAW_GROUPS).forEach(function(key){ GROUPS[key] = freezeGroup_(RAW_GROUPS[key]); });
+  GROUPS = Object.freeze(GROUPS);
+
+  function lockGlobal_(name, value){
+    try{
+      var descriptor = Object.getOwnPropertyDescriptor(window, name);
+      if(descriptor && descriptor.configurable === false){
+        return descriptor.value === value && descriptor.writable === false;
+      }
+      Object.defineProperty(window, name, {
+        value:value,
+        writable:false,
+        configurable:false
+      });
+      var locked = Object.getOwnPropertyDescriptor(window, name);
+      return !!locked && locked.value === value && locked.writable === false && locked.configurable === false;
+    }catch(err){
+      return false;
+    }
+  }
+
+  var FUNCTION_RESULTS = {};
+  var REGISTRY = {};
+
+  Object.keys(GROUPS).forEach(function(key){
+    var group = GROUPS[key];
+    var functionsLocked = group.functions.every(function(name){
+      var fn = window[name];
+      var locked = typeof fn === 'function' && lockGlobal_(name, fn);
+      FUNCTION_RESULTS[name] = locked;
+      return locked;
+    });
+    var selectorsReady = group.selectors.every(function(selector){
+      return !!document.querySelector(selector);
+    });
+    var pageSizeReady = !group.pageSize || Number(WM_HOMEWORK_PAGE_SIZE) === Number(group.pageSize);
+    REGISTRY[key] = Object.freeze({
+      label:group.label,
+      functionsLocked:functionsLocked,
+      selectorsReady:selectorsReady,
+      pageSizeReady:pageSizeReady,
+      locked:functionsLocked && selectorsReady && pageSizeReady
+    });
+  });
+
+  FUNCTION_RESULTS = Object.freeze(FUNCTION_RESULTS);
+  REGISTRY = Object.freeze(REGISTRY);
+
+  function wmGetMapApprovedLockStatus_(){
+    var allLocked = Object.keys(REGISTRY).length === 8 && Object.keys(REGISTRY).every(function(key){
+      return REGISTRY[key].locked === true;
+    });
+    return Object.freeze({
+      version:VERSION,
+      date:DATE,
+      groups:GROUPS,
+      registry:REGISTRY,
+      functions:FUNCTION_RESULTS,
+      allLocked:allLocked
+    });
+  }
+
+  function wmPrintMapApprovedLockStatus_(){
+    var status = wmGetMapApprovedLockStatus_();
+    var rows = {};
+    Object.keys(status.registry).forEach(function(key){
+      var item = status.registry[key];
+      rows[item.label] = item.locked ? '✅ LOCK' : '❌ CHECK';
+    });
+    console.group('🔒 WORD MATE MAP APPROVED LOCK STATUS');
+    console.log('LOCK VERSION : ' + status.version);
+    console.log('LOCK DATE    : ' + status.date);
+    console.table(rows);
+    console.log(status.allLocked ? '🔒 MAP APPROVED 8 GROUPS ALL LOCK VERIFIED' : '⚠️ MAP APPROVED LOCK CHECK REQUIRED');
+    console.groupEnd();
+    return status;
+  }
+
+  var globalsLocked = [
+    lockGlobal_('WM_MAP_APPROVED_LOCK_GROUPS', GROUPS),
+    lockGlobal_('WM_MAP_APPROVED_LOCK_FUNCTIONS', FUNCTION_RESULTS),
+    lockGlobal_('WM_MAP_APPROVED_LOCK_REGISTRY', REGISTRY),
+    lockGlobal_('WM_MAP_APPROVED_LOCK_VERSION', VERSION),
+    lockGlobal_('WM_MAP_APPROVED_LOCK_DATE', DATE),
+    lockGlobal_('wmGetMapApprovedLockStatus', wmGetMapApprovedLockStatus_),
+    lockGlobal_('wmLogMapApprovedLockStatus', wmPrintMapApprovedLockStatus_)
+  ].every(function(value){ return value === true; });
+
+  if(!globalsLocked){
+    console.error('MAP APPROVED LOCK GLOBAL PROTECTION ERROR');
+  }
+  wmPrintMapApprovedLockStatus_();
+})();
+
 wmInitPublishedReportModal_();
 wmInitLearningMap();
 wmForceHomeworkBottomFixedBarOnFirstView();
