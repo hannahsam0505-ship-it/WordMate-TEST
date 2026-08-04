@@ -3791,6 +3791,12 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       options = options || {};
       const allowFallback = options.allowFallback !== false;
       ensureDashboardDefaultDates();
+      const cacheAge=Date.now()-Number(ensureDashboardSourceRows.loadedAt||0);
+      if(!options.force && cacheAge>=0 && cacheAge<30000 &&
+        WM_STUDENT_MANAGE_ROWS&&WM_STUDENT_MANAGE_ROWS.length&&
+        WM_RECORD_MANAGE_ROWS&&WM_RECORD_MANAGE_ROWS.length){
+        return;
+      }
 
       try{
         const res = await fetch(WM_APPS_SCRIPT_URL + '?mode=dashboard&ts=' + Date.now() + wmLmsActorQuery(), {method:'GET', cache:'no-store'});
@@ -3815,7 +3821,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
           WM_DASHBOARD_COUNSEL_ROWS = counsel;
           WM_DASHBOARD_PAYMENT_ROWS = payments;
           if(currentProgress.length) WM_CURRENT_PROGRESS_ROWS = currentProgress;
-
+          ensureDashboardSourceRows.loadedAt=Date.now();
           return;
         }
 
@@ -3838,6 +3844,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       tasks.push(loadDashboardSheetIfEmpty('WM_DASHBOARD_PAYMENT_ROWS', ['결제_DB','결제DB','Payment_DB','payments','매출_DB']));
       if(!WM_CURRENT_PROGRESS_ROWS || !WM_CURRENT_PROGRESS_ROWS.length) tasks.push(loadDashboardSheetIfEmpty('WM_CURRENT_PROGRESS_ROWS', ['8.현재진행_DB','현재진행_DB','currentProgress','current_progress']));
       await Promise.all(tasks);
+      ensureDashboardSourceRows.loadedAt=Date.now();
     }
 
     function buildDashboardState(){
@@ -4200,6 +4207,21 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
     let WM_RECENT_REPORT_MONTHS=[];
     let WM_RECENT_REPORT_STUDENT_ID='';
     let WM_RECENT_REPORT_STUDENT_NAME='';
+    const WM_MONTHLY_REPORT_DATA_CACHE=new Map();
+
+    function wmMonthlyReportCacheKey(studentId,yearMonth){
+      return String(studentId||'').trim().toUpperCase()+'|'+String(yearMonth||'').trim();
+    }
+
+    function wmGetMonthlyReportCache(studentId,yearMonth){
+      const item=WM_MONTHLY_REPORT_DATA_CACHE.get(wmMonthlyReportCacheKey(studentId,yearMonth));
+      return item&&Date.now()-item.savedAt<30000?item.data:null;
+    }
+
+    function wmSetMonthlyReportCache(studentId,yearMonth,data){
+      if(data) WM_MONTHLY_REPORT_DATA_CACHE.set(wmMonthlyReportCacheKey(studentId,yearMonth),{savedAt:Date.now(),data});
+      return data;
+    }
 
     async function wmFetchRecentReportMonths(){
       const response=await fetch(WM_APPS_SCRIPT_URL+'?mode=recentReportMonths&ts='+Date.now()+wmLmsActorQuery(),{method:'GET',cache:'no-store'});
@@ -4211,6 +4233,8 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
     }
 
     async function wmFetchRecentReportData(studentId,item){
+      const cached=wmGetMonthlyReportCache(studentId,item&&item.yearMonth);
+      if(cached) return cached;
       const params=new URLSearchParams();
       params.set('mode','monthlyReportData');
       params.set('action','monthlyReportData');
@@ -4226,7 +4250,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       if(!response.ok) throw new Error('monthlyReportData HTTP '+response.status);
       const result=JSON.parse(text)||{};
       if(!result.success||!result.data) throw new Error(result.message||'성적 내용이 없습니다.');
-      return result.data;
+      return wmSetMonthlyReportCache(studentId,item.yearMonth,result.data);
     }
 
     async function renderRecentReportMonth(){
@@ -4512,6 +4536,8 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
         const studentId=reportDetailStudentId(clickedReportRow);
         const yearMonth=reportDetailMonthKey(clickedReportRow);
         const week=reportDetailWeek(clickedReportRow);
+        const cached=wmGetMonthlyReportCache(studentId,yearMonth);
+        if(cached) return {success:true,message:'월간성적표 캐시 조회 완료',data:cached};
         const params=new URLSearchParams();
         params.set('mode','monthlyReportData');
         params.set('action','monthlyReportData');
@@ -4526,7 +4552,9 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
         const text=await response.text();
         if(!response.ok) return {success:false,message:'monthlyReportData HTTP '+response.status};
         try{
-          return JSON.parse(text)||{};
+          const result=JSON.parse(text)||{};
+          if(result&&result.success&&result.data) wmSetMonthlyReportCache(studentId,yearMonth,result.data);
+          return result;
         }catch(parseError){
           console.warn('monthlyReportData JSON 파싱 실패:',text.slice(0,180));
           return {success:false,message:'monthlyReportData JSON 파싱 실패'};
@@ -4616,6 +4644,15 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       row.appendChild(cell);
     }
 
+    function wmFormatMonthlyTotalPeriod(startDate,endDate){
+      const start=String(startDate||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      const end=String(endDate||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if(!start) return '-';
+      const startText=start[1].slice(-2)+'.'+start[2]+'.'+start[3];
+      if(!end||startDate===endDate) return startText;
+      return startText+'-'+end[2]+'.'+end[3];
+    }
+
     function renderMonthlyReportWeeklyTable(sheet,weeklyRows,monthly){
       const body=sheet.querySelector('[data-wmr-week-body]');
       if(!body) return;
@@ -4647,9 +4684,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       const firstWeek=activeWeeks.length?activeWeeks[0]:null;
       const lastWeek=activeWeeks.length?activeWeeks[activeWeeks.length-1]:null;
       const totalPeriod=firstWeek&&lastWeek
-        ? ((firstWeek.startDate||'')===(lastWeek.endDate||'')
-          ? (firstWeek.startDate||'-')
-          : (firstWeek.startDate||'-')+' ~ '+(lastWeek.endDate||'-'))
+        ? wmFormatMonthlyTotalPeriod(firstWeek.startDate,lastWeek.endDate)
         : '-';
       const totalTime=monthly&&monthly.totalTime?monthly.totalTime:{};
       const totalRow=document.createElement('tr');
@@ -4860,7 +4895,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       const firstWeek=activeWeeks[0]||null;
       const lastWeek=activeWeeks.length?activeWeeks[activeWeeks.length-1]:null;
       const totalPeriod=firstWeek&&lastWeek
-        ? ((firstWeek.startDate||'')===(lastWeek.endDate||'')?(firstWeek.startDate||'-'):(firstWeek.startDate||'-')+' ~ '+(lastWeek.endDate||'-'))
+        ? wmFormatMonthlyTotalPeriod(firstWeek.startDate,lastWeek.endDate)
         : '-';
       const totalExpected=['합계',totalPeriod,Number(monthly.completedSets||0),Number(monthly.wordCount||0),Number(monthly.averageScore||0),(monthly.totalTime&&monthly.totalTime.text)||'0초',Number(monthly.attendanceDays||0)];
       const totalCells=weeklyRows[5]?Array.from(weeklyRows[5].children):[];
