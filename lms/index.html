@@ -7831,7 +7831,7 @@ async function toggleStudentRegisterBox(){
 function wmSyncStudentRegisterLearningStartDate(){
   const registerDate=document.getElementById('wmStudentRegisterDate');
   const learningStartDate=document.getElementById('wmStudentRegisterLearningStartDate');
-  if(registerDate&&learningStartDate&&!learningStartDate.value) learningStartDate.value=registerDate.value||'';
+  if(registerDate&&learningStartDate&&registerDate.value) learningStartDate.value=registerDate.value;
 }
 
 function wmSetStudentRegisterStatus(type, text){
