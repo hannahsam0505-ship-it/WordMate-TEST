@@ -2085,53 +2085,40 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       <div id="wmReportStudentRecordDetail" class="wm-factory-box" style="display:none;"></div>
       <div id="wmReportManageDetail" class="wm-factory-box" style="display:none;"></div>
     </section>
-    <section class="wm-panel" id="panel-sendWait">
-      <h2 class="wm-panel-title">발송대기 센터</h2>
-      <p class="wm-panel-desc">연결 예정 DB: 6.발송대기_DB / 구글시트 현재 1행 컬럼명을 임의 수정 없이 그대로 반영했습니다.</p>
-      <div class="wm-filter-box" data-filter-scope="sendWait">
-        <div class="wm-filter-title">검색조건</div>
-        <div class="wm-filter-grid">
-          <label>기간 시작<input type="date" data-filter="dateStart" /></label>
-          <label>기간 종료<input type="date" data-filter="dateEnd" /></label>
-          <label>리더<input type="text" list="leaderList" placeholder="직접입력 또는 선택" data-filter="leader" /></label>
-          <label>교사<input type="text" list="teacherList" placeholder="직접입력 또는 선택" data-filter="teacher" /></label>
-          <label>반<input type="text" placeholder="반명" data-filter="class" /></label>
-          <label>레벨<input type="text" placeholder="예: Basic 5 / 5" data-filter="level" /></label>
-          <label>학교<input type="text" placeholder="학교명" data-filter="school" /></label>
-          <label>지역<input type="text" placeholder="지역명" data-filter="region" /></label>
-        </div>
-        <div class="wm-filter-actions">
-          <button class="wm-action-btn" onclick="runFilter('sendWait')">검색</button>
-          <button class="wm-action-btn sub" onclick="resetFilter('sendWait')">초기화</button>
-        </div>
-      </div>
-      <div class="wm-action-row"><button class="wm-action-btn">추가</button><button class="wm-action-btn sub">수정</button><button class="wm-action-btn sub">조회</button></div>
-      
-      <div class="wm-table-wrap"><table><thead><tr><th>발송ID</th><th>리포트ID</th><th>학습날짜</th><th>학생이름</th><th>학부모명</th><th>학부모연락처</th><th>발송방식</th><th>발송문구</th><th>Teacher’s Comment</th><th>발송상태</th><th>확인여부</th><th>비고</th></tr></thead><tbody><tr><td>SW001</td><td>REP001</td><td>2026-05-29</td><td>김학생</td><td>김학부모</td><td>010-0000-0001</td><td>카카오</td><td>성적표가 도착했습니다.</td><td>꾸준히 잘 따라오고 있습니다.</td><td>대기</td><td>N</td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr></tbody></table></div>
-    </section>
     <section class="wm-panel" id="panel-sendLog">
       <h2 class="wm-panel-title">발송기록 센터</h2>
-      <p class="wm-panel-desc">연결 예정 DB: 7.발송기록_DB / 구글시트 현재 1행 컬럼명을 임의 수정 없이 그대로 반영했습니다.</p>
-      <div class="wm-filter-box" data-filter-scope="sendLog">
-        <div class="wm-filter-title">검색조건</div>
-        <div class="wm-filter-grid">
-          <label>기간 시작<input type="date" data-filter="dateStart" /></label>
-          <label>기간 종료<input type="date" data-filter="dateEnd" /></label>
-          <label>리더<input type="text" list="leaderList" placeholder="직접입력 또는 선택" data-filter="leader" /></label>
-          <label>교사<input type="text" list="teacherList" placeholder="직접입력 또는 선택" data-filter="teacher" /></label>
-          <label>반<input type="text" placeholder="반명" data-filter="class" /></label>
-          <label>레벨<input type="text" placeholder="예: Basic 5 / 5" data-filter="level" /></label>
-          <label>학교<input type="text" placeholder="학교명" data-filter="school" /></label>
-          <label>지역<input type="text" placeholder="지역명" data-filter="region" /></label>
-        </div>
-        <div class="wm-filter-actions">
-          <button class="wm-action-btn" onclick="runFilter('sendLog')">검색</button>
-          <button class="wm-action-btn sub" onclick="resetFilter('sendLog')">초기화</button>
-        </div>
+      <p class="wm-panel-desc">연결 DB: 5-1.발송내역_DB + 5-2.자동발송설정_DB / 구글시트 값을 계산 없이 그대로 표시합니다.</p>
+      <div class="wm-setting-db-tabs" role="tablist" aria-label="발송기록 DB 선택">
+        <button type="button" class="wm-setting-db-tab active" id="wmSendLogTab" role="tab" aria-selected="true" onclick="wmSwitchSendCenterTab('log')">5-1. 발송내역</button>
+        <button type="button" class="wm-setting-db-tab" id="wmSendSettingTab" role="tab" aria-selected="false" onclick="wmSwitchSendCenterTab('setting')">5-2. 자동발송설정</button>
       </div>
-      <div class="wm-action-row"><button class="wm-action-btn" onclick="generateSendLogIdPreview()">발송ID 자동발급</button><button class="wm-action-btn sub">수정</button><button class="wm-action-btn sub" onclick="runFilter('sendLog')">조회</button><span id="sendLogAutoIdPreview" class="wm-note wm-inline-help-note" style="display:none;"></span></div>
-      <div class="wm-note">발송ID는 신규 발송기록 생성 시 Code.gs에서 자동으로 L + YYMM + 3자리 일련번호 형식으로 부여됩니다. 예: L2606001</div>
-      <div class="wm-table-wrap"><table><thead><tr><th>발송ID</th><th>학생ID</th><th>학생이름</th><th>학부모명</th><th>학부모연락처</th><th>리포트월</th><th>리포트주차</th><th>발송상태</th><th>발송일</th><th>발송시간</th><th>성적표링크</th><th>비고</th></tr></thead><tbody><tr><td colspan="12">발송기록_DB 연결 대기 중입니다.</td></tr></tbody></table></div>
+
+      <div id="wmSendLogView" data-send-center-view="log">
+        <div class="wm-filter-box" data-filter-scope="sendLog">
+          <div class="wm-filter-title">발송내역 검색조건</div>
+          <div class="wm-filter-grid">
+            <label>기간 시작<input type="date" data-filter="dateStart" /></label>
+            <label>기간 종료<input type="date" data-filter="dateEnd" /></label>
+            <label>학생ID<input type="text" placeholder="학생ID" data-filter="studentId" /></label>
+            <label>학생이름<input type="text" placeholder="학생이름" data-filter="studentName" /></label>
+            <label>반<input type="text" placeholder="반명" data-filter="class" /></label>
+            <label>교사<input type="text" placeholder="교사명" data-filter="teacher" /></label>
+            <label>발송채널<input type="text" placeholder="알림톡 / 문자" data-filter="channel" /></label>
+            <label>발송상태<input type="text" placeholder="대기 / 성공 / 실패" data-filter="status" /></label>
+          </div>
+          <div class="wm-filter-actions">
+            <button class="wm-action-btn" onclick="wmFilterSendCenterLog()">검색</button>
+            <button class="wm-action-btn sub" onclick="wmResetSendCenterFilter()">초기화</button>
+            <button class="wm-action-btn sub" onclick="wmLoadSendCenterData(true)">새로고침</button>
+          </div>
+        </div>
+        <div class="wm-table-wrap"><table id="wmSendLogTable"><thead><tr><th>발송내역ID</th><th>발송ID</th><th>학생ID</th><th>학생이름</th><th>반ID</th><th>반명</th><th>교사명</th><th>리포트유형</th><th>리포트월</th><th>리포트주차</th><th>수신자구분</th><th>학부모명</th><th>학부모연락처</th><th>발송채널</th><th>예약발송일시</th><th>실제발송일시</th><th>발송상태</th><th>성적표링크</th><th>실패사유</th><th>API메시지ID</th><th>비고</th><th>등록일시</th><th>수정일시</th></tr></thead><tbody id="wmSendLogTbody"><tr><td colspan="23">5-1.발송내역_DB 조회 대기 중입니다.</td></tr></tbody></table></div>
+      </div>
+
+      <div id="wmSendSettingView" class="wm-setting-db-hidden" data-send-center-view="setting">
+        <div class="wm-action-row"><button type="button" class="wm-action-btn" onclick="wmLoadSendCenterData(true)">새로고침</button><span class="wm-note">자동발송 실행·문자/알림톡 API 연결은 추후 단계에서 적용합니다.</span></div>
+        <div class="wm-table-wrap"><table id="wmSendSettingTable"><thead><tr><th>설정ID</th><th>대상구분</th><th>대상ID</th><th>대상명</th><th>리포트유형</th><th>발송주기</th><th>발송요일</th><th>발송일</th><th>발송시간</th><th>발송채널</th><th>알림톡템플릿ID</th><th>문자대체발송</th><th>자동발송상태</th><th>비고</th><th>등록일시</th><th>수정일시</th></tr></thead><tbody id="wmSendSettingTbody"><tr><td colspan="16">5-2.자동발송설정_DB 조회 대기 중입니다.</td></tr></tbody></table></div>
+      </div>
     </section>
     <section class="wm-panel" id="panel-classes">
       <div class="wm-panel-title-row"><h2 class="wm-panel-title">설정센터</h2><p class="wm-panel-desc">연결 DB: 7-1.교사관리_DB + 7-2.반관리_DB / 교사와 반을 한 화면에서 등록·조회·관리합니다. 등록은 LMS에서만 진행하고 저장 시 구글시트로 자동 반영됩니다.</p></div>
@@ -2652,6 +2639,11 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
         setTimeout(function(){
           if(typeof loadReports === 'function' && (!WM_REPORT_MANAGE_ROWS || !WM_REPORT_MANAGE_ROWS.length)) loadReports();
           else if(typeof renderReportManageRows === 'function') renderReportManageRows();
+        }, 0);
+      }
+      if(panelName === 'sendLog'){
+        setTimeout(function(){
+          if(typeof wmLoadSendCenterData === 'function') wmLoadSendCenterData(false);
         }, 0);
       }
       if(panelName === 'gradeLevel'){
@@ -3841,7 +3833,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       if(!WM_RECORD_MANAGE_ROWS || !WM_RECORD_MANAGE_ROWS.length) tasks.push(loadRecords());
       tasks.push(loadDashboardSheetIfEmpty('WM_DASHBOARD_CLASS_ROWS', ['7-2.반관리_DB','반관리_DB','Class_DB','classes']));
       tasks.push(loadDashboardSheetIfEmpty('WM_DASHBOARD_TEACHER_ROWS', ['7-1.교사관리_DB','교사관리_DB','교사_DB','Teacher_DB']));
-      tasks.push(loadDashboardSheetIfEmpty('WM_DASHBOARD_SEND_LOG_ROWS', ['5-1.발송기록_DB','6.발송기록_DB','발송기록_DB','sendLog','send_log']));
+      tasks.push(loadDashboardSheetIfEmpty('WM_DASHBOARD_SEND_LOG_ROWS', ['5-1.발송내역_DB','5-1.발송기록_DB','6.발송기록_DB','발송내역_DB','발송기록_DB','sendLog','send_log']));
       tasks.push(loadDashboardSheetIfEmpty('WM_DASHBOARD_COUNSEL_ROWS', ['6.상담카페_DB','상담_DB','상담카페_DB','counsel','consult']));
       tasks.push(loadDashboardSheetIfEmpty('WM_DASHBOARD_PAYMENT_ROWS', ['결제_DB','결제DB','Payment_DB','payments','매출_DB']));
       if(!WM_CURRENT_PROGRESS_ROWS || !WM_CURRENT_PROGRESS_ROWS.length) tasks.push(loadDashboardSheetIfEmpty('WM_CURRENT_PROGRESS_ROWS', ['8.현재진행_DB','현재진행_DB','currentProgress','current_progress']));
@@ -3882,7 +3874,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
         return role.includes('SUB_LEADER') || role.includes('LEADER') || role.includes('리더');
       });
 
-      const sendLogRows = dashboardRowsInPeriod(WM_DASHBOARD_SEND_LOG_ROWS || [], ['발송일시','발송일','Sent_Date','생성일','날짜']);
+      const sendLogRows = dashboardRowsInPeriod(WM_DASHBOARD_SEND_LOG_ROWS || [], ['실제발송일시','예약발송일시','발송일시','발송일','Sent_Date','등록일시','생성일','날짜']);
       const counselRows = dashboardRowsInPeriod(WM_DASHBOARD_COUNSEL_ROWS || [], ['상담일','상담날짜','Consult_Date','생성일','날짜']);
       const paymentRows = dashboardRowsInPeriod(WM_DASHBOARD_PAYMENT_ROWS || [], ['결제일','결제일시','Payment_Date','날짜','등록일']);
 
@@ -4042,7 +4034,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
         return;
       }
       if(type==='sendLog'){
-        const headers=['발송ID','학생ID','학생이름','학부모연락처','발송방식','발송일시','발송상태','비고'];
+        const headers=['발송ID','학생ID','학생이름','수신자구분','학부모연락처','발송채널','실제발송일시','발송상태','비고'];
         setDashboardTable(headers, renderRowsForHeaders(state.sendLogRows, headers), '발송기록 목록이 없습니다.');
         return;
       }
@@ -8801,6 +8793,98 @@ function syncStudentTableScroll(){
 }
 
 
+
+/* WM_LMS_SEND_CENTER_DB_CONNECTION_V1
+ * 5-1.발송내역_DB / 5-2.자동발송설정_DB를 Code.gs 응답 그대로 표시합니다. */
+const WM_SEND_LOG_HEADERS=['발송내역ID','발송ID','학생ID','학생이름','반ID','반명','교사명','리포트유형','리포트월','리포트주차','수신자구분','학부모명','학부모연락처','발송채널','예약발송일시','실제발송일시','발송상태','성적표링크','실패사유','API메시지ID','비고','등록일시','수정일시'];
+const WM_SEND_SETTING_HEADERS=['설정ID','대상구분','대상ID','대상명','리포트유형','발송주기','발송요일','발송일','발송시간','발송채널','알림톡템플릿ID','문자대체발송','자동발송상태','비고','등록일시','수정일시'];
+let WM_SEND_LOG_ROWS=[];
+let WM_SEND_SETTING_ROWS=[];
+let WM_SEND_CENTER_LOADED=false;
+let WM_SEND_CENTER_LOADING=false;
+
+function wmSwitchSendCenterTab(type){
+  const logMode=type!=='setting';
+  const logTab=document.getElementById('wmSendLogTab');
+  const settingTab=document.getElementById('wmSendSettingTab');
+  const logView=document.getElementById('wmSendLogView');
+  const settingView=document.getElementById('wmSendSettingView');
+  if(logTab){logTab.classList.toggle('active',logMode);logTab.setAttribute('aria-selected',logMode?'true':'false');}
+  if(settingTab){settingTab.classList.toggle('active',!logMode);settingTab.setAttribute('aria-selected',!logMode?'true':'false');}
+  if(logView)logView.classList.toggle('wm-setting-db-hidden',!logMode);
+  if(settingView)settingView.classList.toggle('wm-setting-db-hidden',logMode);
+}
+
+function wmRenderSendCenterRows(tbodyId,headers,rows,emptyText){
+  const tbody=document.getElementById(tbodyId);
+  if(!tbody)return;
+  if(!Array.isArray(rows)||!rows.length){
+    tbody.innerHTML='<tr><td colspan="'+headers.length+'">'+escapeHtml(emptyText)+'</td></tr>';
+    return;
+  }
+  tbody.innerHTML=rows.map(row=>'<tr>'+headers.map(header=>{
+    const value=row&&row[header]!==undefined&&row[header]!==null?String(row[header]):'';
+    if(header==='성적표링크'&&/^https?:\/\//i.test(value.trim())){
+      return '<td><a class="wm-link-btn" href="'+escapeHtml(value.trim())+'" target="_blank" rel="noopener noreferrer">성적표보기</a></td>';
+    }
+    return '<td>'+escapeHtml(displayCellValue(value,header))+'</td>';
+  }).join('')+'</tr>').join('');
+}
+
+function wmRenderSendCenterData(){
+  wmRenderSendCenterRows('wmSendLogTbody',WM_SEND_LOG_HEADERS,WM_SEND_LOG_ROWS,'5-1.발송내역_DB에 표시할 기록이 없습니다.');
+  wmRenderSendCenterRows('wmSendSettingTbody',WM_SEND_SETTING_HEADERS,WM_SEND_SETTING_ROWS,'5-2.자동발송설정_DB에 표시할 설정이 없습니다.');
+}
+
+async function wmLoadSendCenterData(force){
+  if(WM_SEND_CENTER_LOADING)return;
+  if(WM_SEND_CENTER_LOADED&&!force){wmRenderSendCenterData();return;}
+  WM_SEND_CENTER_LOADING=true;
+  wmRenderSendCenterRows('wmSendLogTbody',WM_SEND_LOG_HEADERS,[],'발송센터 DB를 조회 중입니다.');
+  wmRenderSendCenterRows('wmSendSettingTbody',WM_SEND_SETTING_HEADERS,[],'발송센터 DB를 조회 중입니다.');
+  try{
+    const actorQuery=String(typeof wmLmsActorQuery==='function'?wmLmsActorQuery():'');
+    const response=await fetch(WM_APPS_SCRIPT_URL+'?mode=sendCenterData&action=sendCenterData&ts='+Date.now()+actorQuery,{cache:'no-store'});
+    const data=await response.json();
+    if(!response.ok||!data||data.success!==true)throw new Error(data&&(data.message||data.error)||'발송센터 DB 조회 실패');
+    WM_SEND_LOG_ROWS=normalizeRows(data.logRows||[]);
+    WM_SEND_SETTING_ROWS=normalizeRows(data.settingRows||[]);
+    WM_SEND_CENTER_LOADED=true;
+    wmRenderSendCenterData();
+  }catch(err){
+    const message=String(err&&err.message||err);
+    wmRenderSendCenterRows('wmSendLogTbody',WM_SEND_LOG_HEADERS,[],'조회 실패: '+message);
+    wmRenderSendCenterRows('wmSendSettingTbody',WM_SEND_SETTING_HEADERS,[],'조회 실패: '+message);
+  }finally{
+    WM_SEND_CENTER_LOADING=false;
+  }
+}
+
+function wmSendCenterFilterValue(name){
+  const el=document.querySelector('#panel-sendLog [data-filter="'+name+'"]');
+  return String(el&&el.value||'').trim().toLowerCase();
+}
+
+function wmFilterSendCenterLog(){
+  const start=wmSendCenterFilterValue('dateStart');
+  const end=wmSendCenterFilterValue('dateEnd');
+  const filters={studentId:'학생ID',studentName:'학생이름',class:'반명',teacher:'교사명',channel:'발송채널',status:'발송상태'};
+  const rows=WM_SEND_LOG_ROWS.filter(row=>{
+    const dateText=String(row['실제발송일시']||row['예약발송일시']||row['등록일시']||'').trim().slice(0,10);
+    if(start&&dateText&&dateText<start)return false;
+    if(end&&dateText&&dateText>end)return false;
+    return Object.keys(filters).every(key=>{
+      const query=wmSendCenterFilterValue(key);
+      return !query||String(row[filters[key]]||'').toLowerCase().includes(query);
+    });
+  });
+  wmRenderSendCenterRows('wmSendLogTbody',WM_SEND_LOG_HEADERS,rows,'검색조건에 맞는 발송내역이 없습니다.');
+}
+
+function wmResetSendCenterFilter(){
+  document.querySelectorAll('#panel-sendLog [data-filter-scope="sendLog"] input').forEach(el=>el.value='');
+  wmRenderSendCenterRows('wmSendLogTbody',WM_SEND_LOG_HEADERS,WM_SEND_LOG_ROWS,'5-1.발송내역_DB에 표시할 기록이 없습니다.');
+}
 
 async function generateSendLogIdPreview(){
   const target = document.getElementById('sendLogAutoIdPreview');
