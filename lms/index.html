@@ -772,6 +772,14 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
     .wm-setting-db-tab { border:1px solid var(--wm-line); background:#fff; color:var(--wm-dark); border-radius:12px; padding:11px 16px; font-weight:900; cursor:pointer; }
     .wm-setting-db-tab.active { background:var(--wm-blue); color:#fff; border-color:var(--wm-blue); }
     [data-setting-db-view].wm-setting-db-hidden, [data-send-center-view].wm-setting-db-hidden { display:none !important; }
+    #panel-sendLog [data-send-center-view] > .wm-filter-box { border:1px solid #9fbce8; background:linear-gradient(180deg,#f4f8ff 0%,#eaf2ff 100%); box-shadow:0 8px 22px rgba(7,59,143,.08); }
+    #panel-sendLog [data-send-center-view] > .wm-filter-box > .wm-filter-title { margin:-14px -14px 13px; padding:12px 14px; border-radius:15px 15px 0 0; background:linear-gradient(135deg,#073b8f 0%,#0d55c8 100%); color:#fff; font-size:16px; letter-spacing:-.2px; }
+    #panel-sendLog [data-send-center-view] > .wm-filter-box .wm-filter-grid label { color:#173b75; }
+    #panel-sendLog [data-send-center-view] > .wm-filter-box .wm-filter-grid input,
+    #panel-sendLog [data-send-center-view] > .wm-filter-box .wm-filter-grid select { border-color:#b9cbea; background:#fff; }
+    #panel-sendLog [data-send-center-view] > .wm-filter-box .wm-filter-grid input:focus,
+    #panel-sendLog [data-send-center-view] > .wm-filter-box .wm-filter-grid select:focus { outline:2px solid rgba(13,85,200,.18); border-color:#0d55c8; }
+    #panel-sendLog [data-send-center-view] > .wm-filter-box .wm-filter-actions { margin:13px 0 0; padding-top:12px; border-top:1px solid #cbd9ed; }
 
     .wm-profile-section-title { display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; margin:0 0 10px; }
     .wm-profile-section-title h3 { margin:0; font-size:17px; font-weight:900; }
@@ -2097,12 +2105,12 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
         <div class="wm-filter-box" data-filter-scope="sendLog">
           <div class="wm-filter-title">발송내역 검색조건</div>
           <div class="wm-filter-grid">
-            <label>기간 시작<input type="date" data-filter="dateStart" /></label>
-            <label>기간 종료<input type="date" data-filter="dateEnd" /></label>
-            <label>학생ID<input type="text" placeholder="학생ID" data-filter="studentId" /></label>
-            <label>학생이름<input type="text" placeholder="학생이름" data-filter="studentName" /></label>
+            <label>이름<input type="text" placeholder="학생이름" data-filter="studentName" /></label>
+            <label>아이디<input type="text" placeholder="학생ID" data-filter="studentId" /></label>
             <label>반<input type="text" placeholder="반명" data-filter="class" /></label>
             <label>교사<input type="text" placeholder="교사명" data-filter="teacher" /></label>
+            <label>기간 시작<input type="date" data-filter="dateStart" /></label>
+            <label>기간 종료<input type="date" data-filter="dateEnd" /></label>
             <label>발송채널<input type="text" placeholder="알림톡 / 문자" data-filter="channel" /></label>
             <label>발송상태<input type="text" placeholder="대기 / 성공 / 실패" data-filter="status" /></label>
           </div>
@@ -8977,8 +8985,10 @@ async function wmSaveSendSetting(){
     const response=await fetch(WM_APPS_SCRIPT_URL+'?'+params.toString()+actorQuery,{cache:'no-store'});
     const data=await response.json();
     if(!response.ok||!data||data.success!==true)throw new Error(data&&(data.message||data.error)||'저장 실패');
-    if(status)status.textContent=data.message||'저장완료';
-    WM_SEND_CENTER_LOADED=false;await wmLoadSendCenterData(true);wmResetSendSettingForm();
+    if(status)status.textContent=data.message||'구글시트 저장완료';
+    WM_SEND_CENTER_LOADED=false;
+    await wmLoadSendCenterData(true);
+    wmResetSendSettingForm();
   }catch(err){if(status)status.textContent='저장 실패: '+String(err&&err.message||err);}
 }
 
