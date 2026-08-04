@@ -5846,7 +5846,12 @@ function wmInitPublishedReportModal_(){const open=document.getElementById('wm-re
     try{
       var descriptor = Object.getOwnPropertyDescriptor(window, name);
       if(descriptor && descriptor.configurable === false){
-        return descriptor.value === value && descriptor.writable === false;
+        if(descriptor.value !== value) return false;
+        if(descriptor.writable === true){
+          Object.defineProperty(window, name, {writable:false});
+          descriptor = Object.getOwnPropertyDescriptor(window, name);
+        }
+        return !!descriptor && descriptor.value === value && descriptor.writable === false;
       }
       Object.defineProperty(window, name, {
         value:value,
