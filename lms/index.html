@@ -2140,24 +2140,24 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       <div id="wmSendSettingView" class="wm-setting-db-hidden" data-send-center-view="setting">
         <div class="wm-filter-box">
           <div class="wm-filter-title">자동발송설정 등록·수정</div>
-          <input type="hidden" id="wmSendSettingId" />
           <div class="wm-filter-grid">
-            <label>대상구분<select id="wmSendTargetType" onchange="wmFillSendTargetOptions()"><option value="학생">학생</option><option value="반">반</option></select></label>
-            <label>대상<select id="wmSendTargetSelect" onchange="wmApplySendTargetSelection()"><option value="">대상 선택</option></select></label>
-            <label>대상ID<input type="text" id="wmSendTargetId" readonly /></label>
-            <label>대상명<input type="text" id="wmSendTargetName" readonly /></label>
+            <label>학생이름
+              <input type="text" id="wmSendStudentName" list="wmSendStudentNameList" placeholder="이름 검색·선택" oninput="wmApplySendStudentByName()" />
+              <datalist id="wmSendStudentNameList"></datalist>
+            </label>
+            <label>학생ID
+              <input type="text" id="wmSendStudentId" list="wmSendStudentIdList" placeholder="ID 검색·선택" oninput="wmApplySendStudentById()" />
+              <datalist id="wmSendStudentIdList"></datalist>
+            </label>
             <label>리포트유형<select id="wmSendReportType"><option value="주간">주간</option><option value="월간">월간</option><option value="최근성적표">최근성적표</option></select></label>
             <label>발송주기<select id="wmSendCycle"><option value="매주">매주</option><option value="매월">매월</option><option value="1회">1회</option></select></label>
             <label>발송요일<select id="wmSendWeekday"><option value="">선택안함</option><option>월요일</option><option>화요일</option><option>수요일</option><option>목요일</option><option>금요일</option><option>토요일</option><option>일요일</option></select></label>
             <label>발송일<input type="number" id="wmSendDay" min="1" max="31" placeholder="1~31" /></label>
             <label>발송시간<input type="time" id="wmSendTime" /></label>
-            <label>발송채널<select id="wmSendChannel"><option value="알림톡">알림톡</option><option value="문자">문자</option></select></label>
-            <label>알림톡템플릿ID<input type="text" id="wmSendTemplateId" placeholder="API 연결 후 입력" /></label>
-            <label>문자대체발송<select id="wmSendSmsFallback"><option value="Y">Y</option><option value="N">N</option></select></label>
             <label>자동발송상태<select id="wmSendAutoStatus"><option value="사용">사용</option><option value="중지">중지</option></select></label>
             <label>비고<input type="text" id="wmSendNote" /></label>
           </div>
-          <div class="wm-filter-actions"><button type="button" class="wm-action-btn" onclick="wmSaveSendSetting()">저장</button><button type="button" class="wm-action-btn sub" onclick="wmResetSendSettingForm()">신규입력</button><button type="button" class="wm-action-btn sub" onclick="wmLoadSendSettings(true)">새로고침</button><span id="wmSendSettingStatus" class="wm-note"></span></div>
+          <div class="wm-filter-actions"><button type="button" class="wm-action-btn" onclick="wmSaveSendSetting()">저장</button><button type="button" class="wm-action-btn sub" onclick="wmResetSendSettingForm()">신규입력</button><button type="button" class="wm-action-btn sub" onclick="wmLoadSendSettings(true)">새로고침</button><span id="wmSendSettingStatus" class="wm-manage-loading" style="display:none;"></span></div>
         </div>
         <div class="wm-note">목록 행을 선택하면 수정할 수 있습니다. 자동발송 실행·문자/알림톡 API 연결은 추후 단계에서 적용합니다.</div>
         <div class="wm-table-wrap wm-send-center-table-wrap" id="wmSendSettingTableWrap"><table id="wmSendSettingTable"><thead><tr><th>조회 준비 중</th></tr></thead><tbody id="wmSendSettingTbody"><tr><td>5-2.자동발송설정_DB 조회 대기 중입니다.</td></tr></tbody></table></div><div class="wm-current-progress-pager" id="wmSendSettingPager" style="display:none;"><button type="button" onclick="wmMoveSendCenterPage('setting',-1)">이전</button><span class="wm-current-progress-page-info" data-role="info">1 / 1</span><button type="button" onclick="wmMoveSendCenterPage('setting',1)">다음</button></div>
@@ -8913,7 +8913,7 @@ function wmSwitchSendCenterTab(type){
   if(settingTab){settingTab.classList.toggle('active',!logMode);settingTab.setAttribute('aria-selected',!logMode?'true':'false');}
   if(logView)logView.classList.toggle('wm-setting-db-hidden',!logMode);
   if(settingView)settingView.classList.toggle('wm-setting-db-hidden',logMode);
-  wmLoadSendCenterData(false);
+  if(logMode)wmLoadSendLogs(false);else wmLoadSendSettings(false);
 }
 
 function wmRenderSendCenterHead(tableId,headers){
@@ -9002,45 +9002,53 @@ function wmMoveSendCenterPage(type,delta){
   wmRenderSendCenterData();
 }
 
-async function wmLoadSendCenterData(force){
-  if(WM_SEND_CENTER_LOADING)return;
-  if(WM_SEND_LOG_LOADED&&WM_SEND_SETTING_LOADED&&!force){wmRenderSendCenterData();wmFillSendTargetOptions();return;}
-  WM_SEND_CENTER_LOADING=true;
+
+async function wmLoadSendLogs(force){
+  if(WM_SEND_LOG_LOADING)return;
+  if(WM_SEND_LOG_LOADED&&!force){wmRenderSendCenterData();return;}
   WM_SEND_LOG_LOADING=true;
-  WM_SEND_SETTING_LOADING=true;
-  wmRenderSendCenterRows('wmSendLogTbody',WM_SEND_LOG_HEADERS,[],'5-1.발송내역_DB를 조회 중입니다.','log');
-  wmRenderSendCenterRows('wmSendSettingTbody',WM_SEND_SETTING_HEADERS,[],'5-2.자동발송설정_DB를 조회 중입니다.','setting');
+  wmRenderSendCenterHead('wmSendLogTable',WM_SEND_LOG_HEADERS);
+  wmRenderSendCenterRows('wmSendLogTbody',WM_SEND_LOG_HEADERS,[],'조회 중입니다.','log');
   try{
-    const actorQuery=String(typeof wmLmsActorQuery==='function'?wmLmsActorQuery():'');
-    const response=await fetch(WM_APPS_SCRIPT_URL+'?mode=sendCenterData&action=sendCenterData&ts='+Date.now()+actorQuery,{cache:'no-store'});
+    const response=await fetch(WM_APPS_SCRIPT_URL+'?mode=sendCenterData&tab=log&ts='+Date.now()+wmLmsActorQuery(),{cache:'no-store'});
     const data=await response.json();
-    if(!response.ok||!data||data.success!==true)throw new Error(data&&(data.message||data.error)||'발송센터 DB 조회 실패');
+    if(!response.ok||!data||data.success!==true)throw new Error(data&&(data.message||data.error)||'발송내역 조회 실패');
     WM_SEND_LOG_HEADERS=Array.isArray(data.logHeaders)?data.logHeaders.map(value=>String(value||'').trim()).filter(Boolean):[];
-    WM_SEND_SETTING_HEADERS=Array.isArray(data.settingHeaders)?data.settingHeaders.map(value=>String(value||'').trim()).filter(Boolean):[];
     WM_SEND_LOG_ROWS=normalizeRows(data.logRows||[]);
-    WM_SEND_SETTING_ROWS=normalizeRows(data.settingRows||[]);
     WM_SEND_LOG_FILTERED_ROWS=null;
     WM_SEND_LOG_PAGE=1;
-    WM_SEND_SETTING_PAGE=1;
-    WM_SEND_TARGET_STUDENTS=Array.isArray(data.targetStudents)?data.targetStudents:[];
-    WM_SEND_TARGET_CLASSES=Array.isArray(data.targetClasses)?data.targetClasses:[];
     WM_SEND_LOG_LOADED=true;
-    WM_SEND_SETTING_LOADED=true;
-    wmRenderSendCenterData();
-    wmFillSendTargetOptions();
+    wmRenderSendCenterHead('wmSendLogTable',WM_SEND_LOG_HEADERS);
+    wmRenderSendCenterRows('wmSendLogTbody',WM_SEND_LOG_HEADERS,WM_SEND_LOG_ROWS,'자료가 없습니다.','log');
   }catch(err){
-    console.error('발송센터 DB 조회 실패',err);
+    console.error('5-1.발송내역_DB 조회 실패',err);
     wmRenderSendCenterRows('wmSendLogTbody',WM_SEND_LOG_HEADERS,[],'자료가 없습니다.','log');
-    wmRenderSendCenterRows('wmSendSettingTbody',WM_SEND_SETTING_HEADERS,[],'자료가 없습니다.','setting');
-  }finally{
-    WM_SEND_CENTER_LOADING=false;
-    WM_SEND_LOG_LOADING=false;
-    WM_SEND_SETTING_LOADING=false;
-  }
+  }finally{WM_SEND_LOG_LOADING=false;}
 }
 
-async function wmLoadSendLogs(force){return wmLoadSendCenterData(force);}
-async function wmLoadSendSettings(force){return wmLoadSendCenterData(force);}
+async function wmLoadSendSettings(force){
+  if(WM_SEND_SETTING_LOADING)return;
+  if(WM_SEND_SETTING_LOADED&&!force){wmRenderSendCenterData();wmFillSendStudentLists();return;}
+  WM_SEND_SETTING_LOADING=true;
+  wmRenderSendCenterHead('wmSendSettingTable',WM_SEND_SETTING_HEADERS);
+  wmRenderSendCenterRows('wmSendSettingTbody',WM_SEND_SETTING_HEADERS,[],'조회 중입니다.','setting');
+  try{
+    const response=await fetch(WM_APPS_SCRIPT_URL+'?mode=sendCenterData&tab=setting&ts='+Date.now()+wmLmsActorQuery(),{cache:'no-store'});
+    const data=await response.json();
+    if(!response.ok||!data||data.success!==true)throw new Error(data&&(data.message||data.error)||'자동발송설정 조회 실패');
+    WM_SEND_SETTING_HEADERS=Array.isArray(data.settingHeaders)?data.settingHeaders.map(value=>String(value||'').trim()).filter(Boolean):[];
+    WM_SEND_SETTING_ROWS=normalizeRows(data.settingRows||[]);
+    WM_SEND_TARGET_STUDENTS=Array.isArray(data.targetStudents)?data.targetStudents:[];
+    WM_SEND_SETTING_PAGE=1;
+    WM_SEND_SETTING_LOADED=true;
+    wmRenderSendCenterHead('wmSendSettingTable',WM_SEND_SETTING_HEADERS);
+    wmRenderSendSettingRows();
+    wmFillSendStudentLists();
+  }catch(err){
+    console.error('5-2.자동발송설정_DB 조회 실패',err);
+    wmRenderSendCenterRows('wmSendSettingTbody',WM_SEND_SETTING_HEADERS,[],'자료가 없습니다.','setting');
+  }finally{WM_SEND_SETTING_LOADING=false;}
+}
 
 function wmSendCenterFilterValue(name){
   const el=document.querySelector('#panel-sendLog [data-filter="'+name+'"]');
@@ -9072,69 +9080,84 @@ function wmResetSendCenterFilter(){
   wmRenderSendCenterRows('wmSendLogTbody',WM_SEND_LOG_HEADERS,WM_SEND_LOG_ROWS,'자료가 없습니다.','log');
 }
 
-function wmFillSendTargetOptions(selectedId){
-  const type=document.getElementById('wmSendTargetType')?.value||'학생';
-  const select=document.getElementById('wmSendTargetSelect');
-  if(!select)return;
-  const rows=type==='반'?WM_SEND_TARGET_CLASSES:WM_SEND_TARGET_STUDENTS;
-  const seen=new Set();
-  select.innerHTML='<option value="">대상 선택</option>'+rows.filter(row=>{
-    const key=String(row.targetId||row.targetName||'').trim();
-    if(!key||seen.has(key))return false;seen.add(key);return true;
-  }).map(row=>{
-    const id=String(row.targetId||'').trim();
-    const name=String(row.targetName||'').trim();
-    return '<option value="'+escapeHtml(id)+'" data-name="'+escapeHtml(name)+'"'+(selectedId&&id===selectedId?' selected':'')+'>'+escapeHtml(name+' ('+(id||'ID없음')+')')+'</option>';
-  }).join('');
-  wmApplySendTargetSelection();
+function wmFillSendStudentLists(){
+  const nameList=document.getElementById('wmSendStudentNameList');
+  const idList=document.getElementById('wmSendStudentIdList');
+  if(nameList)nameList.innerHTML=WM_SEND_TARGET_STUDENTS.map(row=>'<option value="'+escapeHtml(String(row.studentName||''))+'">'+escapeHtml(String(row.studentId||''))+'</option>').join('');
+  if(idList)idList.innerHTML=WM_SEND_TARGET_STUDENTS.map(row=>'<option value="'+escapeHtml(String(row.studentId||''))+'">'+escapeHtml(String(row.studentName||''))+'</option>').join('');
 }
 
-function wmApplySendTargetSelection(){
-  const select=document.getElementById('wmSendTargetSelect');
-  const option=select&&select.options[select.selectedIndex];
-  const id=option?String(option.value||''):'';
-  const name=option?String(option.dataset.name||''):'';
-  const idEl=document.getElementById('wmSendTargetId');
-  const nameEl=document.getElementById('wmSendTargetName');
-  if(idEl)idEl.value=id;if(nameEl)nameEl.value=name;
+function wmApplySendStudentByName(){
+  const name=String(document.getElementById('wmSendStudentName')?.value||'').trim();
+  const match=WM_SEND_TARGET_STUDENTS.find(row=>String(row.studentName||'').trim()===name);
+  if(match)document.getElementById('wmSendStudentId').value=String(match.studentId||'');
 }
 
-function wmSetSendSettingValue(id,value){const el=document.getElementById(id);if(el)el.value=value===undefined||value===null?'':String(value);}
+function wmApplySendStudentById(){
+  const id=String(document.getElementById('wmSendStudentId')?.value||'').trim().toUpperCase();
+  const match=WM_SEND_TARGET_STUDENTS.find(row=>String(row.studentId||'').trim().toUpperCase()===id);
+  if(match)document.getElementById('wmSendStudentName').value=String(match.studentName||'');
+}
+
+function wmSetSendSettingValue(id,value){
+  const el=document.getElementById(id);
+  if(el)el.value=value===undefined||value===null?'':String(value);
+}
+
+function wmSetSendSettingStatus(message){
+  const status=document.getElementById('wmSendSettingStatus');
+  if(!status)return;
+  const text=String(message||'').trim();
+  status.textContent=text;
+  status.style.display=text?'inline-flex':'none';
+}
 
 function wmResetSendSettingForm(){
-  ['wmSendSettingId','wmSendTargetId','wmSendTargetName','wmSendDay','wmSendTime','wmSendTemplateId','wmSendNote'].forEach(id=>wmSetSendSettingValue(id,''));
-  wmSetSendSettingValue('wmSendTargetType','학생');wmSetSendSettingValue('wmSendReportType','주간');wmSetSendSettingValue('wmSendCycle','매주');
-  wmSetSendSettingValue('wmSendWeekday','');wmSetSendSettingValue('wmSendChannel','알림톡');wmSetSendSettingValue('wmSendSmsFallback','Y');wmSetSendSettingValue('wmSendAutoStatus','사용');
-  wmFillSendTargetOptions();
-  const status=document.getElementById('wmSendSettingStatus');if(status)status.textContent='신규등록 상태';
+  ['wmSendStudentId','wmSendStudentName','wmSendDay','wmSendTime','wmSendNote'].forEach(id=>wmSetSendSettingValue(id,''));
+  wmSetSendSettingValue('wmSendReportType','주간');
+  wmSetSendSettingValue('wmSendCycle','매주');
+  wmSetSendSettingValue('wmSendWeekday','');
+  wmSetSendSettingValue('wmSendAutoStatus','사용');
+  wmSetSendSettingStatus('');
 }
 
 function wmEditSendSetting(index){
   const row=WM_SEND_SETTING_ROWS[index];if(!row)return;
-  wmSetSendSettingValue('wmSendSettingId',row['설정ID']);wmSetSendSettingValue('wmSendTargetType',/반/.test(row['대상구분']||'')?'반':'학생');
-  wmFillSendTargetOptions(String(row['대상ID']||''));
-  wmSetSendSettingValue('wmSendTargetId',row['대상ID']);wmSetSendSettingValue('wmSendTargetName',row['대상명']);
-  wmSetSendSettingValue('wmSendReportType',row['리포트유형']);wmSetSendSettingValue('wmSendCycle',row['발송주기']);wmSetSendSettingValue('wmSendWeekday',row['발송요일']);
-  wmSetSendSettingValue('wmSendDay',row['발송일']);wmSetSendSettingValue('wmSendTime',row['발송시간']);wmSetSendSettingValue('wmSendChannel',row['발송채널']);
-  wmSetSendSettingValue('wmSendTemplateId',row['알림톡템플릿ID']);wmSetSendSettingValue('wmSendSmsFallback',row['문자대체발송']);wmSetSendSettingValue('wmSendAutoStatus',row['자동발송상태']);wmSetSendSettingValue('wmSendNote',row['비고']);
-  const status=document.getElementById('wmSendSettingStatus');if(status)status.textContent='수정 중: '+String(row['설정ID']||'');
+  wmSetSendSettingValue('wmSendStudentId',row['학생ID']);
+  wmSetSendSettingValue('wmSendStudentName',row['학생이름']);
+  wmSetSendSettingValue('wmSendReportType',row['리포트유형']);
+  wmSetSendSettingValue('wmSendCycle',row['발송주기']);
+  wmSetSendSettingValue('wmSendWeekday',row['발송요일']);
+  wmSetSendSettingValue('wmSendDay',row['발송일']);
+  wmSetSendSettingValue('wmSendTime',row['발송시간']);
+  wmSetSendSettingValue('wmSendAutoStatus',row['자동발송상태']);
+  wmSetSendSettingValue('wmSendNote',row['비고']);
+  wmSetSendSettingStatus('수정 중: '+String(row['학생이름']||row['학생ID']||''));
 }
 
 async function wmSaveSendSetting(){
   const value=id=>String(document.getElementById(id)?.value||'').trim();
-  if(!value('wmSendTargetId')&&!value('wmSendTargetName')){alert('학생 또는 반을 선택하세요.');return;}
-  const params=new URLSearchParams({mode:'saveSendSetting',action:'saveSendSetting',settingId:value('wmSendSettingId'),targetType:value('wmSendTargetType'),targetId:value('wmSendTargetId'),targetName:value('wmSendTargetName'),reportType:value('wmSendReportType'),sendCycle:value('wmSendCycle'),sendWeekday:value('wmSendWeekday'),sendDay:value('wmSendDay'),sendTime:value('wmSendTime'),sendChannel:value('wmSendChannel'),templateId:value('wmSendTemplateId'),smsFallback:value('wmSendSmsFallback'),autoStatus:value('wmSendAutoStatus'),note:value('wmSendNote')});
-  const status=document.getElementById('wmSendSettingStatus');if(status)status.textContent='저장 중입니다.';
+  wmApplySendStudentByName();
+  wmApplySendStudentById();
+  if(!value('wmSendStudentId')){wmSetSendSettingStatus('학생이름 또는 학생ID를 선택하세요.');return;}
+  const params=new URLSearchParams({
+    mode:'saveSendSetting',action:'saveSendSetting',
+    studentId:value('wmSendStudentId'),studentName:value('wmSendStudentName'),
+    reportType:value('wmSendReportType'),sendCycle:value('wmSendCycle'),
+    sendWeekday:value('wmSendWeekday'),sendDay:value('wmSendDay'),
+    sendTime:value('wmSendTime'),autoStatus:value('wmSendAutoStatus'),note:value('wmSendNote')
+  });
+  wmSetSendSettingStatus('저장 중입니다.');
   try{
     const actorQuery=String(typeof wmLmsActorQuery==='function'?wmLmsActorQuery():'');
     const response=await fetch(WM_APPS_SCRIPT_URL+'?'+params.toString()+actorQuery,{cache:'no-store'});
     const data=await response.json();
     if(!response.ok||!data||data.success!==true)throw new Error(data&&(data.message||data.error)||'저장 실패');
-    if(status)status.textContent=data.message||'구글시트 저장완료';
+    wmSetSendSettingStatus(data.message||'구글시트 저장완료');
     WM_SEND_SETTING_LOADED=false;
     await wmLoadSendSettings(true);
-    wmResetSendSettingForm();
-  }catch(err){if(status)status.textContent='저장 실패: '+String(err&&err.message||err);}
+    setTimeout(()=>wmSetSendSettingStatus(''),1800);
+  }catch(err){wmSetSendSettingStatus('저장 실패: '+String(err&&err.message||err));}
 }
 
 async function generateSendLogIdPreview(){
@@ -9223,6 +9246,33 @@ document.addEventListener('DOMContentLoaded', function(){
  * 로그인 직후 화면을 먼저 표시한 뒤 대시보드만 지연 조회합니다.
  * 학생관리/학습기록 탭 로딩 방식은 변경하지 않았습니다.
  */
+const WM_DASHBOARD_BROWSER_CACHE_KEY='WM_LMS_DASHBOARD_SNAPSHOT_V1';
+function wmRestoreDashboardBrowserCache(){
+  try{
+    const cached=JSON.parse(localStorage.getItem(WM_DASHBOARD_BROWSER_CACHE_KEY)||'null');
+    if(!cached||!cached.savedAt||Date.now()-cached.savedAt>6*60*60*1000)return false;
+    if(Array.isArray(cached.students))WM_STUDENT_MANAGE_ROWS=cached.students;
+    if(Array.isArray(cached.records))WM_RECORD_MANAGE_ROWS=cached.records;
+    if(Array.isArray(cached.currentProgress))WM_CURRENT_PROGRESS_ROWS=cached.currentProgress;
+    if(Array.isArray(cached.classInfo))WM_DASHBOARD_CLASS_ROWS=cached.classInfo;
+    if(Array.isArray(cached.teacherInfo))WM_DASHBOARD_TEACHER_ROWS=cached.teacherInfo;
+    if(typeof renderDashboard==='function')renderDashboard({allowFallback:false,useCurrentRows:true});
+    return true;
+  }catch(err){return false;}
+}
+function wmSaveDashboardBrowserCache(){
+  try{
+    localStorage.setItem(WM_DASHBOARD_BROWSER_CACHE_KEY,JSON.stringify({
+      savedAt:Date.now(),
+      students:WM_STUDENT_MANAGE_ROWS||[],
+      records:WM_RECORD_MANAGE_ROWS||[],
+      currentProgress:WM_CURRENT_PROGRESS_ROWS||[],
+      classInfo:WM_DASHBOARD_CLASS_ROWS||[],
+      teacherInfo:WM_DASHBOARD_TEACHER_ROWS||[]
+    }));
+  }catch(err){}
+}
+
 let WM_DASHBOARD_FIRST_LOAD_STARTED = false;
 function wmInitDashboardFastFirstScreen(){
   const today = new Date();
@@ -9233,20 +9283,17 @@ function wmInitDashboardFastFirstScreen(){
   setFilterValue('dashboard', 'dateEnd', toDateInputValue(today));
 }
 function wmScheduleDashboardFirstLoad(){
-  if(WM_DASHBOARD_FIRST_LOAD_STARTED) return;
-  WM_DASHBOARD_FIRST_LOAD_STARTED = true;
+  if(WM_DASHBOARD_FIRST_LOAD_STARTED)return;
+  WM_DASHBOARD_FIRST_LOAD_STARTED=true;
   wmInitDashboardFastFirstScreen();
-  const run = function(){
-    if(typeof renderDashboard === 'function'){
-      renderDashboard({allowFallback:false,lite:true}).then(function(){
-        setTimeout(function(){
-          if(typeof renderDashboard === 'function') renderDashboard({allowFallback:false,force:true,lite:false});
-        }, 800);
+  wmRestoreDashboardBrowserCache();
+  setTimeout(function(){
+    if(typeof renderDashboard==='function'){
+      renderDashboard({allowFallback:false,lite:true,force:true}).then(function(){
+        wmSaveDashboardBrowserCache();
       });
     }
-  };
-  /* 화면은 즉시 연 뒤 대시보드만 짧게 지연하여 백그라운드 조회합니다. */
-  setTimeout(run, 120);
+  },60);
 }
 
 document.addEventListener('DOMContentLoaded', function(){
