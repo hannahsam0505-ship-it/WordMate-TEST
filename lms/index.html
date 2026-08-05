@@ -246,10 +246,44 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
     #dashboardMonthlySalesCard.wm-stat-card-disabled{cursor:default;opacity:.72;background:#f3f4f6;border-color:#e5e7eb;}
     #dashboardMonthlySalesCard.wm-stat-card-disabled:hover{background:#f3f4f6;border-color:#e5e7eb;}
     /* 학생관리 좌측 고정: 일련번호·학생ID·이름 3개만 */
-    #studentManageTable th:nth-child(1),#studentManageTable td:nth-child(1){position:sticky;left:0;z-index:4;background:inherit;min-width:64px;}
-    #studentManageTable th:nth-child(2),#studentManageTable td:nth-child(2){position:sticky;left:64px;z-index:4;background:inherit;min-width:140px;}
-    #studentManageTable th:nth-child(3),#studentManageTable td:nth-child(3){position:sticky;left:204px;z-index:4;background:inherit;min-width:120px;}
-    #studentManageTable th:nth-child(n+4),#studentManageTable td:nth-child(n+4){position:static !important;left:auto !important;}
+    /* =====================================================================
+       WM_STUDENT_SERIAL_ROLE_COLUMN_LOCK_V1
+       [학생관리_DB 권한별 표시·좌측 고정 기준]
+
+       SUPER_ADMIN / SPECIAL_ADMIN
+       - 일련번호 | 학생일련번호 | 학생ID | 이름 표시
+       - 학생 전체 누적 카운트 확인을 위해 학생일련번호를 유지합니다.
+
+       SUB_LEADER / TEACHER
+       - 일련번호 | 학생ID | 이름만 표시
+       - 학생일련번호는 DB에서 삭제하지 않고 화면 열만 완전히 제거합니다.
+       - 빈 열·공란 열을 남기지 않으며 학생ID와 이름을 즉시 앞으로 당깁니다.
+
+       공통
+       - 현재 화면에 표시되는 앞 열만 좌측 고정합니다.
+       - 학생일련번호 원본 데이터·등록 로직·정렬 로직은 변경하지 않습니다.
+       ===================================================================== */
+    #studentManageTable .wm-student-row-no-col{
+      position:sticky;left:0;z-index:4;background:inherit;min-width:64px;width:64px;
+    }
+    #studentManageTable .wm-student-id-col{
+      position:sticky;left:64px;z-index:4;background:inherit;min-width:140px;width:140px;
+    }
+    #studentManageTable .wm-student-name-col{
+      position:sticky;left:204px;z-index:4;background:inherit;min-width:120px;width:120px;
+    }
+    #studentManageTable .wm-student-seq-col{
+      position:static;left:auto;min-width:110px;width:110px;
+    }
+    body.wm-show-student-serial #studentManageTable .wm-student-seq-col{
+      position:sticky;left:64px;z-index:4;background:inherit;
+    }
+    body.wm-show-student-serial #studentManageTable .wm-student-id-col{left:174px;}
+    body.wm-show-student-serial #studentManageTable .wm-student-name-col{left:314px;}
+    #studentManageTable th:not(.wm-student-row-no-col):not(.wm-student-seq-col):not(.wm-student-id-col):not(.wm-student-name-col),
+    #studentManageTable td:not(.wm-student-row-no-col):not(.wm-student-seq-col):not(.wm-student-id-col):not(.wm-student-name-col){
+      position:static !important;left:auto !important;
+    }
 </style>
 <script>
 (function(){
@@ -1238,7 +1272,7 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
         </div>
       </div>
 
-      <div class="wm-record-scroll-top" id="studentTopScroll"><div class="wm-record-scroll-inner" id="studentTopScrollInner"></div></div><div class="wm-table-wrap" id="studentTableWrap"><table id="studentManageTable"><thead><tr><th class="wm-student-row-no-col">일련번호</th><th>학생ID</th><th>학생이름</th><th>비밀번호</th><th>학습시작일</th><th>학습종료일</th><th>출석약속</th><th>세트약속</th><th>최초배정</th><th>레벨완료조건</th><th>S4실루엣단계</th><th>S6테스트모드</th><th>현재세트</th><th>다음레벨완료조건</th><th>반명</th><th>교사명</th><th>학교</th><th>학년</th><th>수신자구분</th><th>학부모명</th><th>학부모연락처</th><th>최종결제</th><th>등록일</th><th>최초등록일</th><th>최근결제일</th><th>결제공백일수</th><th>재등록횟수</th><th>총등록기간</th><th>등록상태</th><th>활성상태</th><th>반ID</th><th>교사ID</th><th>현재세션</th><th>세션상태</th><th>최종로그인</th><th>접속기기</th><th>비고</th><th>저장</th></tr></thead><tbody id="studentManageTbody"><tr><td colspan="38">학생관리_DB 연결 대기 중입니다.</td></tr></tbody></table></div>
+      <div class="wm-record-scroll-top" id="studentTopScroll"><div class="wm-record-scroll-inner" id="studentTopScrollInner"></div></div><div class="wm-table-wrap" id="studentTableWrap"><table id="studentManageTable"><thead><tr><th class="wm-student-row-no-col">일련번호</th><th class="wm-student-seq-col">학생일련번호</th><th class="wm-student-id-col">학생ID</th><th class="wm-student-name-col">학생이름</th><th>비밀번호</th><th>학습시작일</th><th>학습종료일</th><th>출석약속</th><th>세트약속</th><th>최초배정</th><th>레벨완료조건</th><th>S4실루엣단계</th><th>S6테스트모드</th><th>현재세트</th><th>다음레벨완료조건</th><th>반명</th><th>교사명</th><th>학교</th><th>학년</th><th>수신자구분</th><th>학부모명</th><th>학부모연락처</th><th>최종결제</th><th>등록일</th><th>최초등록일</th><th>최근결제일</th><th>결제공백일수</th><th>재등록횟수</th><th>총등록기간</th><th>등록상태</th><th>활성상태</th><th>반ID</th><th>교사ID</th><th>현재세션</th><th>세션상태</th><th>최종로그인</th><th>접속기기</th><th>비고</th><th>저장</th></tr></thead><tbody id="studentManageTbody"><tr><td colspan="39">학생관리_DB 연결 대기 중입니다.</td></tr></tbody></table></div>
     </section>
     <section class="wm-panel" id="panel-records">
       <div class="wm-panel-title-row"><h2 class="wm-panel-title">학습기록 센터</h2><p class="wm-panel-desc">연결 예정 DB: 학습기록_DB / 구글시트 현재 1행 컬럼명을 임의 수정 없이 그대로 반영했습니다.</p></div>
@@ -2823,6 +2857,10 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
         wmApplySettingCenterRoleUI(role, localAllowed);
       }
       if(settingsMenuBtn && authRole === 'TEACHER'){ settingsMenuBtn.classList.remove('wm-hidden'); }
+      /* WM_STUDENT_SERIAL_ROLE_COLUMN_LOCK_V1
+       * 상위 관리자만 학생일련번호 열을 표시합니다.
+       * 하위 권한은 CSS로 공란을 만드는 것이 아니라 열 자체를 display:none 처리하여
+       * 학생ID·이름 열이 즉시 앞으로 당겨지도록 합니다. */
       document.body.classList.toggle('wm-show-student-serial', adminLike);
       updateStudentCreatePreview();
       if(typeof renderStudentManageRows === "function") renderStudentManageRows();
@@ -8950,7 +8988,7 @@ function renderStudentManageRows(){
   if(WM_STUDENT_MANAGE_PAGE < 1) WM_STUDENT_MANAGE_PAGE = 1;
 
   if(!rows.length){
-    tbody.innerHTML = '<tr><td colspan="38">표시할 학생관리_DB 데이터가 없습니다.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="39">표시할 학생관리_DB 데이터가 없습니다.</td></tr>';
     wmUpdateManagePager('students', 0, 1, 1);
     setManageLoading('students', false);
     return;
@@ -8979,8 +9017,9 @@ function renderStudentManageRows(){
     const levelConditionLock = wmLevelConditionLockState(row);
     return `<tr>
       <td class="wm-student-row-no-col">${start+pageIndex+1}</td>
-      <td>${escapeHtml(studentId)}${duplicateBadge}</td>
-      <td><span style="color:var(--wm-blue);font-weight:900;">${escapeHtml(studentName)}</span></td>
+      <td class="wm-student-seq-col">${escapeHtml(row['학생일련번호'] || '')}</td>
+      <td class="wm-student-id-col">${escapeHtml(studentId)}${duplicateBadge}</td>
+      <td class="wm-student-name-col"><span style="color:var(--wm-blue);font-weight:900;">${escapeHtml(studentName)}</span></td>
       <td>${escapeHtml(row['비밀번호'] || '')}</td>
       <td>${wmStudentDateInputHtml(studentId, '학습시작일', learningStartDate)}</td>
       <td>${wmStudentDateInputHtml(studentId, '학습종료일', learningEndDate)}</td>
