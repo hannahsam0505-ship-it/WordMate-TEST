@@ -193,6 +193,7 @@ function wmApplyRoleUI(role){
  const cfg=WM_ROLE_CONFIG[role]||WM_ROLE_CONFIG.SUPER_ADMIN;
  const dev=document.getElementById('devCenterBtn');
  if(dev) dev.style.display=cfg.showDev?'block':'none';
+ if(typeof wmApplyDashboardSalesCardByRole==='function') wmApplyDashboardSalesCardByRole(role);
 }
 /* WM_ROLE_LOCK_V1 END */
 
@@ -241,6 +242,14 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
     :root{--wm-test-booth-height:54px;}
     #wm-test-booth-banner{font-size:22px;}
   }
+
+    #dashboardMonthlySalesCard.wm-stat-card-disabled{cursor:default;opacity:.72;background:#f3f4f6;border-color:#e5e7eb;}
+    #dashboardMonthlySalesCard.wm-stat-card-disabled:hover{background:#f3f4f6;border-color:#e5e7eb;}
+    /* 학생관리 좌측 고정: 일련번호·학생ID·이름 3개만 */
+    #studentManageTable th:nth-child(1),#studentManageTable td:nth-child(1){position:sticky;left:0;z-index:4;background:inherit;min-width:64px;}
+    #studentManageTable th:nth-child(2),#studentManageTable td:nth-child(2){position:sticky;left:64px;z-index:4;background:inherit;min-width:140px;}
+    #studentManageTable th:nth-child(3),#studentManageTable td:nth-child(3){position:sticky;left:204px;z-index:4;background:inherit;min-width:120px;}
+    #studentManageTable th:nth-child(n+4),#studentManageTable td:nth-child(n+4){position:static !important;left:auto !important;}
 </style>
 <script>
 (function(){
@@ -1122,14 +1131,13 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
         <div class="wm-stat-card" onclick="renderDashboardDetail('leaders')"><div class="wm-stat-label">리더교사</div><div class="wm-stat-num" id="dashboardLeaderTeachers">0명</div><div class="wm-stat-sub">리더 권한 기준</div></div>
         <div class="wm-stat-card" onclick="renderDashboardDetail('monthlyNew')"><div class="wm-stat-label">이달신규</div><div class="wm-stat-num" id="dashboardMonthlyNew">0명</div><div class="wm-stat-sub">등록일 기준</div></div>
         <div class="wm-stat-card" onclick="renderDashboardDetail('monthlyRegister')"><div class="wm-stat-label">이달등록</div><div class="wm-stat-num" id="dashboardMonthlyRegister">0명</div><div class="wm-stat-sub">등록/결제 기준</div></div>
-        <div class="wm-stat-card" onclick="renderDashboardDetail('monthlySales')"><div class="wm-stat-label">이달매출</div><div class="wm-stat-num" id="dashboardMonthlySales">0원</div><div class="wm-stat-sub">결제 DB 기준</div></div>
+        <div class="wm-stat-card" id="dashboardMonthlySalesCard" onclick="renderDashboardDetail('monthlySales')"><div class="wm-stat-label" id="dashboardMonthlySalesLabel">이달매출</div><div class="wm-stat-num" id="dashboardMonthlySales">0원</div><div class="wm-stat-sub" id="dashboardMonthlySalesSub">결제 DB 기준</div></div>
         <div class="wm-stat-card" onclick="renderDashboardDetail('monthlyLeave')"><div class="wm-stat-label">이달퇴원</div><div class="wm-stat-num" id="dashboardMonthlyLeave">0명</div><div class="wm-stat-sub">퇴원 처리 기준</div></div>
         <div class="wm-stat-card" onclick="renderDashboardDetail('todayStudy')"><div class="wm-stat-label">오늘학습</div><div class="wm-stat-num" id="dashboardTodayStudy">0/0</div><div class="wm-stat-sub" id="dashboardTodayRate">학습률 0%</div></div>
         <div class="wm-stat-card" onclick="renderDashboardDetail('notStudy')"><div class="wm-stat-label">미학습</div><div class="wm-stat-num" id="dashboardNotStudy">0명</div><div class="wm-stat-sub">오늘 기준</div></div>
         <div class="wm-stat-card" onclick="renderDashboardDetail('sendLog')"><div class="wm-stat-label">발송기록</div><div class="wm-stat-num" id="dashboardSendLogCount">0건</div><div class="wm-stat-sub">검색기간 기준</div></div>
         <div class="wm-stat-card" onclick="renderDashboardDetail('counsel')"><div class="wm-stat-label">상담기록</div><div class="wm-stat-num" id="dashboardCounselCount">0건</div><div class="wm-stat-sub">검색기간 기준</div></div>
       </div>
-      <div class="wm-table-wrap" id="dashboardSummaryWrap" style="display:none;"><table id="dashboardSummaryTable"><thead><tr><th>일련번호</th><th>구분</th><th>학생ID</th><th>학생명</th><th>반</th><th>교사</th><th>리더</th><th>학교</th><th>날짜</th><th>상태</th></tr></thead><tbody id="dashboardSummaryTbody"><tr><td colspan="10">상단 카드를 클릭하면 상세 목록이 표시됩니다.</td></tr></tbody></table></div>
     </section>
     <section class="wm-panel" id="panel-students">
       <div class="wm-panel-title-row"><h2 class="wm-panel-title">학생관리 센터</h2><p class="wm-panel-desc">연결 예정 DB: 학생관리_DB / 요청 컬럼 기준으로 반영했습니다. 최종결제는 향후 아임웹 카드자동결제 연동 예정입니다.</p></div>
@@ -1230,7 +1238,7 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
         </div>
       </div>
 
-      <div class="wm-record-scroll-top" id="studentTopScroll"><div class="wm-record-scroll-inner" id="studentTopScrollInner"></div></div><div class="wm-table-wrap" id="studentTableWrap"><table id="studentManageTable"><thead><tr><th class="wm-student-row-no-col">일련번호</th><th class="wm-student-seq-col">학생일련번호</th><th>학생ID</th><th>학생이름</th><th>비밀번호</th><th>학습시작일</th><th>학습종료일</th><th>출석약속</th><th>세트약속</th><th>최초배정</th><th>레벨완료조건</th><th>S4실루엣단계</th><th>S6테스트모드</th><th>현재세트</th><th>다음레벨완료조건</th><th>반명</th><th>교사명</th><th>학교</th><th>학년</th><th>수신자구분</th><th>학부모명</th><th>학부모연락처</th><th>최종결제</th><th>등록일</th><th>최초등록일</th><th>최근결제일</th><th>결제공백일수</th><th>재등록횟수</th><th>총등록기간</th><th>등록상태</th><th>활성상태</th><th>반ID</th><th>교사ID</th><th>현재세션</th><th>세션상태</th><th>최종로그인</th><th>접속기기</th><th>비고</th><th>저장</th></tr></thead><tbody id="studentManageTbody"><tr><td colspan="39">학생관리_DB 연결 대기 중입니다.</td></tr></tbody></table></div>
+      <div class="wm-record-scroll-top" id="studentTopScroll"><div class="wm-record-scroll-inner" id="studentTopScrollInner"></div></div><div class="wm-table-wrap" id="studentTableWrap"><table id="studentManageTable"><thead><tr><th class="wm-student-row-no-col">일련번호</th><th>학생ID</th><th>학생이름</th><th>비밀번호</th><th>학습시작일</th><th>학습종료일</th><th>출석약속</th><th>세트약속</th><th>최초배정</th><th>레벨완료조건</th><th>S4실루엣단계</th><th>S6테스트모드</th><th>현재세트</th><th>다음레벨완료조건</th><th>반명</th><th>교사명</th><th>학교</th><th>학년</th><th>수신자구분</th><th>학부모명</th><th>학부모연락처</th><th>최종결제</th><th>등록일</th><th>최초등록일</th><th>최근결제일</th><th>결제공백일수</th><th>재등록횟수</th><th>총등록기간</th><th>등록상태</th><th>활성상태</th><th>반ID</th><th>교사ID</th><th>현재세션</th><th>세션상태</th><th>최종로그인</th><th>접속기기</th><th>비고</th><th>저장</th></tr></thead><tbody id="studentManageTbody"><tr><td colspan="38">학생관리_DB 연결 대기 중입니다.</td></tr></tbody></table></div>
     </section>
     <section class="wm-panel" id="panel-records">
       <div class="wm-panel-title-row"><h2 class="wm-panel-title">학습기록 센터</h2><p class="wm-panel-desc">연결 예정 DB: 학습기록_DB / 구글시트 현재 1행 컬럼명을 임의 수정 없이 그대로 반영했습니다.</p></div>
@@ -2682,6 +2690,25 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       SUB_LEADER:'허락된 교사 / 허락된 반 / 해당 학생',
       TEACHER:'자기 Teacher_ID에 연결된 반과 학생'
     };
+    function wmApplyDashboardSalesCardByRole(role){
+      const card=document.getElementById('dashboardMonthlySalesCard');
+      const label=document.getElementById('dashboardMonthlySalesLabel');
+      const num=document.getElementById('dashboardMonthlySales');
+      const sub=document.getElementById('dashboardMonthlySalesSub');
+      const lower=/^(SUB_LEADER|TEACHER)$/.test(String(role||'').toUpperCase());
+      if(!card) return;
+      card.classList.toggle('wm-stat-card-disabled', lower);
+      card.onclick=lower?null:function(){renderDashboardDetail('monthlySales');};
+      if(lower){
+        if(label) label.textContent='해나샘영어';
+        if(num) num.textContent='';
+        if(sub) sub.textContent='준비 중';
+      }else{
+        if(label) label.textContent='이달매출';
+        if(sub) sub.textContent='결제 DB 기준';
+      }
+    }
+
     function showPanel(panelName){
       panels.forEach(panel=>panel.classList.remove('active'));
       menuButtons.forEach(btn=>btn.classList.remove('active'));
@@ -5197,7 +5224,7 @@ function extractRecordRowsFromResponse(data){
       try{
         let rows = [];
         const urls = [
-          WM_APPS_SCRIPT_URL + '?mode=records&ts=' + Date.now() + wmLmsActorQuery(),
+          WM_APPS_SCRIPT_URL + '?mode=records&initial=1&limit=25&ts=' + Date.now() + wmLmsActorQuery(),
           WM_APPS_SCRIPT_URL + '?mode=profile&ts=' + Date.now(),
           WM_APPS_SCRIPT_URL + '?studentId=&studentName=&ts=' + Date.now()
         ];
@@ -5214,7 +5241,7 @@ function extractRecordRowsFromResponse(data){
         WM_RECORD_MANAGE_ROWS = normalizeRows(rows);
         renderRecordManageRows();
         setManageLoading('records', false);
-        console.log('학습기록_DB 전체조회 성공:', WM_RECORD_MANAGE_ROWS);
+        console.log('학습기록_DB 첫화면 최소조회 성공:', WM_RECORD_MANAGE_ROWS);
         return WM_RECORD_MANAGE_ROWS;
       }catch(err){
         console.error('학습기록_DB 로드 실패', err);
@@ -5305,7 +5332,7 @@ function extractRecordRowsFromResponse(data){
          평소에는 속도 개선 구조를 유지하고, 누락 케이스에서만 전체 DB에서 다시 필터링합니다. */
       if(!collected.length){
         const fallbackUrls = [
-          WM_APPS_SCRIPT_URL + '?mode=records&ts=' + Date.now() + wmLmsActorQuery()
+          WM_APPS_SCRIPT_URL + '?mode=records&initial=1&limit=25&ts=' + Date.now() + wmLmsActorQuery()
         ];
         for(const fallbackUrl of fallbackUrls){
           const fallbackRows = await fetchRecordRowsByUrl(fallbackUrl);
@@ -5534,32 +5561,20 @@ function extractRecordRowsFromResponse(data){
       const tbody = document.getElementById('studentManageTbody');
       setManageLoading('students', true);
       if(tbody && (!WM_STUDENT_MANAGE_ROWS || !WM_STUDENT_MANAGE_ROWS.length)) {
-        tbody.innerHTML = '<tr><td colspan="39">학생관리_DB 조회 중입니다.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="38">학생관리_DB 조회 중입니다.</td></tr>';
       }
 
       try {
-        const [res, currentProgressRes] = await Promise.all([
-          fetch(WM_APPS_SCRIPT_URL + '?mode=students&ts=' + Date.now() + wmLmsActorQuery()),
-          fetch(WM_APPS_SCRIPT_URL + '?mode=currentProgress&ts=' + Date.now() + wmLmsActorQuery(), {method:'GET', cache:'no-store'})
-        ]);
-        const [data, currentProgressData] = await Promise.all([res.json(), currentProgressRes.json()]);
+        const res = await fetch(WM_APPS_SCRIPT_URL + '?mode=students&initial=1&limit=25&ts=' + Date.now() + wmLmsActorQuery(), {method:'GET', cache:'no-store'});
+        const data = await res.json();
         WM_STUDENT_MANAGE_ROWS = normalizeRows(data && data.students ? data.students : []);
-        const currentProgressRows = normalizeRows(currentProgressData && (currentProgressData.currentProgress || currentProgressData.currentProgressRows || currentProgressData.rows || currentProgressData.data) ? (currentProgressData.currentProgress || currentProgressData.currentProgressRows || currentProgressData.rows || currentProgressData.data) : currentProgressData);
-        WM_CURRENT_PROGRESS_ROWS = currentProgressRows;
-        const currentProgressByStudentId = new Map(currentProgressRows.map(row => [String(wmProgressField(row, ['학생ID','StudentID','studentId']) || '').trim().toLowerCase(), row]));
-        WM_STUDENT_MANAGE_ROWS.forEach(row => {
-          const currentProgress = currentProgressByStudentId.get(String(row['학생ID'] || '').trim().toLowerCase());
-          const currentSet = currentProgress ? String(currentProgress['Set_ID'] || '').trim() : '';
-          if(currentSet) row['현재세트'] = currentSet;
-          row.__wmCurrentProgress = currentProgress || null;
-        });
         renderStudentManageRows();
         setManageLoading('students', false);
-        console.log('학생관리_DB 전체조회 성공:', WM_STUDENT_MANAGE_ROWS);
+        console.log('학생관리_DB 첫화면 최소조회 성공:', WM_STUDENT_MANAGE_ROWS);
         return WM_STUDENT_MANAGE_ROWS;
       } catch (err) {
         console.error('학생관리_DB 로드 실패', err);
-        if(tbody) tbody.innerHTML = '<tr><td colspan="39">학생관리_DB 조회 실패: '+escapeHtml(err && err.message ? err.message : err)+'</td></tr>';
+        if(tbody) tbody.innerHTML = '<tr><td colspan="38">학생관리_DB 조회 실패: '+escapeHtml(err && err.message ? err.message : err)+'</td></tr>';
         setManageLoading('students', false);
         return [];
       }
@@ -6550,8 +6565,8 @@ function extractRecordRowsFromResponse(data){
       try{
         let rows = [];
         const urls = [
-          WM_APPS_SCRIPT_URL + '?mode=records&ts=' + Date.now() + wmLmsActorQuery(),
-          WM_APPS_SCRIPT_URL + '?action=learningRecords&ts=' + Date.now() + wmLmsActorQuery()
+          WM_APPS_SCRIPT_URL + '?mode=records&initial=1&limit=25&ts=' + Date.now() + wmLmsActorQuery(),
+          WM_APPS_SCRIPT_URL + '?action=learningRecords&initial=1&limit=25&ts=' + Date.now() + wmLmsActorQuery()
         ];
 
         for(const url of urls){
@@ -8741,7 +8756,7 @@ async function loadCurrentProgressRows(){
     let rows = [];
 
     try{
-      const res = await fetch(WM_APPS_SCRIPT_URL + '?mode=currentProgress&ts=' + Date.now() + wmLmsActorQuery(), {method:'GET', cache:'no-store'});
+      const res = await fetch(WM_APPS_SCRIPT_URL + '?mode=currentProgress&initial=1&limit=25&ts=' + Date.now() + wmLmsActorQuery(), {method:'GET', cache:'no-store'});
       const data = await res.json();
       rows = normalizeRows(data && (data.currentProgress || data.currentProgressRows || data.rows || data.data) ? (data.currentProgress || data.currentProgressRows || data.rows || data.data) : data);
     }catch(modeErr){
@@ -8935,7 +8950,7 @@ function renderStudentManageRows(){
   if(WM_STUDENT_MANAGE_PAGE < 1) WM_STUDENT_MANAGE_PAGE = 1;
 
   if(!rows.length){
-    tbody.innerHTML = '<tr><td colspan="39">표시할 학생관리_DB 데이터가 없습니다.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="38">표시할 학생관리_DB 데이터가 없습니다.</td></tr>';
     wmUpdateManagePager('students', 0, 1, 1);
     setManageLoading('students', false);
     return;
@@ -8964,7 +8979,6 @@ function renderStudentManageRows(){
     const levelConditionLock = wmLevelConditionLockState(row);
     return `<tr>
       <td class="wm-student-row-no-col">${start+pageIndex+1}</td>
-      <td class="wm-student-seq-col">${escapeHtml(formatStudentSerial(row['학생일련번호']))}</td>
       <td>${escapeHtml(studentId)}${duplicateBadge}</td>
       <td><span style="color:var(--wm-blue);font-weight:900;">${escapeHtml(studentName)}</span></td>
       <td>${escapeHtml(row['비밀번호'] || '')}</td>
