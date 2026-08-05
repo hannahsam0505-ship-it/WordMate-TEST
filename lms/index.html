@@ -628,6 +628,8 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
     #panel-currentProgress > .wm-filter-box .wm-filter-grid input:focus,
     #panel-currentProgress > .wm-filter-box .wm-filter-grid select:focus { outline:2px solid rgba(13,85,200,.18); border-color:#0d55c8; }
     #panel-currentProgress > .wm-filter-box .wm-filter-actions { margin:13px 0 0; padding-top:12px; border-top:1px solid #cbd9ed; }
+    .wm-class-register-four-grid{grid-template-columns:repeat(4,minmax(0,1fr)) !important;align-items:start;}
+    .wm-class-register-four-grid > *{min-width:0;}
     .wm-filter-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; }
     .wm-filter-grid label { font-size:12px; font-weight:900; color:var(--wm-gray); }
     .wm-filter-grid input,.wm-filter-grid select { width:100%; margin-top:5px; border:1px solid var(--wm-line); border-radius:10px; padding:10px; font-size:13px; background:#fff; }
@@ -2204,12 +2206,20 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
 
       <div class="wm-factory-box wm-setting-db-hidden" id="wmSettingClassRegisterBox" data-setting-db-view="class">
         <h3>반등록</h3>
-        <div class="wm-filter-grid" style="grid-template-columns:repeat(3,minmax(0,1fr));">
+        <div class="wm-filter-grid wm-class-register-four-grid" style="grid-template-columns:repeat(4,minmax(0,1fr));">
           <label id="wmClassRequiredName" class="wm-class-register-required" style="padding:8px;border:1px solid #93c5fd;border-radius:12px;background:#eff6ff;">반명<span style="color:#dc2626;font-weight:950;margin-left:3px;">*</span>
             <input type="text" id="settingClassName" placeholder="예: 중1A" oninput="wmClearClassRequiredError('wmClassRequiredName');wmHandleSettingClassNameInput(this.value)" />
           </label>
           <label id="wmClassRequiredTeacher" class="wm-class-register-required" style="padding:8px;border:1px solid #93c5fd;border-radius:12px;background:#eff6ff;">교사 연결<span style="color:#dc2626;font-weight:950;margin-left:3px;">*</span>
             <select id="settingClassTeacher" onchange="wmClearClassRequiredError('wmClassRequiredTeacher')"><option>추후선택</option></select>
+          </label>
+          <label style="padding:8px;border:1px solid #93c5fd;border-radius:12px;background:#eff6ff;">학생구분
+            <select id="settingClassStudentCategory" onchange="searchSettingClassStudents()">
+              <option value="UNASSIGNED">미등록학생</option>
+              <option value="ALL">전체학생</option>
+              <option value="CURRENT">현재반학생</option>
+              <option value="OTHER">다른반학생</option>
+            </select>
           </label>
           <label id="wmClassRequiredStudents" class="wm-class-register-required" style="padding:8px;border:1px solid #93c5fd;border-radius:12px;background:#eff6ff;">학생 연결<span style="color:#dc2626;font-weight:950;margin-left:3px;">*</span>
             <div class="wm-setting-student-search-row">
@@ -3837,8 +3847,15 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
 
       try{
         const liteQuery = options.lite === true ? '&lite=1' : '';
-        const res = await fetch(WM_APPS_SCRIPT_URL + '?mode=dashboard'+liteQuery+'&ts=' + Date.now() + wmLmsActorQuery(), {method:'GET', cache:'no-store'});
+        const dateStart=encodeURIComponent(String(getFilterValue('dashboard','dateStart')||''));
+        const dateEnd=encodeURIComponent(String(getFilterValue('dashboard','dateEnd')||''));
+        const res = await fetch(WM_APPS_SCRIPT_URL + '?mode=dashboard'+liteQuery+'&dateStart='+dateStart+'&dateEnd='+dateEnd+'&ts=' + Date.now() + wmLmsActorQuery(), {method:'GET', cache:'no-store'});
         const data = await res.json();
+        if(data&&data.success===true&&data.dashboardFast===true){
+          WM_DASHBOARD_FAST_PAYLOAD=data;
+          ensureDashboardSourceRows.loadedAt=Date.now();
+          return;
+        }
 
         const students = normalizeRows(data && data.students ? data.students : []);
         const records = normalizeRows(data && data.records ? data.records : []);
@@ -4090,6 +4107,27 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
 
     async function renderDashboard(options){
       await ensureDashboardSourceRows(options || {allowFallback:true});
+      if(WM_DASHBOARD_FAST_PAYLOAD&&WM_DASHBOARD_FAST_PAYLOAD.dashboardFast===true){
+        const fast=WM_DASHBOARD_FAST_PAYLOAD;
+        const summary=fast.summary||{};
+        setTextById('dashboardTotalStudents', Number(summary.totalStudents||0) + '명');
+        setTextById('dashboardTotalClasses', Number(summary.totalClasses||0) + '개');
+        setTextById('dashboardTotalTeachers', Number(summary.totalTeachers||0) + '명');
+        setTextById('dashboardLeaderTeachers', Number(summary.totalLeaders||0) + '명');
+        setTextById('dashboardMonthlyNew', Number(summary.monthlyNew||0) + '명');
+        setTextById('dashboardMonthlyRegister', Number(summary.monthlyRegister||0) + '명');
+        setTextById('dashboardMonthlySales', '-');
+        setTextById('dashboardMonthlyLeave', Number(summary.monthlyLeave||0) + '명');
+        setTextById('dashboardTodayStudy', Number(summary.todayStudy||0) + '/' + Number(summary.totalStudents||0));
+        setTextById('dashboardTodayRate', '학습률 ' + Number(summary.todayRate||0) + '%');
+        setTextById('dashboardNotStudy', Number(summary.notStudy||0) + '명');
+        setTextById('dashboardSendLogCount', '-');
+        setTextById('dashboardCounselCount', '-');
+        const firstRows=Array.isArray(fast.firstRows)?fast.firstRows:[];
+        const headers=['학생ID','학생이름','반명','교사명','학교','등록일','활성상태'];
+        setDashboardTable(headers,renderRowsForHeaders(firstRows,headers),'표시할 학생이 없습니다.');
+        return;
+      }
       const state = buildDashboardState();
       WM_DASHBOARD_STATE = state;
       const todayCount = state.todayStudyIds.size;
@@ -7302,10 +7340,18 @@ async function searchSettingClassStudents(){
     results.textContent = '학생명단을 불러오는 중입니다.';
     try{ await loadStudents(); }catch(err){}
   }
+  const category = String(document.getElementById('settingClassStudentCategory')?.value || 'UNASSIGNED');
+  const targetClass = String(document.getElementById('settingClassName')?.value || '').trim();
   const rows = (WM_STUDENT_MANAGE_ROWS || []).filter(row=>{
     const id = String(cellValue(row, headerAliases('학생ID')) || '').trim();
     const name = String(cellValue(row, headerAliases('학생이름')) || '').trim();
-    return !query || id.toLowerCase().includes(query) || name.toLowerCase().includes(query);
+    const currentClass = wmSettingStudentValue(row, ['반명','현재반','Class','반']);
+    const textMatch = !query || id.toLowerCase().includes(query) || name.toLowerCase().includes(query);
+    if(!textMatch)return false;
+    if(category==='UNASSIGNED')return !currentClass;
+    if(category==='CURRENT')return !!targetClass && currentClass===targetClass;
+    if(category==='OTHER')return !!currentClass && (!targetClass || currentClass!==targetClass);
+    return true;
   }).slice(0,100);
   if(!rows.length){
     results.textContent = '검색된 학생이 없습니다.';
@@ -7372,11 +7418,28 @@ async function saveSettingClass(){
       throw new Error((result && (result.error || result.message)) || 'Apps Script 반등록 저장 실패');
     }
 
-    await loadStudents();
-    await loadSettingCenterDB();
-    if(typeof loadDashboardSourceData === 'function'){
-      try{ await loadDashboardSourceData(true); }catch(ignoreDashboardReload){}
+    /* 저장 응답의 1행만 화면에 반영하고 전체 학생·설정센터·대시보드 재조회는 하지 않습니다. */
+    const savedIdSet = new Set(studentIds.map(id=>String(id).trim().toUpperCase()));
+    (WM_STUDENT_MANAGE_ROWS || []).forEach(row=>{
+      const sid=String(cellValue(row,headerAliases('학생ID'))||'').trim().toUpperCase();
+      if(!savedIdSet.has(sid))return;
+      row['반명']=className;
+      row['현재반']=className;
+      row['Class']=className;
+      row['교사명']=teacherName;
+      row['현재담당교사']=teacherName;
+      row['교사ID']=teacherId;
+    });
+    const teacherRow=(wmSettingCenterRows || []).find(row=>String(row['교사명']||'').trim()===teacherName);
+    if(teacherRow){
+      const classes=splitSettingClasses(teacherRow['담당반목록']);
+      if(!classes.includes(className))classes.push(className);
+      teacherRow['담당반목록']=classes.join(', ');
+      teacherRow['담당반']=classes.join(', ');
+      teacherRow['총담당반']=classes.length;
     }
+    try{ localStorage.removeItem('WM_LMS_DASHBOARD_SNAPSHOT_V1'); }catch(ignoreCache){}
+    WM_DASHBOARD_FIRST_LOAD_STARTED=false;
     wmSettingClassStatusFilter = 'ALL';
     wmSettingClassPage = 1;
     const statusFilter = document.getElementById('wmSettingClassStatusFilter');
@@ -7393,19 +7456,6 @@ async function saveSettingClass(){
         '학생수','상태','등록일','수정일','등록자','메모'
       ]);
     }
-
-    const studentRows = WM_STUDENT_MANAGE_ROWS || [];
-    const savedIds = new Set(studentRows.filter(row=>
-      String(cellValue(row, headerAliases('반')) || '').trim() === className
-    ).map(row=>String(cellValue(row, headerAliases('학생ID')) || '').trim().toUpperCase()));
-    const missingIds = studentIds.filter(id=>!savedIds.has(String(id).trim().toUpperCase()));
-    if(missingIds.length) throw new Error('학생 Class 반영 확인 실패: '+missingIds.join(', '));
-
-    const teacherSaved = (wmSettingCenterRows || []).some(row=>{
-      if(String(row['교사명'] || '').trim() !== teacherName) return false;
-      return splitSettingClasses(row['담당반목록']).includes(className);
-    });
-    if(!teacherSaved) throw new Error('교사 담당반목록 반영 확인 실패');
 
     setSettingStatus('settingClassStatus', result.message || '반등록 완료', true);
     wmSettingClassSelectedStudents.clear();
@@ -9273,6 +9323,7 @@ function wmSaveDashboardBrowserCache(){
   }catch(err){}
 }
 
+let WM_DASHBOARD_FAST_PAYLOAD=null;
 let WM_DASHBOARD_FIRST_LOAD_STARTED = false;
 function wmInitDashboardFastFirstScreen(){
   const today = new Date();
@@ -9286,14 +9337,11 @@ function wmScheduleDashboardFirstLoad(){
   if(WM_DASHBOARD_FIRST_LOAD_STARTED)return;
   WM_DASHBOARD_FIRST_LOAD_STARTED=true;
   wmInitDashboardFastFirstScreen();
-  wmRestoreDashboardBrowserCache();
   setTimeout(function(){
     if(typeof renderDashboard==='function'){
-      renderDashboard({allowFallback:false,lite:true,force:true}).then(function(){
-        wmSaveDashboardBrowserCache();
-      });
+      renderDashboard({allowFallback:false,lite:true,force:true});
     }
-  },60);
+  },40);
 }
 
 document.addEventListener('DOMContentLoaded', function(){
