@@ -732,6 +732,19 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
     .wm-current-progress-pager button { border:1px solid var(--wm-line); background:#fff; color:var(--wm-dark); border-radius:10px; padding:8px 13px; font-size:13px; font-weight:900; cursor:pointer; }
     .wm-current-progress-pager button:disabled { opacity:.45; cursor:not-allowed; }
     .wm-current-progress-page-info { font-size:13px; font-weight:900; color:var(--wm-gray); }
+    /* WM_SEND_CENTER_TABLE_UI_V1: 5-1/5-2 일련번호·교차행·고정헤더·15행 페이지 */
+    .wm-send-center-table-wrap { max-height:620px; overflow:auto; }
+    .wm-send-center-table-wrap thead th { position:sticky; top:0; z-index:20; background:#f9fafb; }
+    #wmSendLogTable tbody tr:nth-child(odd),
+    #wmSendSettingTable tbody tr:nth-child(odd) { background:#fff; }
+    #wmSendLogTable tbody tr:nth-child(even),
+    #wmSendSettingTable tbody tr:nth-child(even) { background:#eef4ff; }
+    #wmSendLogTable tbody td,
+    #wmSendSettingTable tbody td { background-color:inherit; }
+    #wmSendLogTable th:first-child, #wmSendLogTable td:first-child,
+    #wmSendSettingTable th:first-child, #wmSendSettingTable td:first-child {
+      width:72px; min-width:72px; max-width:72px; text-align:center;
+    }
     table { width:100%; border-collapse:collapse; min-width:1200px; background:#fff; }
     /* WM_RECORD_DEVICE_MEMO_WIDTH_LOCK: 학습기록 기기정보/비고 폭 고정 */
     #recordManageTable th:nth-child(24), #recordManageTable td:nth-child(24) { width:58px; min-width:58px; max-width:58px; text-align:center; overflow:hidden; text-overflow:ellipsis; }
@@ -1052,7 +1065,7 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
       <button type="button" class="wm-lms-logout-btn" id="wmLmsLogoutBtn">LMS 로그아웃</button>
     </section>
     <nav class="wm-menu-grid">
-      <button class="wm-menu-btn active" data-panel="dashboard">대시보드</button><button class="wm-menu-btn" data-panel="students">1. 학생관리</button><button class="wm-menu-btn" data-panel="records">2. 학습기록</button><button class="wm-menu-btn" data-panel="profile">3. 프로필센터</button><button class="wm-menu-btn" data-panel="reports">4. 성적표생성</button><button class="wm-menu-btn" data-panel="sendLog">5. 발송기록</button><button class="wm-menu-btn" data-panel="gradeLevel">6. 성적등급</button><button class="wm-menu-btn" data-panel="classes">7. 설정센터</button><button class="wm-menu-btn" data-panel="currentProgress">8. 현재진행</button><button class="wm-menu-btn" data-panel="counsel">9. 상담카페</button><button class="wm-menu-btn wm-learning-btn" data-panel="learning">학습화면</button>
+      <button class="wm-menu-btn active" data-panel="dashboard">대시보드</button><button class="wm-menu-btn" data-panel="students">1. 학생관리</button><button class="wm-menu-btn" data-panel="records">2. 학습기록</button><button class="wm-menu-btn" data-panel="profile">3. 프로필센터</button><button class="wm-menu-btn" data-panel="reports">4. 성적표생성</button><button class="wm-menu-btn" data-panel="sendLog">발송센터</button><button class="wm-menu-btn" data-panel="gradeLevel">6. 성적등급</button><button class="wm-menu-btn" data-panel="classes">7. 설정센터</button><button class="wm-menu-btn" data-panel="currentProgress">8. 현재진행</button><button class="wm-menu-btn" data-panel="counsel">9. 상담카페</button><button class="wm-menu-btn wm-learning-btn" data-panel="learning">학습화면</button>
       <button class="wm-menu-btn wm-dev-btn" id="devCenterBtn" data-panel="dev">DEV CENTER</button>
     </nav>
     <section class="wm-panel active" id="panel-dashboard">
@@ -1200,7 +1213,7 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
         </div>
       </div>
 
-      <div class="wm-record-scroll-top" id="studentTopScroll"><div class="wm-record-scroll-inner" id="studentTopScrollInner"></div></div><div class="wm-table-wrap" id="studentTableWrap"><table id="studentManageTable"><thead><tr><th class="wm-student-seq-col">학생일련번호</th><th>학생ID</th><th>학생이름</th><th>비밀번호</th><th>학습시작일</th><th>학습종료일</th><th>출석약속</th><th>세트약속</th><th>최초배정</th><th>레벨완료조건</th><th>S4실루엣단계</th><th>S6테스트모드</th><th>현재세트</th><th>다음레벨완료조건</th><th>반명</th><th>교사명</th><th>학교</th><th>학년</th><th>학부모명</th><th>학부모연락처</th><th>최종결제</th><th>등록일</th><th>최초등록일</th><th>최근결제일</th><th>결제공백일수</th><th>재등록횟수</th><th>총등록기간</th><th>등록상태</th><th>활성상태</th><th>반ID</th><th>교사ID</th><th>현재세션</th><th>세션상태</th><th>최종로그인</th><th>접속기기</th><th>비고</th><th>저장</th></tr></thead><tbody id="studentManageTbody"><tr><td colspan="37">학생관리_DB 연결 대기 중입니다.</td></tr></tbody></table></div>
+      <div class="wm-record-scroll-top" id="studentTopScroll"><div class="wm-record-scroll-inner" id="studentTopScrollInner"></div></div><div class="wm-table-wrap" id="studentTableWrap"><table id="studentManageTable"><thead><tr><th class="wm-student-seq-col">학생일련번호</th><th>학생ID</th><th>학생이름</th><th>비밀번호</th><th>학습시작일</th><th>학습종료일</th><th>출석약속</th><th>세트약속</th><th>최초배정</th><th>레벨완료조건</th><th>S4실루엣단계</th><th>S6테스트모드</th><th>현재세트</th><th>다음레벨완료조건</th><th>반명</th><th>교사명</th><th>학교</th><th>학년</th><th>수신자구분</th><th>학부모명</th><th>학부모연락처</th><th>최종결제</th><th>등록일</th><th>최초등록일</th><th>최근결제일</th><th>결제공백일수</th><th>재등록횟수</th><th>총등록기간</th><th>등록상태</th><th>활성상태</th><th>반ID</th><th>교사ID</th><th>현재세션</th><th>세션상태</th><th>최종로그인</th><th>접속기기</th><th>비고</th><th>저장</th></tr></thead><tbody id="studentManageTbody"><tr><td colspan="38">학생관리_DB 연결 대기 중입니다.</td></tr></tbody></table></div>
     </section>
     <section class="wm-panel" id="panel-records">
       <div class="wm-panel-title-row"><h2 class="wm-panel-title">학습기록 센터</h2><p class="wm-panel-desc">연결 예정 DB: 학습기록_DB / 구글시트 현재 1행 컬럼명을 임의 수정 없이 그대로 반영했습니다.</p></div>
@@ -1287,7 +1300,7 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
 
       <div class="wm-factory-box">
         <div class="wm-profile-section-title"><h3>1. 학생관리_DB</h3><span>1.학생관리_DB 실제 연결 · 학생ID 기준으로 최신 학생관리 컬럼을 표시합니다.</span></div>
-        <div class="wm-table-wrap"><table class="wm-profile-table"><thead><tr><th class="wm-student-seq-col">학생일련번호</th><th>학생ID</th><th>학생이름</th><th>비밀번호</th><th>학습시작일</th><th>학습종료일</th><th>출석약속</th><th>세트약속</th><th>최초배정</th><th>레벨완료조건</th><th>S4실루엣단계</th><th>S6테스트모드</th><th>현재세트</th><th>다음레벨완료조건</th><th>반명</th><th>교사명</th><th>학교</th><th>학년</th><th>학부모명</th><th>학부모연락처</th><th>최종결제</th><th>등록일</th><th>최초등록일</th><th>최근결제일</th><th>결제공백일수</th><th>재등록횟수</th><th>총등록기간</th><th>등록상태</th><th>활성상태</th><th>반ID</th><th>교사ID</th><th>현재세션</th><th>세션상태</th><th>최종로그인</th><th>접속기기</th><th>비고</th></tr></thead><tbody><tr id="profileStudentRow"><td colspan="36">학생ID 검색 후 표시됩니다.</td></tr></tbody></table></div>
+        <div class="wm-table-wrap"><table class="wm-profile-table"><thead><tr><th class="wm-student-seq-col">학생일련번호</th><th>학생ID</th><th>학생이름</th><th>비밀번호</th><th>학습시작일</th><th>학습종료일</th><th>출석약속</th><th>세트약속</th><th>최초배정</th><th>레벨완료조건</th><th>S4실루엣단계</th><th>S6테스트모드</th><th>현재세트</th><th>다음레벨완료조건</th><th>반명</th><th>교사명</th><th>학교</th><th>학년</th><th>수신자구분</th><th>학부모명</th><th>학부모연락처</th><th>최종결제</th><th>등록일</th><th>최초등록일</th><th>최근결제일</th><th>결제공백일수</th><th>재등록횟수</th><th>총등록기간</th><th>등록상태</th><th>활성상태</th><th>반ID</th><th>교사ID</th><th>현재세션</th><th>세션상태</th><th>최종로그인</th><th>접속기기</th><th>비고</th></tr></thead><tbody><tr id="profileStudentRow"><td colspan="36">학생ID 검색 후 표시됩니다.</td></tr></tbody></table></div>
       </div>
 
       <div class="wm-factory-box">
@@ -2094,9 +2107,9 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       <div id="wmReportManageDetail" class="wm-factory-box" style="display:none;"></div>
     </section>
     <section class="wm-panel" id="panel-sendLog">
-      <h2 class="wm-panel-title">발송기록 센터</h2>
+      <h2 class="wm-panel-title">발송센터</h2>
       <p class="wm-panel-desc">연결 DB: 5-1.발송내역_DB + 5-2.자동발송설정_DB / 구글시트 값을 계산 없이 그대로 표시합니다.</p>
-      <div class="wm-setting-db-tabs" role="tablist" aria-label="발송기록 DB 선택">
+      <div class="wm-setting-db-tabs" role="tablist" aria-label="발송센터 DB 선택">
         <button type="button" class="wm-setting-db-tab active" id="wmSendLogTab" role="tab" aria-selected="true" onclick="wmSwitchSendCenterTab('log')">5-1. 발송내역</button>
         <button type="button" class="wm-setting-db-tab" id="wmSendSettingTab" role="tab" aria-selected="false" onclick="wmSwitchSendCenterTab('setting')">5-2. 자동발송설정</button>
       </div>
@@ -2120,7 +2133,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
             <button class="wm-action-btn sub" onclick="wmLoadSendLogs(true)">새로고침</button>
           </div>
         </div>
-        <div class="wm-table-wrap"><table id="wmSendLogTable"><thead><tr><th>조회 준비 중</th></tr></thead><tbody id="wmSendLogTbody"><tr><td>5-1.발송내역_DB 조회 대기 중입니다.</td></tr></tbody></table></div>
+        <div class="wm-table-wrap wm-send-center-table-wrap" id="wmSendLogTableWrap"><table id="wmSendLogTable"><thead><tr><th>조회 준비 중</th></tr></thead><tbody id="wmSendLogTbody"><tr><td>5-1.발송내역_DB 조회 대기 중입니다.</td></tr></tbody></table></div><div class="wm-current-progress-pager" id="wmSendLogPager" style="display:none;"><button type="button" onclick="wmMoveSendCenterPage('log',-1)">이전</button><span class="wm-current-progress-page-info" data-role="info">1 / 1</span><button type="button" onclick="wmMoveSendCenterPage('log',1)">다음</button></div>
       </div>
 
       <div id="wmSendSettingView" class="wm-setting-db-hidden" data-send-center-view="setting">
@@ -2146,7 +2159,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
           <div class="wm-filter-actions"><button type="button" class="wm-action-btn" onclick="wmSaveSendSetting()">저장</button><button type="button" class="wm-action-btn sub" onclick="wmResetSendSettingForm()">신규입력</button><button type="button" class="wm-action-btn sub" onclick="wmLoadSendSettings(true)">새로고침</button><span id="wmSendSettingStatus" class="wm-note"></span></div>
         </div>
         <div class="wm-note">목록 행을 선택하면 수정할 수 있습니다. 자동발송 실행·문자/알림톡 API 연결은 추후 단계에서 적용합니다.</div>
-        <div class="wm-table-wrap"><table id="wmSendSettingTable"><thead><tr><th>조회 준비 중</th></tr></thead><tbody id="wmSendSettingTbody"><tr><td>5-2.자동발송설정_DB 조회 대기 중입니다.</td></tr></tbody></table></div>
+        <div class="wm-table-wrap wm-send-center-table-wrap" id="wmSendSettingTableWrap"><table id="wmSendSettingTable"><thead><tr><th>조회 준비 중</th></tr></thead><tbody id="wmSendSettingTbody"><tr><td>5-2.자동발송설정_DB 조회 대기 중입니다.</td></tr></tbody></table></div><div class="wm-current-progress-pager" id="wmSendSettingPager" style="display:none;"><button type="button" onclick="wmMoveSendCenterPage('setting',-1)">이전</button><span class="wm-current-progress-page-info" data-role="info">1 / 1</span><button type="button" onclick="wmMoveSendCenterPage('setting',1)">다음</button></div>
       </div>
     </section>
     <section class="wm-panel" id="panel-classes">
@@ -3822,7 +3835,8 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       }
 
       try{
-        const res = await fetch(WM_APPS_SCRIPT_URL + '?mode=dashboard&ts=' + Date.now() + wmLmsActorQuery(), {method:'GET', cache:'no-store'});
+        const liteQuery = options.lite === true ? '&lite=1' : '';
+        const res = await fetch(WM_APPS_SCRIPT_URL + '?mode=dashboard'+liteQuery+'&ts=' + Date.now() + wmLmsActorQuery(), {method:'GET', cache:'no-store'});
         const data = await res.json();
 
         const students = normalizeRows(data && data.students ? data.students : []);
@@ -8736,7 +8750,7 @@ function renderStudentManageRows(){
   if(WM_STUDENT_MANAGE_PAGE < 1) WM_STUDENT_MANAGE_PAGE = 1;
 
   if(!rows.length){
-    tbody.innerHTML = '<tr><td colspan="37">표시할 학생관리_DB 데이터가 없습니다.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="38">표시할 학생관리_DB 데이터가 없습니다.</td></tr>';
     wmUpdateManagePager('students', 0, 1, 1);
     setManageLoading('students', false);
     return;
@@ -8782,6 +8796,7 @@ function renderStudentManageRows(){
       <td>${escapeHtml(row['교사명'] || '')}</td>
       <td>${escapeHtml(row['학교'] || '')}</td>
       <td>${escapeHtml(wmNormalizeGradeDisplay(row['학년'] || ''))}</td>
+      <td>${escapeHtml(row['수신자구분'] || row['수신구분'] || row['수신'] || '')}</td>
       <td>${escapeHtml(row['학부모명'] || '')}</td>
       <td>${escapeHtml(row['학부모연락처'] || '')}</td>
       <td>${escapeHtml(displayCellValue(row['최종결제']))}</td>
@@ -8837,6 +8852,10 @@ let WM_SEND_SETTING_LOADED=false;
 let WM_SEND_LOG_LOADING=false;
 let WM_SEND_SETTING_LOADING=false;
 let WM_SEND_CENTER_LOADING=false;
+const WM_SEND_CENTER_PAGE_SIZE=15;
+let WM_SEND_LOG_PAGE=1;
+let WM_SEND_SETTING_PAGE=1;
+let WM_SEND_LOG_FILTERED_ROWS=null;
 
 function wmSwitchSendCenterTab(type){
   const logMode=type!=='setting';
@@ -8856,19 +8875,46 @@ function wmRenderSendCenterHead(tableId,headers){
   const row=table&&table.querySelector('thead tr');
   if(!row)return;
   const actual=Array.isArray(headers)?headers.filter(header=>String(header||'').trim()):[];
-  row.innerHTML=(actual.length?actual:['컬럼 없음']).map(header=>'<th>'+escapeHtml(String(header||''))+'</th>').join('');
+  row.innerHTML='<th>일련번호</th>'+(actual.length?actual:['컬럼 없음']).map(header=>'<th>'+escapeHtml(String(header||''))+'</th>').join('');
 }
 
-function wmRenderSendCenterRows(tbodyId,headers,rows,emptyText){
+function wmUpdateSendCenterPager(type,totalRows,totalPages,page){
+  const pager=document.getElementById(type==='setting'?'wmSendSettingPager':'wmSendLogPager');
+  if(!pager)return;
+  const buttons=pager.querySelectorAll('button');
+  const info=pager.querySelector('[data-role="info"]');
+  pager.style.display='flex';
+  if(info)info.textContent=page+' / '+totalPages+' · 총 '+totalRows+'건';
+  if(buttons[0])buttons[0].disabled=page<=1;
+  if(buttons[1])buttons[1].disabled=page>=totalPages;
+}
+
+function wmSendCenterPageRows(type,rows){
+  const source=Array.isArray(rows)?rows:[];
+  const totalRows=source.length;
+  const totalPages=Math.max(1,Math.ceil(totalRows/WM_SEND_CENTER_PAGE_SIZE));
+  if(type==='setting'){
+    WM_SEND_SETTING_PAGE=Math.min(totalPages,Math.max(1,WM_SEND_SETTING_PAGE));
+    const start=(WM_SEND_SETTING_PAGE-1)*WM_SEND_CENTER_PAGE_SIZE;
+    return {rows:source.slice(start,start+WM_SEND_CENTER_PAGE_SIZE),start:start,totalRows:totalRows,totalPages:totalPages,page:WM_SEND_SETTING_PAGE};
+  }
+  WM_SEND_LOG_PAGE=Math.min(totalPages,Math.max(1,WM_SEND_LOG_PAGE));
+  const start=(WM_SEND_LOG_PAGE-1)*WM_SEND_CENTER_PAGE_SIZE;
+  return {rows:source.slice(start,start+WM_SEND_CENTER_PAGE_SIZE),start:start,totalRows:totalRows,totalPages:totalPages,page:WM_SEND_LOG_PAGE};
+}
+
+function wmRenderSendCenterRows(tbodyId,headers,rows,emptyText,type){
   const tbody=document.getElementById(tbodyId);
   if(!tbody)return;
   const actualHeaders=Array.isArray(headers)?headers.filter(header=>String(header||'').trim()):[];
-  const colspan=Math.max(actualHeaders.length,1);
-  if(!Array.isArray(rows)||!rows.length){
+  const colspan=Math.max(actualHeaders.length+1,1);
+  const pageData=wmSendCenterPageRows(type||'log',rows);
+  wmUpdateSendCenterPager(type||'log',pageData.totalRows,pageData.totalPages,pageData.page);
+  if(!pageData.totalRows){
     tbody.innerHTML='<tr><td colspan="'+colspan+'">'+escapeHtml(emptyText)+'</td></tr>';
     return;
   }
-  tbody.innerHTML=rows.map(row=>'<tr>'+actualHeaders.map(header=>{
+  tbody.innerHTML=pageData.rows.map((row,rowIndex)=>'<tr><td>'+(pageData.start+rowIndex+1)+'</td>'+actualHeaders.map(header=>{
     const value=row&&row[header]!==undefined&&row[header]!==null?String(row[header]):'';
     if(header==='성적표링크'&&/^https?:\/\//i.test(value.trim())){
       return '<td><a class="wm-link-btn" href="'+escapeHtml(value.trim())+'" target="_blank" rel="noopener noreferrer">성적표보기</a></td>';
@@ -8880,21 +8926,34 @@ function wmRenderSendCenterRows(tbodyId,headers,rows,emptyText){
 function wmRenderSendCenterData(){
   wmRenderSendCenterHead('wmSendLogTable',WM_SEND_LOG_HEADERS);
   wmRenderSendCenterHead('wmSendSettingTable',WM_SEND_SETTING_HEADERS);
-  wmRenderSendCenterRows('wmSendLogTbody',WM_SEND_LOG_HEADERS,WM_SEND_LOG_ROWS,'5-1.발송내역_DB에 표시할 기록이 없습니다.');
+  const logRows=Array.isArray(WM_SEND_LOG_FILTERED_ROWS)?WM_SEND_LOG_FILTERED_ROWS:WM_SEND_LOG_ROWS;
+  wmRenderSendCenterRows('wmSendLogTbody',WM_SEND_LOG_HEADERS,logRows,'5-1.발송내역_DB에 표시할 기록이 없습니다.','log');
   wmRenderSendSettingRows();
 }
 
 function wmRenderSendSettingRows(){
   const tbody=document.getElementById('wmSendSettingTbody');
   if(!tbody)return;
-  if(!WM_SEND_SETTING_ROWS.length){
-    tbody.innerHTML='<tr><td colspan="'+Math.max(WM_SEND_SETTING_HEADERS.length,1)+'">5-2.자동발송설정_DB에 표시할 설정이 없습니다.</td></tr>';
+  const pageData=wmSendCenterPageRows('setting',WM_SEND_SETTING_ROWS);
+  wmUpdateSendCenterPager('setting',pageData.totalRows,pageData.totalPages,pageData.page);
+  const colspan=Math.max(WM_SEND_SETTING_HEADERS.length+1,1);
+  if(!pageData.totalRows){
+    tbody.innerHTML='<tr><td colspan="'+colspan+'">5-2.자동발송설정_DB에 표시할 설정이 없습니다.</td></tr>';
     return;
   }
-  tbody.innerHTML=WM_SEND_SETTING_ROWS.map((row,index)=>'<tr role="button" tabindex="0" onclick="wmEditSendSetting('+index+')">'+WM_SEND_SETTING_HEADERS.map(header=>{
-    const value=row&&row[header]!==undefined&&row[header]!==null?row[header]:'';
-    return '<td>'+escapeHtml(displayCellValue(value,header))+'</td>';
-  }).join('')+'</tr>').join('');
+  tbody.innerHTML=pageData.rows.map((row,rowIndex)=>{
+    const actualIndex=pageData.start+rowIndex;
+    return '<tr role="button" tabindex="0" onclick="wmEditSendSetting('+actualIndex+')"><td>'+(actualIndex+1)+'</td>'+WM_SEND_SETTING_HEADERS.map(header=>{
+      const value=row&&row[header]!==undefined&&row[header]!==null?row[header]:'';
+      return '<td>'+escapeHtml(displayCellValue(value,header))+'</td>';
+    }).join('')+'</tr>';
+  }).join('');
+}
+
+function wmMoveSendCenterPage(type,delta){
+  if(type==='setting')WM_SEND_SETTING_PAGE+=Number(delta||0);
+  else WM_SEND_LOG_PAGE+=Number(delta||0);
+  wmRenderSendCenterData();
 }
 
 async function wmLoadSendCenterData(force){
@@ -8903,8 +8962,8 @@ async function wmLoadSendCenterData(force){
   WM_SEND_CENTER_LOADING=true;
   WM_SEND_LOG_LOADING=true;
   WM_SEND_SETTING_LOADING=true;
-  wmRenderSendCenterRows('wmSendLogTbody',WM_SEND_LOG_HEADERS,[],'5-1.발송내역_DB를 조회 중입니다.');
-  wmRenderSendCenterRows('wmSendSettingTbody',WM_SEND_SETTING_HEADERS,[],'5-2.자동발송설정_DB를 조회 중입니다.');
+  wmRenderSendCenterRows('wmSendLogTbody',WM_SEND_LOG_HEADERS,[],'5-1.발송내역_DB를 조회 중입니다.','log');
+  wmRenderSendCenterRows('wmSendSettingTbody',WM_SEND_SETTING_HEADERS,[],'5-2.자동발송설정_DB를 조회 중입니다.','setting');
   try{
     const actorQuery=String(typeof wmLmsActorQuery==='function'?wmLmsActorQuery():'');
     const response=await fetch(WM_APPS_SCRIPT_URL+'?mode=sendCenterData&action=sendCenterData&ts='+Date.now()+actorQuery,{cache:'no-store'});
@@ -8914,6 +8973,9 @@ async function wmLoadSendCenterData(force){
     WM_SEND_SETTING_HEADERS=Array.isArray(data.settingHeaders)?data.settingHeaders.map(value=>String(value||'').trim()).filter(Boolean):[];
     WM_SEND_LOG_ROWS=normalizeRows(data.logRows||[]);
     WM_SEND_SETTING_ROWS=normalizeRows(data.settingRows||[]);
+    WM_SEND_LOG_FILTERED_ROWS=null;
+    WM_SEND_LOG_PAGE=1;
+    WM_SEND_SETTING_PAGE=1;
     WM_SEND_TARGET_STUDENTS=Array.isArray(data.targetStudents)?data.targetStudents:[];
     WM_SEND_TARGET_CLASSES=Array.isArray(data.targetClasses)?data.targetClasses:[];
     WM_SEND_LOG_LOADED=true;
@@ -8922,8 +8984,8 @@ async function wmLoadSendCenterData(force){
     wmFillSendTargetOptions();
   }catch(err){
     const message='조회 실패: '+String(err&&err.message||err);
-    wmRenderSendCenterRows('wmSendLogTbody',WM_SEND_LOG_HEADERS,[],message);
-    wmRenderSendCenterRows('wmSendSettingTbody',WM_SEND_SETTING_HEADERS,[],message);
+    wmRenderSendCenterRows('wmSendLogTbody',WM_SEND_LOG_HEADERS,[],message,'log');
+    wmRenderSendCenterRows('wmSendSettingTbody',WM_SEND_SETTING_HEADERS,[],message,'setting');
   }finally{
     WM_SEND_CENTER_LOADING=false;
     WM_SEND_LOG_LOADING=false;
@@ -8952,12 +9014,16 @@ function wmFilterSendCenterLog(){
       return !query||String(row[filters[key]]||'').toLowerCase().includes(query);
     });
   });
-  wmRenderSendCenterRows('wmSendLogTbody',WM_SEND_LOG_HEADERS,rows,'검색조건에 맞는 발송내역이 없습니다.');
+  WM_SEND_LOG_FILTERED_ROWS=rows;
+  WM_SEND_LOG_PAGE=1;
+  wmRenderSendCenterRows('wmSendLogTbody',WM_SEND_LOG_HEADERS,rows,'검색조건에 맞는 발송내역이 없습니다.','log');
 }
 
 function wmResetSendCenterFilter(){
   document.querySelectorAll('#panel-sendLog [data-filter-scope="sendLog"] input').forEach(el=>el.value='');
-  wmRenderSendCenterRows('wmSendLogTbody',WM_SEND_LOG_HEADERS,WM_SEND_LOG_ROWS,'5-1.발송내역_DB에 표시할 기록이 없습니다.');
+  WM_SEND_LOG_FILTERED_ROWS=null;
+  WM_SEND_LOG_PAGE=1;
+  wmRenderSendCenterRows('wmSendLogTbody',WM_SEND_LOG_HEADERS,WM_SEND_LOG_ROWS,'5-1.발송내역_DB에 표시할 기록이 없습니다.','log');
 }
 
 function wmFillSendTargetOptions(selectedId){
@@ -9125,7 +9191,13 @@ function wmScheduleDashboardFirstLoad(){
   WM_DASHBOARD_FIRST_LOAD_STARTED = true;
   wmInitDashboardFastFirstScreen();
   const run = function(){
-    if(typeof renderDashboard === 'function') renderDashboard({allowFallback:false});
+    if(typeof renderDashboard === 'function'){
+      renderDashboard({allowFallback:false,lite:true}).then(function(){
+        setTimeout(function(){
+          if(typeof renderDashboard === 'function') renderDashboard({allowFallback:false,force:true,lite:false});
+        }, 800);
+      });
+    }
   };
   /* 화면은 즉시 연 뒤 대시보드만 짧게 지연하여 백그라운드 조회합니다. */
   setTimeout(run, 120);
