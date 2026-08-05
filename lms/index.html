@@ -908,11 +908,15 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
     .wm-setting-student-result-item { display:flex; align-items:center; gap:9px; padding:8px 6px; border-bottom:1px solid #eef2f7; color:var(--wm-dark); }
     .wm-setting-student-result-item:last-child { border-bottom:0; }
     .wm-setting-student-result-item input { width:auto; margin:0; }
-    .wm-setting-student-group { border:1px solid #dbeafe; border-radius:12px; margin:8px 0; overflow:hidden; background:#fff; }
-    .wm-setting-student-group-head { width:100%; border:0; background:#eff6ff; color:#173b75; padding:10px 12px; display:flex; justify-content:space-between; align-items:center; font-weight:950; cursor:pointer; text-align:left; }
-    .wm-setting-student-group-head:hover { background:#dbeafe; }
-    .wm-setting-student-group-body { display:none; padding:4px 8px; }
-    .wm-setting-student-group.open .wm-setting-student-group-body { display:block; }
+    .wm-setting-student-group-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; align-items:stretch; }
+    .wm-setting-student-group-head { width:100%; min-width:0; border:1px solid #bfdbfe; border-radius:10px; background:#eff6ff; color:#173b75; padding:10px 9px; display:flex; justify-content:space-between; align-items:center; gap:6px; font-weight:950; cursor:pointer; text-align:left; }
+    .wm-setting-student-group-head:hover,.wm-setting-student-group-head.active { background:#dbeafe; border-color:#60a5fa; color:#1d4ed8; }
+    .wm-setting-student-expanded { margin-top:8px; border:1px solid #dbeafe; border-radius:12px; background:#fff; padding:6px 8px; }
+    .wm-setting-student-loading { min-height:90px; display:flex; align-items:center; justify-content:center; gap:10px; color:#1d4ed8; font-weight:900; }
+    .wm-setting-student-spinner { width:22px; height:22px; border:3px solid #bfdbfe; border-top-color:#2563eb; border-radius:50%; animation:wmSettingStudentSpin .8s linear infinite; flex:0 0 auto; }
+    @keyframes wmSettingStudentSpin { to { transform:rotate(360deg); } }
+    @media (max-width:900px){ .wm-setting-student-group-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+    @media (max-width:520px){ .wm-setting-student-group-grid { grid-template-columns:1fr; } }
     .wm-setting-student-result-item { cursor:pointer; border-radius:8px; }
     .wm-setting-student-result-item:hover { background:#f8fbff; }
     .wm-setting-student-result-item.is-selected { background:#dbeafe; color:#1d4ed8; font-weight:900; }
@@ -7350,9 +7354,15 @@ function toggleSettingClassStudent(check){
   if(wmSettingClassSelectedStudents.size > 0) wmClearClassRequiredError('wmClassRequiredStudents');
 }
 
-function wmToggleSettingStudentGroup(button){
-  const group=button && button.closest('.wm-setting-student-group');
-  if(group)group.classList.toggle('open');
+let wmSettingStudentGroupRows = new Map();
+
+function wmOpenSettingStudentGroup(button, groupKey){
+  const expanded=document.getElementById('wmSettingStudentExpanded');
+  if(!expanded) return;
+  const rows=wmSettingStudentGroupRows.get(String(groupKey || '')) || [];
+  document.querySelectorAll('.wm-setting-student-group-head').forEach(tab=>tab.classList.toggle('active',tab===button));
+  expanded.innerHTML=rows.length ? wmRenderSettingStudentRows(rows) : '해당 반에 학생이 없습니다.';
+  expanded.hidden=false;
 }
 
 function wmRenderSettingStudentRows(rows){
@@ -7375,12 +7385,16 @@ async function searchSettingClassStudents(){
   const query = String(document.getElementById('settingClassStudentSearch')?.value || '').trim().toLowerCase();
   const results = document.getElementById('settingClassStudentResults');
   if(!results) return;
+  const category = String(document.getElementById('settingClassStudentCategory')?.value || 'UNASSIGNED');
+
+  /* 미등록학생을 포함한 학생명단 조회는 지연될 수 있으므로 즉시 스피너를 표시합니다. */
+  results.innerHTML='<div class="wm-setting-student-loading"><span class="wm-setting-student-spinner" aria-hidden="true"></span><span>학생명단을 불러오는 중입니다.</span></div>';
+  await new Promise(resolve=>setTimeout(resolve,0));
+
   if(!WM_STUDENT_MANAGE_ROWS || !WM_STUDENT_MANAGE_ROWS.length){
-    results.textContent = '학생명단을 불러오는 중입니다.';
     try{ await loadStudents(); }catch(err){}
   }
 
-  const category = String(document.getElementById('settingClassStudentCategory')?.value || 'UNASSIGNED');
   const targetClass = String(document.getElementById('settingClassName')?.value || '').trim();
   const source=(WM_STUDENT_MANAGE_ROWS || []).filter(row=>{
     const id = String(cellValue(row, headerAliases('학생ID')) || '').trim();
@@ -7422,16 +7436,27 @@ async function searchSettingClassStudents(){
     return;
   }
 
-  const classNames=Array.from(groups.keys()).filter(name=>category!=='OTHER' || !targetClass || name!==targetClass).sort((a,b)=>a.localeCompare(b,'ko'));
-  let html='';
+  wmSettingStudentGroupRows = new Map();
+  const tabs=[];
   if(category==='ALL'){
-    html+='<div class="wm-setting-student-group open"><button type="button" class="wm-setting-student-group-head" onclick="wmToggleSettingStudentGroup(this)"><span>미등록학생</span><span>'+unassigned.length+'명</span></button><div class="wm-setting-student-group-body">'+(unassigned.length?wmRenderSettingStudentRows(sortRows(unassigned)):'미등록학생이 없습니다.')+'</div></div>';
+    const rows=sortRows(unassigned);
+    wmSettingStudentGroupRows.set('__UNASSIGNED__',rows);
+    tabs.push('<button type="button" class="wm-setting-student-group-head" onclick="wmOpenSettingStudentGroup(this,\'__UNASSIGNED__\')"><span>미등록학생</span><span>'+rows.length+'명</span></button>');
   }
-  html+=classNames.map(className=>{
+
+  const classNames=Array.from(groups.keys()).filter(name=>category!=='OTHER' || !targetClass || name!==targetClass).sort((a,b)=>a.localeCompare(b,'ko'));
+  classNames.forEach((className,index)=>{
     const rows=sortRows(groups.get(className)||[]);
-    return '<div class="wm-setting-student-group"><button type="button" class="wm-setting-student-group-head" onclick="wmToggleSettingStudentGroup(this)"><span>'+escapeHtml(className)+'</span><span>'+rows.length+'명</span></button><div class="wm-setting-student-group-body">'+wmRenderSettingStudentRows(rows)+'</div></div>';
-  }).join('');
-  results.innerHTML=html || (category==='OTHER' ? '다른 반 학생이 없습니다.' : '표시할 학생이 없습니다.');
+    const key='CLASS_'+index;
+    wmSettingStudentGroupRows.set(key,rows);
+    tabs.push('<button type="button" class="wm-setting-student-group-head" onclick="wmOpenSettingStudentGroup(this,\''+key+'\')"><span>'+escapeHtml(className)+'</span><span>'+rows.length+'명</span></button>');
+  });
+
+  if(!tabs.length){
+    results.textContent=category==='OTHER' ? '다른 반 학생이 없습니다.' : '표시할 학생이 없습니다.';
+    return;
+  }
+  results.innerHTML='<div class="wm-setting-student-group-grid">'+tabs.join('')+'</div><div id="wmSettingStudentExpanded" class="wm-setting-student-expanded" hidden></div>';
 }
 
 function generateSettingClassId(){
