@@ -10893,7 +10893,7 @@ document.addEventListener('keydown',function(e){
       search:exists('#panel-reports .wm-filter-box'),
       dateSearch:exists('#panel-reports input[type="date"]'),
       preview:exists('#panel-reports .wm-report-preview-side'),
-      detailModal:(exists('#reportDetailModal')||exists('#wmReportDetailModal')||exists('.wm-report-detail-modal')||exists('#reportPreviewModal')||exists('#wmReportPreviewModal')),
+      detailModal:exists('#wmReportDesignPreviewModal')&&exists('#wmReportDesignPreviewModalBody'),
       weeklyMonthly:document.documentElement.innerHTML.indexOf('Weekly')!==-1&&
         document.documentElement.innerHTML.indexOf('Monthly')!==-1,
       monthlyDataRoute:typeof window.fetchMonthlyReportSingleData==='function',
