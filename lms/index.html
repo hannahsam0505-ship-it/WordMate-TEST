@@ -11524,5 +11524,204 @@ document.addEventListener('keydown',function(e){
 /* 🔒 LMS PHASE 4 COMMON ROLE / SPEED LOCK V1 END */
 </script>
 
+
+<script>
+/* ==========================================================
+   🔒 LMS PHASE 5 INTEGRATED ALL LOCK VERIFICATION V1 / 수정 금지
+   1~4차 Registry·실제 함수 참조·DOM·CSS·F12 결과 최종 통합 검증
+   ========================================================== */
+(function wmInstallLmsPhase5IntegratedLockVerification_(){
+  'use strict';
+
+  var LOCK_VERSION='LMS_PHASE5_INTEGRATED_ALL_LOCK_VERIFICATION_V1.0';
+  var LOCK_DATE='2026-08-06';
+
+  var PHASES=Object.freeze({
+    phase1:Object.freeze({
+      label:'1차 핵심 운영 화면',
+      get:window.wmGetLmsPhase1CoreOperationsLockStatus,
+      log:window.wmLogLmsPhase1CoreOperationsLockStatus,
+      registry:window.WM_LMS_PHASE1_CORE_OPERATIONS_LOCK
+    }),
+    phase2:Object.freeze({
+      label:'2차 성적표·성적등급·최근성적표',
+      get:window.wmGetLmsPhase2ReportGradeLockStatus,
+      log:window.wmLogLmsPhase2ReportGradeLockStatus,
+      registry:window.WM_LMS_PHASE2_REPORT_GRADE_LOCK
+    }),
+    phase3:Object.freeze({
+      label:'3차 프로필센터·발송센터',
+      get:window.wmGetLmsPhase3ProfileSendLockStatus,
+      log:window.wmLogLmsPhase3ProfileSendLockStatus,
+      registry:window.WM_LMS_PHASE3_PROFILE_SEND_LOCK
+    }),
+    phase4:Object.freeze({
+      label:'4차 공통 권한·공통 속도',
+      get:window.wmGetLmsPhase4CommonRoleSpeedLockStatus,
+      log:window.wmLogLmsPhase4CommonRoleSpeedLockStatus,
+      registry:window.WM_LMS_PHASE4_COMMON_ROLE_SPEED_LOCK
+    })
+  });
+
+  var REGISTRY=Object.freeze({
+    version:LOCK_VERSION,
+    date:LOCK_DATE,
+    phases:PHASES,
+    requiredDom:Object.freeze([
+      '#panel-dashboard','#panel-students','#settingCenterTable',
+      '#panel-reports','#gradeLevelManageTable','#wmRecentReportModal',
+      '#panel-profile','#panel-sendLog'
+    ]),
+    requiredCss:Object.freeze([
+      '.wm-panel','.wm-table-wrap','.wm-role-btn',
+      '.wm-send-center-table-wrap','.wm-profile-student-banner'
+    ])
+  });
+
+  Object.defineProperty(window,'WM_LMS_PHASE5_INTEGRATED_ALL_LOCK',{
+    value:REGISTRY,writable:false,configurable:false
+  });
+
+  function descriptorProtected(name){
+    var d=Object.getOwnPropertyDescriptor(window,name)||{};
+    return d.writable===false&&d.configurable===false;
+  }
+  function phaseStatus(phase){
+    if(!phase||typeof phase.get!=='function') return null;
+    try{return phase.get();}catch(error){return null;}
+  }
+  function styleRuleExists(selector){
+    var sheets=Array.prototype.slice.call(document.styleSheets||[]);
+    return sheets.some(function(sheet){
+      var rules;
+      try{rules=sheet.cssRules||sheet.rules||[];}catch(error){return false;}
+      return Array.prototype.some.call(rules,function(rule){
+        if(!rule.selectorText) return false;
+        return String(rule.selectorText).split(',').some(function(item){
+          return String(item).trim()===selector;
+        });
+      });
+    });
+  }
+
+  function getStatus(){
+    var registry=window.WM_LMS_PHASE5_INTEGRATED_ALL_LOCK;
+    var rd=Object.getOwnPropertyDescriptor(
+      window,'WM_LMS_PHASE5_INTEGRATED_ALL_LOCK'
+    )||{};
+
+    var names={
+      phase1:['wmGetLmsPhase1CoreOperationsLockStatus','wmLogLmsPhase1CoreOperationsLockStatus'],
+      phase2:['wmGetLmsPhase2ReportGradeLockStatus','wmLogLmsPhase2ReportGradeLockStatus'],
+      phase3:['wmGetLmsPhase3ProfileSendLockStatus','wmLogLmsPhase3ProfileSendLockStatus'],
+      phase4:['wmGetLmsPhase4CommonRoleSpeedLockStatus','wmLogLmsPhase4CommonRoleSpeedLockStatus']
+    };
+
+    var phaseResults={};
+    var phaseVerified=true;
+    Object.keys(PHASES).forEach(function(key){
+      var phase=PHASES[key];
+      var status=phaseStatus(phase);
+      var verified=!!status&&status.verified===true&&
+        !!phase.registry&&Object.isFrozen(phase.registry)&&
+        phase.get===window[names[key][0]]&&
+        phase.log===window[names[key][1]];
+      phaseResults[key]=Object.freeze({
+        label:phase.label,
+        statusVerified:!!status&&status.verified===true,
+        registryFrozen:!!phase.registry&&Object.isFrozen(phase.registry),
+        exactGetReference:phase.get===window[names[key][0]],
+        exactLogReference:phase.log===window[names[key][1]],
+        verified:verified
+      });
+      phaseVerified=phaseVerified&&verified;
+    });
+
+    var dom={};
+    registry.requiredDom.forEach(function(selector){
+      dom[selector]=!!document.querySelector(selector);
+    });
+
+    var css={};
+    registry.requiredCss.forEach(function(selector){
+      css[selector]=styleRuleExists(selector);
+    });
+
+    var protection={
+      integratedRegistryFrozen:Object.isFrozen(registry)&&
+        Object.isFrozen(registry.phases)&&
+        Object.isFrozen(registry.requiredDom)&&
+        Object.isFrozen(registry.requiredCss),
+      registryWriteProtected:rd.writable===false,
+      registryDeleteProtected:rd.configurable===false,
+      phaseStatusFunctionsProtected:Object.keys(names).every(function(key){
+        return descriptorProtected(names[key][0]);
+      }),
+      phaseLogFunctionsProtected:Object.keys(names).every(function(key){
+        return descriptorProtected(names[key][1]);
+      })
+    };
+
+    var domVerified=Object.keys(dom).every(function(k){return dom[k]===true;});
+    var cssVerified=Object.keys(css).every(function(k){return css[k]===true;});
+    var protectionVerified=Object.keys(protection).every(function(k){
+      return protection[k]===true;
+    });
+
+    return Object.freeze({
+      version:LOCK_VERSION,date:LOCK_DATE,
+      phases:Object.freeze(phaseResults),
+      dom:Object.freeze(dom),
+      css:Object.freeze(css),
+      protection:Object.freeze(protection),
+      verified:phaseVerified&&domVerified&&cssVerified&&protectionVerified
+    });
+  }
+
+  function printRows(title,obj){
+    var rows={};
+    Object.keys(obj).forEach(function(key){
+      if(key!=='label') rows[key]=obj[key]===true?'✅ LOCK':'❌ CHECK';
+    });
+    console.group(title);
+    console.table(rows);
+    console.groupEnd();
+  }
+
+  function printStatus(){
+    var s=getStatus();
+    console.group('🔒 WORD MATE LMS PHASE 5 INTEGRATED ALL LOCK STATUS');
+    console.log('LOCK VERSION : '+s.version);
+    console.log('LOCK DATE    : '+s.date);
+    Object.keys(s.phases).forEach(function(key){
+      printRows(s.phases[key].label,s.phases[key]);
+    });
+    printRows('DOM 통합 검증',s.dom);
+    printRows('CSS 통합 검증',s.css);
+    printRows('Registry·함수 보호',s.protection);
+    console.log(s.verified
+      ?'🔒 WORD MATE LMS ALL LOCK VERIFIED'
+      :'❌ WORD MATE LMS INTEGRATED LOCK CHECK REQUIRED');
+    console.groupEnd();
+    return s;
+  }
+
+  Object.defineProperty(window,'wmGetLmsAllLockVerifiedStatus',{
+    value:getStatus,writable:false,configurable:false
+  });
+  Object.defineProperty(window,'wmLogLmsAllLockVerifiedStatus',{
+    value:printStatus,writable:false,configurable:false
+  });
+
+  function boot(){setTimeout(printStatus,0);}
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',boot,{once:true});
+  }else{
+    boot();
+  }
+})();
+/* 🔒 LMS PHASE 5 INTEGRATED ALL LOCK VERIFICATION V1 END */
+</script>
+
 </body>
 </html>
