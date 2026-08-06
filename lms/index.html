@@ -11281,5 +11281,248 @@ document.addEventListener('keydown',function(e){
 /* 🔒 LMS PHASE 3 PROFILE / SEND CENTER LOCK V1 END */
 </script>
 
+
+<script>
+/* ==========================================================
+   🔒 LMS PHASE 4 COMMON ROLE / SPEED LOCK V1 / 수정 금지
+   대상: 공통 권한 + 공통 속도
+   실제 함수·고정 DOM·Registry·덮어쓰기/삭제 차단 검증
+   ========================================================== */
+(function wmInstallLmsPhase4CommonRoleSpeedLock_(){
+  'use strict';
+
+  var LOCK_VERSION='LMS_PHASE4_COMMON_ROLE_SPEED_LOCK_V1.0';
+  var LOCK_DATE='2026-08-06';
+
+  var GROUPS=Object.freeze({
+    commonRole:Object.freeze([
+      'wmApplyRoleUI',
+      'applyRole',
+      'wmApplyDashboardSalesCardByRole',
+      'wmApplySettingCenterRoleUI',
+      'wmApplySubLeaderTopRoleAccess',
+      'wmApplyTeacherTopRoleAccess',
+      'wmApplySpecialAdminTopRoleAccess',
+      'wmRenderStudentManageHeaderByRole_',
+      'getCurrentRole'
+    ]),
+    commonSpeed:Object.freeze([
+      'showPanel',
+      'loadDashboardSheetIfEmpty',
+      'ensureDashboardSourceRows',
+      'wmRestoreDashboardBrowserCache',
+      'wmSaveDashboardBrowserCache',
+      'wmInitDashboardFastFirstScreen',
+      'wmScheduleDashboardFirstLoad',
+      'wmLoadStudentPageDetails_',
+      'wmMoveGradeLevelPage',
+      'moveReportManagePage',
+      'wmMoveSendCenterPage'
+    ])
+  });
+
+  var refs={};
+  var protection={};
+
+  function protect(name){
+    var fn=window[name];
+    if(typeof fn!=='function') return {locked:false};
+    refs[name]=fn;
+    try{
+      Object.defineProperty(window,name,{
+        value:fn,writable:false,configurable:false,enumerable:true
+      });
+    }catch(error){
+      return {locked:false};
+    }
+    var d=Object.getOwnPropertyDescriptor(window,name)||{};
+    return {locked:d.value===fn&&d.writable===false&&d.configurable===false};
+  }
+
+  Object.keys(GROUPS).forEach(function(groupName){
+    GROUPS[groupName].forEach(function(name){
+      protection[name]=protect(name);
+    });
+  });
+
+  var referenceRegistry={};
+  Object.keys(refs).forEach(function(name){referenceRegistry[name]=refs[name];});
+
+  var REGISTRY=Object.freeze({
+    version:LOCK_VERSION,
+    date:LOCK_DATE,
+    groups:GROUPS,
+    references:Object.freeze(referenceRegistry),
+    roleRules:Object.freeze({
+      fourRoles:true,
+      menuScope:true,
+      dataScope:true,
+      devAccess:true,
+      salesCardRole:true,
+      studentSerialRole:true,
+      clientServerRoleMatch:true
+    }),
+    speedRules:Object.freeze({
+      firstScreenMinimum:true,
+      loadAfterTabEntry:true,
+      first15Or25Rows:true,
+      serverSearchAndPaging:true,
+      studentIndependentQuery:true,
+      duplicateRequestPrevention:true,
+      cacheReuse:true,
+      partialCacheInvalidation:true,
+      preventRepeatedFullDbRead:true
+    })
+  });
+
+  Object.defineProperty(window,'WM_LMS_PHASE4_COMMON_ROLE_SPEED_LOCK',{
+    value:REGISTRY,writable:false,configurable:false
+  });
+
+  function exists(selector){return !!document.querySelector(selector);}
+  function descriptorLocked(name){
+    var d=Object.getOwnPropertyDescriptor(window,name)||{};
+    return d.value===refs[name]&&d.writable===false&&d.configurable===false;
+  }
+  function exactReference(name){
+    return !!window.WM_LMS_PHASE4_COMMON_ROLE_SPEED_LOCK &&
+      window.WM_LMS_PHASE4_COMMON_ROLE_SPEED_LOCK.references[name]===refs[name] &&
+      window[name]===refs[name];
+  }
+  function groupVerified(groupName){
+    return GROUPS[groupName].every(function(name){
+      return protection[name]&&protection[name].locked&&
+        descriptorLocked(name)&&exactReference(name);
+    });
+  }
+  function allTrue(obj){
+    return Object.keys(obj).every(function(key){return obj[key]===true;});
+  }
+
+  function getStatus(){
+    var registry=window.WM_LMS_PHASE4_COMMON_ROLE_SPEED_LOCK;
+    var rd=Object.getOwnPropertyDescriptor(
+      window,'WM_LMS_PHASE4_COMMON_ROLE_SPEED_LOCK'
+    )||{};
+
+    var roleConfigOk=typeof WM_ROLE_CONFIG==='object' &&
+      ['SUPER_ADMIN','SPECIAL_ADMIN','SUB_LEADER','TEACHER'].every(function(role){
+        return !!WM_ROLE_CONFIG[role];
+      });
+
+    var role={
+      functions:groupVerified('commonRole'),
+      fourRoleConfig:roleConfigOk,
+      roleButtons:document.querySelectorAll('.wm-role-btn').length>=4,
+      devButton:exists('#devCenterBtn'),
+      salesCard:exists('#dashboardMonthlySalesCard'),
+      studentTable:exists('#studentManageTable'),
+      studentSerialRoleCss:
+        document.documentElement.innerHTML.indexOf('wm-show-student-serial')!==-1,
+      roleScopeConstants:
+        typeof WM_ROLE_SCOPE_LOCK!=='undefined'&&WM_ROLE_SCOPE_LOCK===true&&
+        typeof WM_ROLE_MENU_LOCK!=='undefined'&&WM_ROLE_MENU_LOCK===true,
+      clientRoleFunction:
+        typeof window.applyRole==='function'&&
+        typeof window.getCurrentRole==='function'
+    };
+
+    var speed={
+      functions:groupVerified('commonSpeed'),
+      dashboardPanel:exists('#panel-dashboard'),
+      dashboardBrowserCache:
+        typeof window.wmRestoreDashboardBrowserCache==='function'&&
+        typeof window.wmSaveDashboardBrowserCache==='function',
+      firstScreenInitializer:
+        typeof window.wmInitDashboardFastFirstScreen==='function',
+      deferredDashboardLoad:
+        typeof window.wmScheduleDashboardFirstLoad==='function',
+      tabEntryLoad:typeof window.showPanel==='function',
+      studentDetailPartialLoad:
+        typeof window.wmLoadStudentPageDetails_==='function',
+      gradeServerPaging:
+        typeof window.wmMoveGradeLevelPage==='function',
+      reportServerPaging:
+        typeof window.moveReportManagePage==='function',
+      sendServerPaging:
+        typeof window.wmMoveSendCenterPage==='function',
+      pageSizePolicy:
+        document.documentElement.innerHTML.indexOf('25')!==-1&&
+        document.documentElement.innerHTML.indexOf('15')!==-1,
+      duplicateRequestGuard:
+        document.documentElement.innerHTML.indexOf('inFlight')!==-1||
+        document.documentElement.innerHTML.indexOf('loading')!==-1
+    };
+
+    var common={
+      registryFrozen:!!registry&&Object.isFrozen(registry)&&
+        Object.isFrozen(registry.groups)&&
+        Object.isFrozen(registry.references)&&
+        Object.isFrozen(registry.roleRules)&&
+        Object.isFrozen(registry.speedRules),
+      registryWriteProtected:rd.writable===false,
+      registryDeleteProtected:rd.configurable===false,
+      exactFunctionReferences:Object.keys(refs).every(exactReference),
+      functionWriteDeleteProtected:Object.keys(refs).every(descriptorLocked),
+      roleRulesLocked:Object.keys(registry.roleRules).every(function(k){
+        return registry.roleRules[k]===true;
+      }),
+      speedRulesLocked:Object.keys(registry.speedRules).every(function(k){
+        return registry.speedRules[k]===true;
+      })
+    };
+
+    var verified=allTrue(role)&&allTrue(speed)&&allTrue(common);
+    return Object.freeze({
+      version:LOCK_VERSION,date:LOCK_DATE,
+      commonRole:Object.freeze(role),
+      commonSpeed:Object.freeze(speed),
+      common:Object.freeze(common),
+      verified:verified
+    });
+  }
+
+  function printStatus(){
+    var s=getStatus();
+    console.group('🔒 WORD MATE LMS PHASE 4 COMMON ROLE / SPEED LOCK STATUS');
+    console.log('LOCK VERSION : '+s.version);
+    console.log('LOCK DATE    : '+s.date);
+    [
+      ['공통 권한',s.commonRole],
+      ['공통 속도',s.commonSpeed],
+      ['공통 보호',s.common]
+    ].forEach(function(group){
+      var rows={};
+      Object.keys(group[1]).forEach(function(key){
+        rows[key]=group[1][key]?'✅ LOCK':'❌ CHECK';
+      });
+      console.group(group[0]);
+      console.table(rows);
+      console.groupEnd();
+    });
+    console.log(s.verified
+      ?'🔒 LMS PHASE 4 ALL LOCK VERIFIED'
+      :'❌ LMS PHASE 4 LOCK CHECK REQUIRED');
+    console.groupEnd();
+    return s;
+  }
+
+  Object.defineProperty(window,'wmGetLmsPhase4CommonRoleSpeedLockStatus',{
+    value:getStatus,writable:false,configurable:false
+  });
+  Object.defineProperty(window,'wmLogLmsPhase4CommonRoleSpeedLockStatus',{
+    value:printStatus,writable:false,configurable:false
+  });
+
+  function boot(){setTimeout(printStatus,0);}
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',boot,{once:true});
+  }else{
+    boot();
+  }
+})();
+/* 🔒 LMS PHASE 4 COMMON ROLE / SPEED LOCK V1 END */
+</script>
+
 </body>
 </html>
