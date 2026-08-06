@@ -11644,7 +11644,17 @@ document.addEventListener('keydown',function(e){
 
     var css={};
     registry.requiredCss.forEach(function(selector){
-      css[selector]=styleRuleExists(selector);
+      if(selector==='#panel-profile .wm-profile-student-banner'){
+        var banner=document.querySelector(selector);
+        var bannerStyle=banner&&window.getComputedStyle
+          ? window.getComputedStyle(banner)
+          : null;
+        css[selector]=!!banner&&!!bannerStyle&&
+          bannerStyle.position==='sticky'&&
+          bannerStyle.display==='grid';
+      }else{
+        css[selector]=styleRuleExists(selector);
+      }
     });
 
     var protection={
