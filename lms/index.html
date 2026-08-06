@@ -10770,5 +10770,233 @@ document.addEventListener('keydown',function(e){
 /* 🔒 LMS PHASE 1 CORE OPERATIONS LOCK V1 END */
 </script>
 
+
+<script>
+/* ==========================================================
+   🔒 LMS PHASE 2 REPORT / GRADE / RECENT REPORT LOCK V1 / 수정 금지
+   대상: 성적표생성 + 성적등급 + 최근성적표
+   실제 함수 연결·덮어쓰기/삭제 차단·Registry 동결·DOM/권한/조회/계산기준 검증
+   ========================================================== */
+(function wmInstallLmsPhase2ReportGradeLock_(){
+  'use strict';
+  var LOCK_VERSION='LMS_PHASE2_REPORT_GRADE_LOCK_V1.0';
+  var LOCK_DATE='2026-08-06';
+  var GROUPS=Object.freeze({
+    reportGeneration:Object.freeze([
+      'loadReports','renderReportManageRows','openReportDetail',
+      'fetchMonthlyReportSingleData','renderMonthlyReportWeeklyTable',
+      'renderMonthlyReportDetailTable','renderMonthlyReportScoreChart'
+    ]),
+    gradeLevel:Object.freeze([
+      'loadGradeLevelRows','renderGradeLevelRows','getGradeLevelFilteredRows',
+      'wmMoveGradeLevelPage','wmBuildGradeCommentFromRow'
+    ]),
+    recentReport:Object.freeze([
+      'wmFetchRecentReportMonths','wmFetchRecentReportData','renderRecentReportMonth',
+      'openRecentReportDetail','changeRecentReportMonth','closeRecentReportModal'
+    ])
+  });
+  var LABELS=Object.freeze({
+    reportGeneration:'성적표생성',
+    gradeLevel:'성적등급',
+    recentReport:'최근성적표',
+    common:'공통 보호'
+  });
+  var refs={};
+  var lockResults={};
+
+  function protect(name){
+    var fn=window[name];
+    if(typeof fn!=='function') return {locked:false,reason:'함수 없음'};
+    refs[name]=fn;
+    try{
+      Object.defineProperty(window,name,{
+        value:fn,writable:false,configurable:false,enumerable:true
+      });
+    }catch(error){
+      return {locked:false,reason:error&&error.message?error.message:'defineProperty 실패'};
+    }
+    var descriptor=Object.getOwnPropertyDescriptor(window,name)||{};
+    return {
+      locked:descriptor.value===fn&&descriptor.writable===false&&descriptor.configurable===false,
+      reason:''
+    };
+  }
+
+  Object.keys(GROUPS).forEach(function(groupName){
+    GROUPS[groupName].forEach(function(name){
+      lockResults[name]=protect(name);
+    });
+  });
+
+  var referenceRegistry={};
+  Object.keys(refs).forEach(function(name){ referenceRegistry[name]=refs[name]; });
+  var registryValue=Object.freeze({
+    version:LOCK_VERSION,
+    date:LOCK_DATE,
+    groups:GROUPS,
+    references:Object.freeze(referenceRegistry),
+    calculationRules:Object.freeze({
+      weeklyMonthly:true,
+      learningStartEnd:true,
+      monthlyCumulative:true,
+      lastWeekMonthly:true,
+      partialWeekProration:true,
+      fullAbsenceZero:true,
+      completedSetOnly:true,
+      fourMonthFixed:true,
+      currentMonthProgressive:true,
+      previousThreeMonths:true,
+      studentIndependentQuery:true
+    })
+  });
+
+  try{
+    Object.defineProperty(window,'WM_LMS_PHASE2_REPORT_GRADE_LOCK',{
+      value:registryValue,writable:false,configurable:false
+    });
+  }catch(ignoreRegistryInstall){}
+
+  function exists(selector){ return !!document.querySelector(selector); }
+  function descriptorLocked(name){
+    var descriptor=Object.getOwnPropertyDescriptor(window,name)||{};
+    return descriptor.value===refs[name]&&descriptor.writable===false&&descriptor.configurable===false;
+  }
+  function exactReference(name){
+    var registry=window.WM_LMS_PHASE2_REPORT_GRADE_LOCK;
+    return !!registry&&!!registry.references&&
+      registry.references[name]===refs[name]&&window[name]===refs[name];
+  }
+  function groupFunctionsVerified(groupName){
+    return GROUPS[groupName].every(function(name){
+      return !!lockResults[name]&&lockResults[name].locked&&
+        descriptorLocked(name)&&exactReference(name);
+    });
+  }
+  function allTrue(obj){
+    return Object.keys(obj).every(function(key){ return obj[key]===true; });
+  }
+
+  function getStatus(){
+    var registry=window.WM_LMS_PHASE2_REPORT_GRADE_LOCK;
+    var registryDescriptor=Object.getOwnPropertyDescriptor(
+      window,'WM_LMS_PHASE2_REPORT_GRADE_LOCK'
+    )||{};
+    var role=String((window.WM_AUTH_USER&&window.WM_AUTH_USER.role)||'').toUpperCase();
+    var validRole=!role||
+      ['SUPER_ADMIN','SPECIAL_ADMIN','SUB_LEADER','TEACHER'].indexOf(role)!==-1;
+
+    var reportStatus={
+      functions:groupFunctionsVerified('reportGeneration'),
+      panel:exists('#panel-reports'),
+      table:exists('#reportManageTable'),
+      search:exists('#panel-reports .wm-filter-box'),
+      dateSearch:exists('#panel-reports input[type="date"]'),
+      preview:exists('#panel-reports .wm-report-preview-side'),
+      detailModal:exists('#reportDetailModal, #wmReportDetailModal, .wm-report-detail-modal'),
+      weeklyMonthly:document.documentElement.innerHTML.indexOf('Weekly')!==-1&&
+        document.documentElement.innerHTML.indexOf('Monthly')!==-1,
+      monthlyDataRoute:typeof window.fetchMonthlyReportSingleData==='function',
+      permissionRole:validRole
+    };
+
+    var gradeStatus={
+      functions:groupFunctionsVerified('gradeLevel'),
+      panel:exists('#panel-gradeLevel'),
+      table:exists('#gradeLevelManageTable'),
+      search:exists('#panel-gradeLevel .wm-filter-box'),
+      pagination:typeof window.wmMoveGradeLevelPage==='function',
+      gradeClass:document.documentElement.innerHTML.indexOf('Grade')!==-1&&
+        document.documentElement.innerHTML.indexOf('Class')!==-1,
+      autoComment:typeof window.wmBuildGradeCommentFromRow==='function',
+      thirtyPointFormula:document.documentElement.innerHTML.indexOf('출석')!==-1&&
+        document.documentElement.innerHTML.indexOf('참여집중도')!==-1&&
+        document.documentElement.innerHTML.indexOf('점수추이')!==-1,
+      permissionRole:validRole
+    };
+
+    var recentStatus={
+      functions:groupFunctionsVerified('recentReport'),
+      modal:exists('#wmRecentReportModal'),
+      monthSelect:exists('#wmRecentReportMonthSelect'),
+      modalBody:exists('#wmRecentReportModalBody'),
+      spinnerOrLoading:document.documentElement.innerHTML.indexOf('조회 중')!==-1,
+      fixedFourMonths:typeof window.wmFetchRecentReportMonths==='function',
+      currentPlusPreviousThree:document.documentElement.innerHTML.indexOf('최근 4개월')!==-1,
+      monthlySameRoute:typeof window.wmFetchRecentReportData==='function',
+      independentStudentQuery:typeof window.openRecentReportDetail==='function',
+      permissionRole:validRole
+    };
+
+    var rules=registry&&registry.calculationRules;
+    var common={
+      registryFrozen:!!registry&&Object.isFrozen(registry)&&
+        Object.isFrozen(registry.groups)&&Object.isFrozen(registry.references)&&
+        Object.isFrozen(registry.calculationRules),
+      registryWriteProtected:registryDescriptor.writable===false,
+      registryDeleteProtected:registryDescriptor.configurable===false,
+      exactFunctionReferences:Object.keys(refs).every(exactReference),
+      functionWriteDeleteProtected:Object.keys(refs).every(descriptorLocked),
+      calculationRulesLocked:!!rules&&Object.keys(rules).every(function(key){
+        return rules[key]===true;
+      })
+    };
+
+    var verified=allTrue(reportStatus)&&allTrue(gradeStatus)&&
+      allTrue(recentStatus)&&allTrue(common);
+
+    return Object.freeze({
+      version:LOCK_VERSION,date:LOCK_DATE,
+      reportGeneration:Object.freeze(reportStatus),
+      gradeLevel:Object.freeze(gradeStatus),
+      recentReport:Object.freeze(recentStatus),
+      common:Object.freeze(common),
+      verified:verified
+    });
+  }
+
+  function printStatus(){
+    var status=getStatus();
+    console.group('🔒 WORD MATE LMS PHASE 2 REPORT / GRADE LOCK STATUS');
+    console.log('LOCK VERSION : '+status.version);
+    console.log('LOCK DATE    : '+status.date);
+    [
+      ['reportGeneration',status.reportGeneration],
+      ['gradeLevel',status.gradeLevel],
+      ['recentReport',status.recentReport],
+      ['common',status.common]
+    ].forEach(function(item){
+      var rows={};
+      Object.keys(item[1]).forEach(function(key){
+        rows[key]=item[1][key]?'✅ LOCK':'❌ CHECK';
+      });
+      console.group(LABELS[item[0]]||item[0]);
+      console.table(rows);
+      console.groupEnd();
+    });
+    console.log(status.verified
+      ? '🔒 LMS PHASE 2 ALL LOCK VERIFIED'
+      : '❌ LMS PHASE 2 LOCK CHECK REQUIRED');
+    console.groupEnd();
+    return status;
+  }
+
+  Object.defineProperty(window,'wmGetLmsPhase2ReportGradeLockStatus',{
+    value:getStatus,writable:false,configurable:false
+  });
+  Object.defineProperty(window,'wmLogLmsPhase2ReportGradeLockStatus',{
+    value:printStatus,writable:false,configurable:false
+  });
+
+  function boot(){ setTimeout(printStatus,0); }
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',boot,{once:true});
+  }else{
+    boot();
+  }
+})();
+/* 🔒 LMS PHASE 2 REPORT / GRADE / RECENT REPORT LOCK V1 END */
+</script>
+
 </body>
 </html>
