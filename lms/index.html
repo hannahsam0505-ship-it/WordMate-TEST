@@ -10615,5 +10615,135 @@ document.addEventListener('keydown',function(e){
     if(event.key==='Escape') wmCloseGradeComment();
   });
   </script>
+
+
+<script>
+/* ============================================================
+   🔒 WM LMS OPERATION SCREEN LOCK V1 / 1차 핵심 운영 화면 LOCK 추가
+   대상: 대시보드 + 학생관리 + 7-1 교사관리 + 7-2 반관리
+   기존 LOCK은 유지하고 후반 작업 함수·UI·권한·최소조회 경로를 추가 보호합니다.
+   ============================================================ */
+(function wmApplyOperationScreenLockV1_(){
+  'use strict';
+  var VERSION='WM_LMS_OPERATION_SCREEN_LOCK_V1.0';
+  var DATE='2026-08-06';
+  var GROUPS=Object.freeze({
+    dashboard:Object.freeze([
+      'ensureDashboardDefaultDates','setDashboardDateRange','getDashboardDateStart','getDashboardDateEnd',
+      'wmRestoreDashboardBrowserCache','wmSaveDashboardBrowserCache','wmInitDashboardFastFirstScreen',
+      'wmScheduleDashboardFirstLoad','renderDashboard','renderDashboardDetail','renderDashboardDefaultRows',
+      'buildDashboardState','wmApplyDashboardSalesCardByRole'
+    ]),
+    studentManagement:Object.freeze([
+      'loadStudents','getStudentManageFilteredRows','renderStudentManageRows','wmRenderStudentManageHeaderByRole_',
+      'wmSortStudentRowsLatestFirst','saveStudentLearningModeFromRow','saveAllStudentLearningModes',
+      'syncStudentTableScroll','prepareStudentCreateFactory','generateStudentAutoIdForCreate',
+      'saveStudentCreateToDB','wmCollectStudentRegisterPayload','wmPrepareStudentRegisterClassOptions',
+      'wmApplyStudentRegister','wmStudentRowsNeedDetails_','wmLoadStudentPageDetails_'
+    ]),
+    teacherManagement:Object.freeze([
+      'loadSettingCenterDB','renderSettingCenterRows','wmApplySettingCenterRoleUI','fillSettingSelectOptions',
+      'wmNormalizeSettingTeacherId','generateSettingTeacherId','checkSettingTeacherIdDuplicate',
+      'saveSettingTeacher','saveSettingTeacherStatus','openTeacherDetail','summarizeTeacherRows'
+    ]),
+    classManagement:Object.freeze([
+      'wmNormalizeClassLookupKey','wmFindExistingClassRowByName','wmHandleSettingClassNameInput',
+      'wmValidateClassRequiredFields','wmRunClassSearch','wmResetClassSearch','wmSetClassQuickDate',
+      'wmGetFilteredSortedClassRows','wmChangeClassStatusFilter','wmMoveClassDbPage',
+      'saveSettingClassStatus','generateSettingClassId','saveSettingClass','openSettingClassStudentList',
+      'searchSettingClassStudents','toggleSettingClassStudent','renderSettingClassSelectedStudents',
+      'wmOpenSettingStudentGroup','wmRenderSettingStudentRows','removeSettingClassStudent','renderSettingClassDbRows'
+    ]),
+    commonPermissionPerformance:Object.freeze([
+      'applyRole','wmApplyRoleUI','wmApplyTeacherTopRoleAccess','wmFetchSettingApi','wmSettingApiUrl'
+    ])
+  });
+  var LABELS=Object.freeze({
+    dashboard:'대시보드',studentManagement:'학생관리',teacherManagement:'7-1 교사관리',
+    classManagement:'7-2 반관리',commonPermissionPerformance:'공통 권한·조회'
+  });
+
+  function protect(name){
+    var fn=window[name];
+    if(typeof fn!=='function') return {name:name,locked:false,reason:'함수 없음'};
+    var before=Object.getOwnPropertyDescriptor(window,name);
+    try{
+      Object.defineProperty(window,name,{value:fn,writable:false,configurable:false,enumerable:before?before.enumerable:true});
+    }catch(error){
+      return {name:name,locked:false,reason:String(error&&error.message||error)};
+    }
+    var descriptor=Object.getOwnPropertyDescriptor(window,name);
+    return {name:name,locked:!!descriptor&&descriptor.value===fn&&descriptor.writable===false&&descriptor.configurable===false,reason:''};
+  }
+
+  var functionResults={};
+  var moduleResults={};
+  Object.keys(GROUPS).forEach(function(groupName){
+    var names=GROUPS[groupName];
+    var lockedCount=0;
+    names.forEach(function(name){
+      var result=protect(name);
+      functionResults[name]=result;
+      if(result.locked) lockedCount+=1;
+    });
+    moduleResults[groupName]=Object.freeze({
+      label:LABELS[groupName],locked:lockedCount===names.length,lockedCount:lockedCount,totalCount:names.length
+    });
+  });
+
+  function verifyUi(){
+    var checks={
+      dashboardPanel:!!document.getElementById('panel-dashboard'),
+      studentPanel:!!document.getElementById('panel-students'),
+      settingPanel:!!document.getElementById('panel-classes'),
+      dashboardNoLegacyTable:!document.querySelector('#panel-dashboard .wm-table-wrap table'),
+      studentTable:!!document.querySelector('#panel-students table'),
+      settingClassTab:!!document.querySelector('[data-setting-db-tab="classes"]')||!!document.getElementById('settingClassDbBody'),
+      registryFrozen:Object.isFrozen(GROUPS)&&Object.keys(GROUPS).every(function(k){return Object.isFrozen(GROUPS[k]);})
+    };
+    checks.verified=Object.keys(checks).every(function(k){return k==='verified'||checks[k]===true;});
+    return Object.freeze(checks);
+  }
+
+  async function verifyServer(){
+    try{return await wmFetchSettingApi('operationScreenLockStatus',{});}
+    catch(error){return {allVerified:false,error:String(error&&error.message||error)};}
+  }
+
+  async function logStatus(){
+    var ui=verifyUi();
+    var server=await verifyServer();
+    var clientVerified=Object.keys(moduleResults).every(function(k){return moduleResults[k].locked;});
+    console.group('🔒 WORD MATE 1차 핵심 운영 화면 LOCK STATUS');
+    console.info('LOCK VERSION :',VERSION);
+    console.info('LOCK DATE    :',DATE);
+    var table={};
+    Object.keys(moduleResults).forEach(function(k){
+      var item=moduleResults[k];
+      table[item.label]=(item.locked?'✅ ':'❌ ')+item.lockedCount+'/'+item.totalCount;
+    });
+    console.table(table);
+    console.info(ui.verified?'✅ UI STRUCTURE VERIFIED':'❌ UI STRUCTURE CHECK REQUIRED',ui);
+    console.info(server&&server.allVerified===true?'✅ CODE.GS SERVER REGISTRY VERIFIED':'❌ CODE.GS SERVER CHECK REQUIRED',server);
+    var allVerified=clientVerified&&ui.verified&&server&&server.allVerified===true;
+    if(!clientVerified){
+      var failed={};
+      Object.keys(functionResults).forEach(function(name){if(!functionResults[name].locked)failed[name]=functionResults[name].reason||'LOCK 실패';});
+      console.table(failed);
+    }
+    console.info(allVerified?'🔒 1차 핵심 운영 화면 ALL LOCK VERIFIED':'❌ 1차 핵심 운영 화면 LOCK CHECK REQUIRED');
+    console.groupEnd();
+    return {clientVerified:clientVerified,ui:ui,server:server,allVerified:allVerified};
+  }
+
+  Object.defineProperty(window,'WM_LMS_OPERATION_SCREEN_LOCK_V1',{value:Object.freeze({
+    version:VERSION,date:DATE,groups:GROUPS,moduleResults:Object.freeze(moduleResults),
+    functionResults:Object.freeze(functionResults),verifyUi:verifyUi,verifyServer:verifyServer,log:logStatus
+  }),writable:false,configurable:false});
+  Object.defineProperty(window,'wmLogOperationScreenLockStatus',{value:logStatus,writable:false,configurable:false});
+  document.addEventListener('DOMContentLoaded',function(){setTimeout(logStatus,0);},{once:true});
+})();
+</script>
+
 </body>
 </html>
