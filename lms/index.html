@@ -10998,5 +10998,281 @@ document.addEventListener('keydown',function(e){
 /* 🔒 LMS PHASE 2 REPORT / GRADE / RECENT REPORT LOCK V1 END */
 </script>
 
+
+<script>
+/* ==========================================================
+   🔒 LMS PHASE 3 PROFILE / SEND CENTER LOCK V1 / 수정 금지
+   대상: 프로필센터 + 발송센터
+   실제 함수 연결·덮어쓰기/삭제 차단·Registry 동결·DOM/권한/독립조회 검증
+   ========================================================== */
+(function wmInstallLmsPhase3ProfileSendLock_(){
+  'use strict';
+
+  var LOCK_VERSION='LMS_PHASE3_PROFILE_SEND_LOCK_V1.0';
+  var LOCK_DATE='2026-08-06';
+
+  var GROUPS=Object.freeze({
+    profileCenter:Object.freeze([
+      'runProfileFilter',
+      'wmProfileLoadSelectedStudent',
+      'wmProfileRenderRecordPage',
+      'wmProfileRenderReportPage',
+      'wmProfileRenderGradePage',
+      'wmProfileLoadSendLogRows',
+      'wmProfileRenderClassMoveRows',
+      'wmProfileBindRecordPager',
+      'wmProfileBindReportPager',
+      'wmProfileBindGradePager'
+    ]),
+    sendCenter:Object.freeze([
+      'wmSwitchSendCenterTab',
+      'wmLoadSendLogs',
+      'wmLoadSendSettings',
+      'wmRenderSendCenterRows',
+      'wmRenderSendSettingRows',
+      'wmMoveSendCenterPage',
+      'wmFilterSendCenterLog',
+      'wmSaveSendSetting',
+      'wmApplySendStudentByName',
+      'wmApplySendStudentById'
+    ])
+  });
+
+  var refs={};
+  var protection={};
+
+  function protectFunction(name){
+    var fn=window[name];
+    if(typeof fn!=='function'){
+      return {locked:false,reason:'함수 없음'};
+    }
+    refs[name]=fn;
+    try{
+      Object.defineProperty(window,name,{
+        value:fn,
+        writable:false,
+        configurable:false,
+        enumerable:true
+      });
+    }catch(error){
+      return {locked:false,reason:String(error&&error.message||error)};
+    }
+    var descriptor=Object.getOwnPropertyDescriptor(window,name)||{};
+    return {
+      locked:descriptor.value===fn &&
+        descriptor.writable===false &&
+        descriptor.configurable===false,
+      reason:''
+    };
+  }
+
+  Object.keys(GROUPS).forEach(function(groupName){
+    GROUPS[groupName].forEach(function(name){
+      protection[name]=protectFunction(name);
+    });
+  });
+
+  var referenceRegistry={};
+  Object.keys(refs).forEach(function(name){
+    referenceRegistry[name]=refs[name];
+  });
+
+  var REGISTRY=Object.freeze({
+    version:LOCK_VERSION,
+    date:LOCK_DATE,
+    groups:GROUPS,
+    references:Object.freeze(referenceRegistry),
+    rules:Object.freeze({
+      studentIndependentQuery:true,
+      selectedStudentIsolation:true,
+      roleScope:true,
+      sectionIndependentLoad:true,
+      profilePagination:true,
+      sendTabIndependentLoad:true,
+      sendLogAndSettingSeparated:true,
+      studentNameIdLink:true,
+      parentRecipientData:true,
+      saveAndEdit:true,
+      profileSendHistory:true
+    })
+  });
+
+  Object.defineProperty(window,'WM_LMS_PHASE3_PROFILE_SEND_LOCK',{
+    value:REGISTRY,
+    writable:false,
+    configurable:false
+  });
+
+  function exists(selector){
+    return !!document.querySelector(selector);
+  }
+
+  function descriptorLocked(name){
+    var descriptor=Object.getOwnPropertyDescriptor(window,name)||{};
+    return descriptor.value===refs[name] &&
+      descriptor.writable===false &&
+      descriptor.configurable===false;
+  }
+
+  function exactReference(name){
+    var registry=window.WM_LMS_PHASE3_PROFILE_SEND_LOCK;
+    return !!registry &&
+      registry.references[name]===refs[name] &&
+      window[name]===refs[name];
+  }
+
+  function groupVerified(groupName){
+    return GROUPS[groupName].every(function(name){
+      return !!protection[name] &&
+        protection[name].locked===true &&
+        descriptorLocked(name) &&
+        exactReference(name);
+    });
+  }
+
+  function allTrue(obj){
+    return Object.keys(obj).every(function(key){
+      return obj[key]===true;
+    });
+  }
+
+  function getStatus(){
+    var registry=window.WM_LMS_PHASE3_PROFILE_SEND_LOCK;
+    var registryDescriptor=
+      Object.getOwnPropertyDescriptor(window,'WM_LMS_PHASE3_PROFILE_SEND_LOCK')||{};
+
+    var role=String((window.WM_AUTH_USER&&window.WM_AUTH_USER.role)||'').toUpperCase();
+    var validRole=!role ||
+      ['SUPER_ADMIN','SPECIAL_ADMIN','SUB_LEADER','TEACHER'].indexOf(role)!==-1;
+
+    var profile={
+      functions:groupVerified('profileCenter'),
+      panel:exists('#panel-profile'),
+      loading:exists('#wmProfileLoading'),
+      searchStatus:exists('#wmProfileSearchStatus'),
+      candidateBox:exists('#profileCandidateBox')&&exists('#profileCandidateList'),
+      studentBanner:exists('#wmProfileStudentBanner'),
+      studentBase:exists('#profileStudentRow'),
+      learningRecord:exists('#profileRecordRowHost'),
+      recentReport:exists('#profileReportRowHost'),
+      gradeLevel:exists('#profileGradeRowHost'),
+      sendHistory:exists('#profileSendLogRowHost'),
+      classMove:exists('#profileClassMoveRowHost, #profileClassMoveRow'),
+      recordPagination:exists('#profileRecordPager')&&
+        exists('#profileRecordPrevBtn')&&exists('#profileRecordNextBtn'),
+      reportPagination:exists('#profileReportPager')&&
+        exists('#profileReportPrevBtn')&&exists('#profileReportNextBtn'),
+      gradePagination:exists('#profileGradePager')&&
+        exists('#profileGradePrevBtn')&&exists('#profileGradeNextBtn'),
+      selectedStudentIndependentQuery:
+        typeof window.wmProfileLoadSelectedStudent==='function',
+      permissionRole:validRole
+    };
+
+    var send={
+      functions:groupVerified('sendCenter'),
+      panel:exists('#panel-sendLog'),
+      logTab:exists('#wmSendLogTab'),
+      settingTab:exists('#wmSendSettingTab'),
+      logView:exists('#wmSendLogView'),
+      settingView:exists('#wmSendSettingView'),
+      logTable:exists('#wmSendLogTable')&&exists('#wmSendLogTbody'),
+      settingTable:exists('#wmSendSettingTable')&&exists('#wmSendSettingTbody'),
+      logPager:exists('#wmSendLogPager'),
+      settingPager:exists('#wmSendSettingPager'),
+      studentNameId:exists('#wmSendStudentName')&&exists('#wmSendStudentId'),
+      reportType:exists('#wmSendReportType'),
+      cycleSchedule:exists('#wmSendCycle')&&exists('#wmSendTime'),
+      autoStatus:exists('#wmSendAutoStatus'),
+      saveStatus:exists('#wmSendSettingStatus'),
+      independentTabLoad:
+        typeof window.wmLoadSendLogs==='function' &&
+        typeof window.wmLoadSendSettings==='function',
+      permissionRole:validRole
+    };
+
+    var common={
+      registryFrozen:!!registry &&
+        Object.isFrozen(registry) &&
+        Object.isFrozen(registry.groups) &&
+        Object.isFrozen(registry.references) &&
+        Object.isFrozen(registry.rules),
+      registryWriteProtected:registryDescriptor.writable===false,
+      registryDeleteProtected:registryDescriptor.configurable===false,
+      exactFunctionReferences:Object.keys(refs).every(exactReference),
+      functionWriteDeleteProtected:Object.keys(refs).every(descriptorLocked),
+      rulesLocked:!!registry &&
+        Object.keys(registry.rules).every(function(ruleName){
+          return registry.rules[ruleName]===true;
+        })
+    };
+
+    var verified=allTrue(profile)&&allTrue(send)&&allTrue(common);
+
+    return Object.freeze({
+      version:LOCK_VERSION,
+      date:LOCK_DATE,
+      profileCenter:Object.freeze(profile),
+      sendCenter:Object.freeze(send),
+      common:Object.freeze(common),
+      verified:verified
+    });
+  }
+
+  function printStatus(){
+    var status=getStatus();
+
+    console.group('🔒 WORD MATE LMS PHASE 3 PROFILE / SEND CENTER LOCK STATUS');
+    console.log('LOCK VERSION : '+status.version);
+    console.log('LOCK DATE    : '+status.date);
+
+    [
+      ['프로필센터',status.profileCenter],
+      ['발송센터',status.sendCenter],
+      ['공통 보호',status.common]
+    ].forEach(function(group){
+      var rows={};
+      Object.keys(group[1]).forEach(function(key){
+        rows[key]=group[1][key]?'✅ LOCK':'❌ CHECK';
+      });
+      console.group(group[0]);
+      console.table(rows);
+      console.groupEnd();
+    });
+
+    console.log(
+      status.verified
+        ? '🔒 LMS PHASE 3 ALL LOCK VERIFIED'
+        : '❌ LMS PHASE 3 LOCK CHECK REQUIRED'
+    );
+    console.groupEnd();
+    return status;
+  }
+
+  Object.defineProperty(window,'wmGetLmsPhase3ProfileSendLockStatus',{
+    value:getStatus,
+    writable:false,
+    configurable:false
+  });
+
+  Object.defineProperty(window,'wmLogLmsPhase3ProfileSendLockStatus',{
+    value:printStatus,
+    writable:false,
+    configurable:false
+  });
+
+  function boot(){
+    setTimeout(printStatus,0);
+  }
+
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',boot,{once:true});
+  }else{
+    boot();
+  }
+})();
+/* 🔒 LMS PHASE 3 PROFILE / SEND CENTER LOCK V1 END */
+</script>
+
 </body>
 </html>
