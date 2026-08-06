@@ -10618,131 +10618,156 @@ document.addEventListener('keydown',function(e){
 
 
 <script>
-/* ============================================================
-   🔒 WM LMS OPERATION SCREEN LOCK V1 / 1차 핵심 운영 화면 LOCK 추가
-   대상: 대시보드 + 학생관리 + 7-1 교사관리 + 7-2 반관리
-   기존 LOCK은 유지하고 후반 작업 함수·UI·권한·최소조회 경로를 추가 보호합니다.
-   ============================================================ */
-(function wmApplyOperationScreenLockV1_(){
+/* ==========================================================
+   🔒 LMS PHASE 1 CORE OPERATIONS LOCK V1 / 수정 금지
+   대상: 대시보드 + 학생관리 + 교사관리 + 반관리
+   실제 함수 연결·덮어쓰기/삭제 차단·Registry 동결·DOM/CSS/권한/조회 검증
+   ========================================================== */
+(function wmInstallLmsPhase1CoreOperationsLock_(){
   'use strict';
-  var VERSION='WM_LMS_OPERATION_SCREEN_LOCK_V1.0';
-  var DATE='2026-08-06';
+  var LOCK_VERSION='LMS_PHASE1_CORE_OPERATIONS_LOCK_V1.0';
+  var LOCK_DATE='2026-08-06';
   var GROUPS=Object.freeze({
     dashboard:Object.freeze([
-      'ensureDashboardDefaultDates','setDashboardDateRange','getDashboardDateStart','getDashboardDateEnd',
-      'wmRestoreDashboardBrowserCache','wmSaveDashboardBrowserCache','wmInitDashboardFastFirstScreen',
-      'wmScheduleDashboardFirstLoad','renderDashboard','renderDashboardDetail','renderDashboardDefaultRows',
-      'buildDashboardState','wmApplyDashboardSalesCardByRole'
+      'renderDashboard','renderDashboardDetail','wmInitDashboardFastFirstScreen',
+      'wmScheduleDashboardFirstLoad','setDashboardTable','renderDashboardDefaultRows'
     ]),
     studentManagement:Object.freeze([
-      'loadStudents','getStudentManageFilteredRows','renderStudentManageRows','wmRenderStudentManageHeaderByRole_',
-      'wmSortStudentRowsLatestFirst','saveStudentLearningModeFromRow','saveAllStudentLearningModes',
-      'syncStudentTableScroll','prepareStudentCreateFactory','generateStudentAutoIdForCreate',
-      'saveStudentCreateToDB','wmCollectStudentRegisterPayload','wmPrepareStudentRegisterClassOptions',
-      'wmApplyStudentRegister','wmStudentRowsNeedDetails_','wmLoadStudentPageDetails_'
+      'loadStudents','renderStudentManageRows','getStudentManageFilteredRows',
+      'saveStudentLearningModeFromRow','saveAllStudentLearningModes','wmRenderStudentManageHeaderByRole_'
     ]),
     teacherManagement:Object.freeze([
-      'loadSettingCenterDB','renderSettingCenterRows','wmApplySettingCenterRoleUI','fillSettingSelectOptions',
-      'wmNormalizeSettingTeacherId','generateSettingTeacherId','checkSettingTeacherIdDuplicate',
-      'saveSettingTeacher','saveSettingTeacherStatus','openTeacherDetail','summarizeTeacherRows'
+      'loadSettingCenterDB','renderSettingCenterRows','wmApplySettingCenterRoleUI',
+      'generateSettingTeacherId','checkSettingTeacherIdDuplicate','saveSettingTeacher','saveSettingTeacherStatus'
     ]),
     classManagement:Object.freeze([
-      'wmNormalizeClassLookupKey','wmFindExistingClassRowByName','wmHandleSettingClassNameInput',
-      'wmValidateClassRequiredFields','wmRunClassSearch','wmResetClassSearch','wmSetClassQuickDate',
-      'wmGetFilteredSortedClassRows','wmChangeClassStatusFilter','wmMoveClassDbPage',
-      'saveSettingClassStatus','generateSettingClassId','saveSettingClass','openSettingClassStudentList',
-      'searchSettingClassStudents','toggleSettingClassStudent','renderSettingClassSelectedStudents',
-      'wmOpenSettingStudentGroup','wmRenderSettingStudentRows','removeSettingClassStudent','renderSettingClassDbRows'
-    ]),
-    commonPermissionPerformance:Object.freeze([
-      'applyRole','wmApplyRoleUI','wmApplyTeacherTopRoleAccess','wmFetchSettingApi','wmSettingApiUrl'
+      'renderSettingClassDbRows','wmRunClassSearch','searchSettingClassStudents',
+      'renderSettingClassSelectedStudents','saveSettingClass','openSettingClassStudentList'
     ])
   });
   var LABELS=Object.freeze({
-    dashboard:'대시보드',studentManagement:'학생관리',teacherManagement:'7-1 교사관리',
-    classManagement:'7-2 반관리',commonPermissionPerformance:'공통 권한·조회'
+    dashboard:'대시보드',studentManagement:'학생관리',
+    teacherManagement:'교사관리',classManagement:'반관리'
   });
+  var refs={};
+  var lockResults={};
 
   function protect(name){
     var fn=window[name];
-    if(typeof fn!=='function') return {name:name,locked:false,reason:'함수 없음'};
-    var before=Object.getOwnPropertyDescriptor(window,name);
+    if(typeof fn!=='function') return {locked:false,reason:'함수 없음'};
+    refs[name]=fn;
     try{
-      Object.defineProperty(window,name,{value:fn,writable:false,configurable:false,enumerable:before?before.enumerable:true});
+      Object.defineProperty(window,name,{value:fn,writable:false,configurable:false,enumerable:true});
     }catch(error){
-      return {name:name,locked:false,reason:String(error&&error.message||error)};
+      return {locked:false,reason:error&&error.message?error.message:'defineProperty 실패'};
     }
-    var descriptor=Object.getOwnPropertyDescriptor(window,name);
-    return {name:name,locked:!!descriptor&&descriptor.value===fn&&descriptor.writable===false&&descriptor.configurable===false,reason:''};
+    var d=Object.getOwnPropertyDescriptor(window,name)||{};
+    return {locked:d.value===fn&&d.writable===false&&d.configurable===false,reason:''};
   }
 
-  var functionResults={};
-  var moduleResults={};
   Object.keys(GROUPS).forEach(function(groupName){
-    var names=GROUPS[groupName];
-    var lockedCount=0;
-    names.forEach(function(name){
-      var result=protect(name);
-      functionResults[name]=result;
-      if(result.locked) lockedCount+=1;
-    });
-    moduleResults[groupName]=Object.freeze({
-      label:LABELS[groupName],locked:lockedCount===names.length,lockedCount:lockedCount,totalCount:names.length
-    });
+    GROUPS[groupName].forEach(function(name){ lockResults[name]=protect(name); });
   });
 
-  function verifyUi(){
-    var checks={
-      dashboardPanel:!!document.getElementById('panel-dashboard'),
-      studentPanel:!!document.getElementById('panel-students'),
-      settingPanel:!!document.getElementById('panel-classes'),
-      dashboardNoLegacyTable:!document.querySelector('#panel-dashboard .wm-table-wrap table'),
-      studentTable:!!document.querySelector('#panel-students table'),
-      settingClassTab:!!document.querySelector('[data-setting-db-tab="classes"]')||!!document.getElementById('settingClassDbBody'),
-      registryFrozen:Object.isFrozen(GROUPS)&&Object.keys(GROUPS).every(function(k){return Object.isFrozen(GROUPS[k]);})
+  var registryValue=Object.freeze({
+    version:LOCK_VERSION,date:LOCK_DATE,groups:GROUPS,
+    references:Object.freeze(Object.keys(refs).reduce(function(out,name){out[name]=refs[name];return out;},{}))
+  });
+  try{
+    Object.defineProperty(window,'WM_LMS_PHASE1_CORE_OPERATIONS_LOCK',{value:registryValue,writable:false,configurable:false});
+  }catch(ignoreRegistryInstall){}
+
+  function exists(selector){ return !!document.querySelector(selector); }
+  function styleMatches(selector,property,expected){
+    var el=document.querySelector(selector);
+    if(!el||!window.getComputedStyle) return false;
+    return String(window.getComputedStyle(el)[property]||'').toLowerCase()===String(expected).toLowerCase();
+  }
+  function descriptorLocked(name){
+    var d=Object.getOwnPropertyDescriptor(window,name)||{};
+    return d.value===refs[name]&&d.writable===false&&d.configurable===false;
+  }
+  function exactReference(name){
+    var reg=window.WM_LMS_PHASE1_CORE_OPERATIONS_LOCK;
+    return !!reg&&!!reg.references&&reg.references[name]===refs[name]&&window[name]===refs[name];
+  }
+  function groupFunctionsVerified(groupName){
+    return GROUPS[groupName].every(function(name){return !!lockResults[name]&&lockResults[name].locked&&descriptorLocked(name)&&exactReference(name);});
+  }
+
+  function getStatus(){
+    var reg=window.WM_LMS_PHASE1_CORE_OPERATIONS_LOCK;
+    var role=String((window.WM_AUTH_USER&&window.WM_AUTH_USER.role)||'').toUpperCase();
+    var validRole=!role||['SUPER_ADMIN','SPECIAL_ADMIN','SUB_LEADER','TEACHER'].indexOf(role)!==-1;
+    var dashboardSummary=document.getElementById('dashboardSummaryWrap');
+    var dashboardStatus={
+      functions:groupFunctionsVerified('dashboard'),
+      panel:exists('#panel-dashboard'),cards:exists('#panel-dashboard .wm-card-grid'),
+      dateSearch:exists('#panel-dashboard input[type="date"]'),
+      lowerTableDeletedOrHidden:!dashboardSummary||dashboardSummary.style.display==='none'||window.getComputedStyle(dashboardSummary).display==='none',
+      minimumFirstLoad:typeof window.wmInitDashboardFastFirstScreen==='function',
+      salesRoleControl:typeof window.wmApplyDashboardSalesCardByRole==='function',
+      roleValid:validRole
     };
-    checks.verified=Object.keys(checks).every(function(k){return k==='verified'||checks[k]===true;});
-    return Object.freeze(checks);
+    var studentStatus={
+      functions:groupFunctionsVerified('studentManagement'),
+      panel:exists('#panel-students'),table:exists('#studentManageTable, #studentManageTbody'),
+      fixedColumns:exists('#studentManageTable .wm-student-fixed, #studentManageTbody .wm-student-fixed'),
+      currentSessionHidden:!exists('#studentManageTable th[data-key="현재세션"], #studentManageTable [data-mode-key="현재세션"]'),
+      dates:document.documentElement.innerHTML.indexOf('학습시작일')!==-1&&document.documentElement.innerHTML.indexOf('학습종료일')!==-1,
+      parentInfo:document.documentElement.innerHTML.indexOf('학부모')!==-1,
+      recipientType:document.documentElement.innerHTML.indexOf('수신자구분')!==-1,
+      minimumLoad:typeof window.loadStudents==='function',roleValid:validRole
+    };
+    var teacherStatus={
+      functions:groupFunctionsVerified('teacherManagement'),
+      panel:exists('#panel-classes'),teacherTable:exists('#settingTeacherTbody, #wmSettingTeacherDbColumnTable'),
+      teacherIdInput:exists('#settingTeacherId'),searchOrLoad:typeof window.loadSettingCenterDB==='function',
+      roleValid:validRole
+    };
+    var classStatus={
+      functions:groupFunctionsVerified('classManagement'),
+      panel:exists('#panel-classes'),classTable:exists('#wmSettingClassDbColumnTable'),
+      fourFields:['반명','교사','학생구분','학생연결'].every(function(text){return document.documentElement.innerHTML.indexOf(text)!==-1;}),
+      multiSelect:exists('#settingClassStudentSearch, input[type="checkbox"]'),
+      studentList:typeof window.openSettingClassStudentList==='function',roleValid:validRole
+    };
+    function complete(obj){return Object.keys(obj).every(function(k){return obj[k]===true;});}
+    var registryDescriptor=Object.getOwnPropertyDescriptor(window,'WM_LMS_PHASE1_CORE_OPERATIONS_LOCK')||{};
+    var common={
+      registryFrozen:!!reg&&Object.isFrozen(reg)&&Object.isFrozen(reg.groups)&&Object.isFrozen(reg.references),
+      registryWriteProtected:registryDescriptor.writable===false,
+      registryDeleteProtected:registryDescriptor.configurable===false,
+      allFunctionReferences:Object.keys(refs).every(exactReference),
+      allFunctionDescriptors:Object.keys(refs).every(descriptorLocked)
+    };
+    var verified=complete(dashboardStatus)&&complete(studentStatus)&&complete(teacherStatus)&&complete(classStatus)&&complete(common);
+    return Object.freeze({version:LOCK_VERSION,date:LOCK_DATE,dashboard:Object.freeze(dashboardStatus),studentManagement:Object.freeze(studentStatus),teacherManagement:Object.freeze(teacherStatus),classManagement:Object.freeze(classStatus),common:Object.freeze(common),verified:verified});
   }
 
-  async function verifyServer(){
-    try{return await wmFetchSettingApi('operationScreenLockStatus',{});}
-    catch(error){return {allVerified:false,error:String(error&&error.message||error)};}
-  }
-
-  async function logStatus(){
-    var ui=verifyUi();
-    var server=await verifyServer();
-    var clientVerified=Object.keys(moduleResults).every(function(k){return moduleResults[k].locked;});
-    console.group('🔒 WORD MATE 1차 핵심 운영 화면 LOCK STATUS');
-    console.info('LOCK VERSION :',VERSION);
-    console.info('LOCK DATE    :',DATE);
-    var table={};
-    Object.keys(moduleResults).forEach(function(k){
-      var item=moduleResults[k];
-      table[item.label]=(item.locked?'✅ ':'❌ ')+item.lockedCount+'/'+item.totalCount;
+  function printStatus(){
+    var s=getStatus();
+    console.group('🔒 WORD MATE LMS PHASE 1 CORE OPERATIONS LOCK STATUS');
+    console.log('LOCK VERSION : '+s.version); console.log('LOCK DATE    : '+s.date);
+    [
+      ['dashboard',s.dashboard],['studentManagement',s.studentManagement],
+      ['teacherManagement',s.teacherManagement],['classManagement',s.classManagement],['common',s.common]
+    ].forEach(function(item){
+      var rows={}; Object.keys(item[1]).forEach(function(k){rows[k]=item[1][k]?'✅ LOCK':'❌ CHECK';});
+      console.group(LABELS[item[0]]||'공통 보호'); console.table(rows); console.groupEnd();
     });
-    console.table(table);
-    console.info(ui.verified?'✅ UI STRUCTURE VERIFIED':'❌ UI STRUCTURE CHECK REQUIRED',ui);
-    console.info(server&&server.allVerified===true?'✅ CODE.GS SERVER REGISTRY VERIFIED':'❌ CODE.GS SERVER CHECK REQUIRED',server);
-    var allVerified=clientVerified&&ui.verified&&server&&server.allVerified===true;
-    if(!clientVerified){
-      var failed={};
-      Object.keys(functionResults).forEach(function(name){if(!functionResults[name].locked)failed[name]=functionResults[name].reason||'LOCK 실패';});
-      console.table(failed);
-    }
-    console.info(allVerified?'🔒 1차 핵심 운영 화면 ALL LOCK VERIFIED':'❌ 1차 핵심 운영 화면 LOCK CHECK REQUIRED');
+    console.log(s.verified?'🔒 LMS PHASE 1 ALL LOCK VERIFIED':'❌ LMS PHASE 1 LOCK CHECK REQUIRED');
     console.groupEnd();
-    return {clientVerified:clientVerified,ui:ui,server:server,allVerified:allVerified};
+    return s;
   }
 
-  Object.defineProperty(window,'WM_LMS_OPERATION_SCREEN_LOCK_V1',{value:Object.freeze({
-    version:VERSION,date:DATE,groups:GROUPS,moduleResults:Object.freeze(moduleResults),
-    functionResults:Object.freeze(functionResults),verifyUi:verifyUi,verifyServer:verifyServer,log:logStatus
-  }),writable:false,configurable:false});
-  Object.defineProperty(window,'wmLogOperationScreenLockStatus',{value:logStatus,writable:false,configurable:false});
-  document.addEventListener('DOMContentLoaded',function(){setTimeout(logStatus,0);},{once:true});
+  Object.defineProperty(window,'wmGetLmsPhase1CoreOperationsLockStatus',{value:getStatus,writable:false,configurable:false});
+  Object.defineProperty(window,'wmLogLmsPhase1CoreOperationsLockStatus',{value:printStatus,writable:false,configurable:false});
+  function boot(){setTimeout(printStatus,0);}
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot,{once:true});
+  else boot();
 })();
+/* 🔒 LMS PHASE 1 CORE OPERATIONS LOCK V1 END */
 </script>
 
 </body>
