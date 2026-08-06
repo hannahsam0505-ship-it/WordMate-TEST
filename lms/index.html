@@ -3662,7 +3662,25 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       const host=document.getElementById('profileSendLogRowHost');
       if(host) host.innerHTML='<tr><td colspan="9">발송기록 조회 중입니다.</td></tr>';
       try{
-        const rows=await readSheetRows(['5-1.발송내역_DB','5-1.발송기록_DB','6.발송기록_DB','발송내역_DB','발송기록_DB']);
+        let rows=[];
+        if(WM_SEND_LOG_LOADED && Array.isArray(WM_SEND_LOG_ROWS)){
+          rows=WM_SEND_LOG_ROWS;
+        }else{
+          const response=await fetch(
+            WM_APPS_SCRIPT_URL+'?mode=sendCenterData&tab=log&ts='+Date.now()+wmLmsActorQuery(),
+            {method:'GET',cache:'no-store'}
+          );
+          const data=await response.json();
+          if(!response.ok || !data || data.success!==true){
+            throw new Error((data && (data.message || data.error)) || '발송내역 조회 실패');
+          }
+          WM_SEND_LOG_HEADERS=Array.isArray(data.logHeaders)
+            ? data.logHeaders.map(value=>String(value || '').trim()).filter(Boolean)
+            : WM_SEND_LOG_HEADERS;
+          WM_SEND_LOG_ROWS=normalizeRows(data.logRows || []);
+          WM_SEND_LOG_LOADED=true;
+          rows=WM_SEND_LOG_ROWS;
+        }
         const wanted=String(selectedId || '').trim().toUpperCase();
         const filtered=(rows || []).filter(row=>
           String(cellValue(row,headerAliases('학생ID')) || '').trim().toUpperCase()===wanted
@@ -3733,6 +3751,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
 
         setTableRowsByBoxTitle('1.',studentRows);
         wmProfileRenderClassMoveRows(studentRows);
+        const sendLogPromise=wmProfileLoadSendLogRows(selectedId);
 
         const recordParams=new URLSearchParams();
         recordParams.set('mode','records');
@@ -3766,7 +3785,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
 
         const reportRows=wmProfilePrepareReportRows(selectedId);
         const gradeRows=await wmProfilePrepareGradeRows(selectedId);
-        const sendLogRows=await wmProfileLoadSendLogRows(selectedId);
+        const sendLogRows=await sendLogPromise;
 
         setProfileSearchStatus(
           '선택 완료: '+selectedId+' · 학습기록 '+wmProfileRecordRows.length+
