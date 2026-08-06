@@ -11157,7 +11157,14 @@ document.addEventListener('keydown',function(e){
       recentReport:exists('#profileReportRowHost'),
       gradeLevel:exists('#profileGradeRowHost'),
       sendHistory:exists('#profileSendLogRowHost'),
-      classMove:exists('#profileClassMoveRowHost, #profileClassMoveRow'),
+      classMove:Array.prototype.some.call(
+        document.querySelectorAll('#panel-profile .wm-profile-section-title h3'),
+        function(title){
+          var box=title.closest('.wm-factory-box');
+          return /^6\./.test(String(title.textContent||'').trim()) &&
+            !!(box&&box.querySelector('tbody'));
+        }
+      ),
       recordPagination:exists('#profileRecordPager')&&
         exists('#profileRecordPrevBtn')&&exists('#profileRecordNextBtn'),
       reportPagination:exists('#profileReportPager')&&
