@@ -13702,22 +13702,10 @@ renderStart();
     window.wmdcSyncBottomDevTestControl = syncBottomFromTop;
   }
 
-  var WMDC_185_QA_LOCK_API = Object.freeze({
-    startSequence:startSequence,
-    stopAudio:stopAudio,
-    move:move,
-    decide:decide,
-    render:render,
-    boot:boot
-  });
-  Object.defineProperty(window,'WMDC_185_QA_LOCK_API',{
-    value:WMDC_185_QA_LOCK_API,writable:false,configurable:false
-  });
-
   if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded',WMDC_185_QA_LOCK_API.boot,{once:true});
+    document.addEventListener('DOMContentLoaded',boot,{once:true});
   }else{
-    WMDC_185_QA_LOCK_API.boot();
+    boot();
   }
 })();
 </script>
@@ -14304,7 +14292,6 @@ renderStart();
   var DATE='2026-08-07';
 
   var REGISTRY=Object.freeze({
-    FINAL_185:window.WMDC_185_QA_LOCK_API,
     LEVEL_CONTINUOUS:window.WMDC_LEVEL_QA_LOCK_API,
     STUDY_AUDIO:Object.freeze({
       playWordSegment:window.playWordSegment,
@@ -14331,10 +14318,7 @@ renderStart();
     var rows={
       registryFrozen:Object.isFrozen(r),
       registryProtected:descriptorLocked('WM_DEV_AUDIO_QA_FINAL_LOCK',REGISTRY),
-      final185ApiProtected:descriptorLocked('WMDC_185_QA_LOCK_API',REGISTRY.FINAL_185),
       levelApiProtected:descriptorLocked('WMDC_LEVEL_QA_LOCK_API',REGISTRY.LEVEL_CONTINUOUS),
-      final185Functions:Object.isFrozen(r.FINAL_185) &&
-        ['startSequence','stopAudio','move','decide','render','boot'].every(function(k){return typeof r.FINAL_185[k]==='function';}),
       levelFunctions:Object.isFrozen(r.LEVEL_CONTINUOUS) &&
         ['loadLevel','start','stop','move','render','fetchSet','levelSetIds','boot'].every(function(k){return typeof r.LEVEL_CONTINUOUS[k]==='function';}),
       studyAudioExact:r.STUDY_AUDIO.playWordSegment===window.playWordSegment &&
@@ -14342,6 +14326,10 @@ renderStart();
         r.STUDY_AUDIO.verifyOverride===window.wmVerifyWordAudioOverrideLock,
       override211:typeof window.wmVerifyWordAudioOverrideLock==='function' && window.wmVerifyWordAudioOverrideLock()===true,
       final185Dom:domExists(['wmdc-185qa-card','wmdc-185qa-play1','wmdc-185qa-play2','wmdc-185qa-play5','wmdc-185qa-pause','wmdc-185qa-resume','wmdc-185qa-stop','wmdc-185qa-prev','wmdc-185qa-next','wmdc-185qa-human-ok','wmdc-185qa-human-error']),
+      final185Controls:[1,2,5].every(function(n){
+        var el=document.getElementById('wmdc-185qa-play'+n);
+        return !!el && el.tagName==='BUTTON';
+      }),
       levelDom:domExists(['wmdc-levelqa-card','wmdc-levelqa-level','wmdc-levelqa-load','wmdc-levelqa-play1','wmdc-levelqa-play2','wmdc-levelqa-play5','wmdc-levelqa-pause','wmdc-levelqa-resume','wmdc-levelqa-stop','wmdc-levelqa-prev','wmdc-levelqa-next'])
     };
     rows.verified=Object.keys(rows).every(function(k){return k==='verified'||rows[k]===true;});
@@ -14356,13 +14344,12 @@ renderStart();
     console.table({
       'Registry 동결':s.registryFrozen,
       'Registry 덮어쓰기·삭제 차단':s.registryProtected,
-      '185개 검수 API 보호':s.final185ApiProtected,
       '레벨 이어듣기 API 보호':s.levelApiProtected,
-      '185개 실제 함수 참조':s.final185Functions,
       '레벨 실제 함수 참조':s.levelFunctions,
       'Study 실제 음원함수 연결':s.studyAudioExact,
       'Override 211개 검증':s.override211,
       '185개 DOM·버튼':s.final185Dom,
+      '185개 1·2·5회 제어':s.final185Controls,
       '레벨별 DOM·버튼':s.levelDom
     });
     console.log(s.verified ? '🔒 DEV AUDIO QA ALL LOCK VERIFIED' : '❌ DEV AUDIO QA LOCK CHECK REQUIRED');
