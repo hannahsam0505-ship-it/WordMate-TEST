@@ -1115,6 +1115,56 @@ WMDC_CURRENT_SET_RUN_AND_AUX_TESTS_V2 적용: 현재세트실행 상단 고정�
   #wmdc-root .wmdc-185qa-row{grid-template-columns:42px 100px minmax(110px,1fr) 70px;}
 }
 
+
+/* WMDC_LEVEL_ACTUAL_AUDIO_CONTINUOUS_QA_V1: 레벨별 실제 적용음원 이어듣기 */
+#wmdc-root .wmdc-levelqa-card{
+  margin-top:20px;border:2px solid #4f46e5;border-radius:16px;
+  background:#eef2ff;padding:18px;
+}
+#wmdc-root .wmdc-levelqa-title{font-size:20px;font-weight:900;color:#312e81;margin-bottom:6px;}
+#wmdc-root .wmdc-levelqa-note{font-size:13px;line-height:1.55;color:#475569;margin-bottom:12px;}
+#wmdc-root .wmdc-levelqa-controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;}
+#wmdc-root .wmdc-levelqa-select{
+  min-height:40px;border:1px solid #a5b4fc;border-radius:10px;background:#fff;
+  padding:8px 12px;font-size:13px;font-weight:900;
+}
+#wmdc-root .wmdc-levelqa-btn{
+  border:none;border-radius:10px;background:#3730a3;color:#fff;
+  font-size:13px;font-weight:900;padding:10px 13px;cursor:pointer;
+}
+#wmdc-root .wmdc-levelqa-btn.gray{background:#475569;}
+#wmdc-root .wmdc-levelqa-btn.stop{background:#b91c1c;}
+#wmdc-root .wmdc-levelqa-btn:disabled{opacity:.5;cursor:not-allowed;}
+#wmdc-root .wmdc-levelqa-status{
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:12px;
+}
+#wmdc-root .wmdc-levelqa-stat{
+  background:#fff;border:1px solid #c7d2fe;border-radius:10px;
+  padding:10px;font-size:13px;font-weight:800;color:#334155;
+}
+#wmdc-root .wmdc-levelqa-now{
+  background:#fff;border:2px solid #a5b4fc;border-radius:14px;padding:16px;margin-bottom:12px;
+}
+#wmdc-root .wmdc-levelqa-word{font-size:30px;font-weight:900;color:#111827;margin:4px 0 8px;}
+#wmdc-root .wmdc-levelqa-meta{font-size:13px;color:#475569;word-break:break-all;line-height:1.55;}
+#wmdc-root .wmdc-levelqa-source{
+  display:inline-flex;border-radius:999px;padding:4px 8px;margin-left:6px;
+  background:#e0e7ff;color:#3730a3;font-size:11px;font-weight:900;
+}
+#wmdc-root .wmdc-levelqa-list{
+  max-height:300px;overflow:auto;background:#fff;border:1px solid #c7d2fe;border-radius:12px;
+}
+#wmdc-root .wmdc-levelqa-row{
+  display:grid;grid-template-columns:58px 110px minmax(130px,1fr) 92px;
+  gap:8px;align-items:center;padding:8px 10px;border-bottom:1px solid #e5e7eb;font-size:12px;
+}
+#wmdc-root .wmdc-levelqa-row.current{background:#eef2ff;font-weight:900;}
+#wmdc-root .wmdc-levelqa-row:last-child{border-bottom:none;}
+@media(max-width:700px){
+  #wmdc-root .wmdc-levelqa-status{grid-template-columns:repeat(2,minmax(0,1fr));}
+  #wmdc-root .wmdc-levelqa-row{grid-template-columns:48px 96px minmax(110px,1fr) 80px;}
+}
+
 /* WMDC_SET_NAV_V7 + WMDC_TOP_DOCKING_MINI_BAR_V5: 현재세트 접두어 13px / 세트번호 26px / 로딩 32px 유지 / 상단바 세로·가로 여백 축소 / DB·음원·LOCK 로직 무변경 */
 #wmdc-root .wmdc-set-nav{
   display:flex;
@@ -3249,6 +3299,54 @@ window.addEventListener('load',function wmApplyDevActualFunctionLock_(){
         </div>
       </div>
       <div class="wmdc-185qa-list" id="wmdc-185qa-list"></div>
+    </div>
+
+
+    <!-- WMDC_LEVEL_ACTUAL_AUDIO_CONTINUOUS_QA_V1
+      레벨 단위로 모든 Set을 순서대로 불러와 학생에게 실제 적용되는 음원을 이어듣습니다.
+      - override 단어: 독립 MP3 전체를 끝까지 재생
+      - 일반 단어: 해당 Set의 실제 세트 음원 + DB Start/End 구간 재생
+      - 한 Set 종료 후 다음 Set으로 자동 진행하며 레벨 끝까지 끊지 않습니다.
+      - Study/DB 저장값을 수정하지 않는 검수 전용 기능입니다.
+    -->
+    <div class="wmdc-levelqa-card" id="wmdc-levelqa-card">
+      <div class="wmdc-levelqa-title">레벨별 실제 적용음원 이어듣기</div>
+      <div class="wmdc-levelqa-note">
+        선택한 레벨의 전체 세트를 순서대로 연결합니다. 수정 단어는 독립 MP3, 나머지는 실제 세트 음원의 Start/End 구간을 재생하므로 학생이 듣는 기준과 같습니다.
+      </div>
+      <div class="wmdc-levelqa-controls">
+        <select class="wmdc-levelqa-select" id="wmdc-levelqa-level">
+          <option value="3">Level 3</option><option value="4">Level 4</option>
+          <option value="5">Level 5</option><option value="6">Level 6</option>
+          <option value="7">Level 7</option><option value="8">Level 8</option>
+          <option value="9">Level 9</option><option value="10">Level 10</option>
+          <option value="11">Level 11</option><option value="12">Level 12</option>
+          <option value="13">Level 13</option>
+        </select>
+        <button type="button" class="wmdc-levelqa-btn" id="wmdc-levelqa-load">레벨 목록 불러오기</button>
+        <button type="button" class="wmdc-levelqa-btn" id="wmdc-levelqa-play1">1회 이어듣기</button>
+        <button type="button" class="wmdc-levelqa-btn" id="wmdc-levelqa-play2">2회 이어듣기</button>
+        <button type="button" class="wmdc-levelqa-btn" id="wmdc-levelqa-play5">5회 이어듣기</button>
+        <button type="button" class="wmdc-levelqa-btn gray" id="wmdc-levelqa-pause">일시정지</button>
+        <button type="button" class="wmdc-levelqa-btn gray" id="wmdc-levelqa-resume">계속</button>
+        <button type="button" class="wmdc-levelqa-btn stop" id="wmdc-levelqa-stop">정지</button>
+        <button type="button" class="wmdc-levelqa-btn gray" id="wmdc-levelqa-prev">이전</button>
+        <button type="button" class="wmdc-levelqa-btn gray" id="wmdc-levelqa-next">다음</button>
+      </div>
+      <div class="wmdc-levelqa-status">
+        <div class="wmdc-levelqa-stat" id="wmdc-levelqa-loadstate">목록: 미불러옴</div>
+        <div class="wmdc-levelqa-stat" id="wmdc-levelqa-total">대상: 0단어</div>
+        <div class="wmdc-levelqa-stat" id="wmdc-levelqa-progress">진행: 0 / 0</div>
+        <div class="wmdc-levelqa-stat" id="wmdc-levelqa-setprogress">세트: -</div>
+      </div>
+      <div class="wmdc-levelqa-now">
+        <div class="wmdc-levelqa-meta" id="wmdc-levelqa-index">현재: -</div>
+        <div class="wmdc-levelqa-word" id="wmdc-levelqa-word">대기</div>
+        <div class="wmdc-levelqa-meta" id="wmdc-levelqa-meta">Set_ID: -</div>
+        <div class="wmdc-levelqa-meta" id="wmdc-levelqa-repeat">재생: 대기</div>
+        <div class="wmdc-levelqa-meta" id="wmdc-levelqa-url">실제 적용 음원: -</div>
+      </div>
+      <div class="wmdc-levelqa-list" id="wmdc-levelqa-list"></div>
     </div>
 
     <!-- WM_DEVLOG_TOGGLE_LOCK_V1 -->
@@ -13883,4 +13981,290 @@ renderStart();
   }
 })();
 </script>
+
+
+<script>
+/* WMDC_LEVEL_ACTUAL_AUDIO_CONTINUOUS_QA_V1
+   실제 적용음원 판정:
+   1) wmGetWordAudioOverrideUrl(Set_ID, word)가 있으면 독립 MP3 전체 재생
+   2) 없으면 getSetData 응답의 Audio_URL과 해당 단어 Start/End 재생
+   레벨의 마지막 세트까지 자동 진행하며 Study 상태/DB는 변경하지 않습니다.
+*/
+(function(){
+  'use strict';
+
+  var state = {
+    level:3, rows:[], sets:[], index:0, repeatTarget:1, repeatDone:0,
+    running:false, paused:false, loading:false, audio:null, segmentTimer:null
+  };
+
+  function byId(id){ return document.getElementById(id); }
+  function esc(v){
+    return String(v == null ? '' : v)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+
+  function levelSetIds(level){
+    var ids = [];
+    var maxPart = typeof getMaxPart === 'function' ? getMaxPart(level) : (level >= 10 ? 5 : (level >= 7 ? 4 : 3));
+    for(var part=1; part<=maxPart; part++){
+      var maxSet = typeof getMaxSet === 'function' ? getMaxSet(level, part) : 10;
+      for(var setNo=1; setNo<=maxSet; setNo++){
+        ids.push('WM'+level+'-'+part+'-'+setNo);
+      }
+    }
+    return ids;
+  }
+
+  function audioUrlFromData(data){
+    var raw = data && data.audio && (data.audio.Audio_URL || data.audio.audio_url);
+    return typeof fixDriveAudioUrl === 'function' ? fixDriveAudioUrl(raw) : String(raw || '');
+  }
+
+  function normalizeWordRow(raw){
+    return typeof normalizeDbWord === 'function' ? normalizeDbWord(raw) : raw;
+  }
+
+  async function fetchSet(setId){
+    var data = (typeof wmReadStudySetDataCache === 'function' && wmReadStudySetDataCache(setId))
+      || await wmFetchStudySetData(setId);
+    if(!data || !data.success || !Array.isArray(data.words)){
+      throw new Error((data && data.message) || (setId+' DB 응답 오류'));
+    }
+    var audioUrl = audioUrlFromData(data);
+    if(!audioUrl) throw new Error(setId+' Audio_URL 없음');
+
+    var words = data.words.map(normalizeWordRow).filter(function(w){ return w && w.word; });
+    return words.map(function(word, idx){
+      var overrideUrl = typeof wmGetWordAudioOverrideUrl === 'function'
+        ? wmGetWordAudioOverrideUrl(setId, word.word)
+        : '';
+      return {
+        setId:setId,
+        word:String(word.word || ''),
+        start:Number(word.start),
+        end:Number(word.end),
+        source:overrideUrl ? '수정 독립MP3' : '세트음원 구간',
+        url:overrideUrl || audioUrl,
+        fullFile:!!overrideUrl,
+        wordNo:idx + 1
+      };
+    });
+  }
+
+  async function loadLevel(){
+    stop();
+    state.loading = true;
+    state.rows = [];
+    state.sets = [];
+    state.index = 0;
+    state.level = Number((byId('wmdc-levelqa-level') || {}).value || 3);
+    var ids = levelSetIds(state.level);
+    setText('wmdc-levelqa-loadstate','목록: 0 / '+ids.length+'세트');
+    setText('wmdc-levelqa-total','대상: 불러오는 중');
+
+    try{
+      for(var i=0; i<ids.length; i++){
+        var setRows = await fetchSet(ids[i]);
+        state.sets.push({setId:ids[i], count:setRows.length});
+        Array.prototype.push.apply(state.rows,setRows);
+        setText('wmdc-levelqa-loadstate','목록: '+(i+1)+' / '+ids.length+'세트');
+        setText('wmdc-levelqa-total','대상: '+state.rows.length+'단어');
+      }
+      state.loading = false;
+      setText('wmdc-levelqa-loadstate','목록: Level '+state.level+' 완료');
+      render();
+    }catch(err){
+      state.loading = false;
+      setText('wmdc-levelqa-loadstate','불러오기 오류: '+(err && err.message ? err.message : String(err)));
+      render();
+    }
+  }
+
+  function setText(id, value){ var el=byId(id); if(el) el.textContent=value; }
+
+  function currentSetPosition(){
+    var row = state.rows[state.index];
+    if(!row) return {order:0,total:state.sets.length};
+    var order = 0;
+    for(var i=0;i<state.sets.length;i++){
+      if(state.sets[i].setId === row.setId){ order=i+1; break; }
+    }
+    return {order:order,total:state.sets.length};
+  }
+
+  function renderList(){
+    var box=byId('wmdc-levelqa-list');
+    if(!box) return;
+    var from=Math.max(0,state.index-30);
+    var to=Math.min(state.rows.length,state.index+31);
+    box.innerHTML=state.rows.slice(from,to).map(function(row,local){
+      var idx=from+local;
+      return '<div class="wmdc-levelqa-row'+(idx===state.index?' current':'')+'" data-wmdc-levelqa-row="'+idx+'">'
+        +'<span>'+(idx+1)+'</span><span>'+esc(row.setId)+'</span>'
+        +'<span>'+esc(row.word)+'</span><span>'+esc(row.source)+'</span></div>';
+    }).join('');
+    var current=box.querySelector('.current');
+    if(current&&current.scrollIntoView) current.scrollIntoView({block:'nearest'});
+  }
+
+  function render(){
+    var row=state.rows[state.index]||{};
+    var sp=currentSetPosition();
+    setText('wmdc-levelqa-total','대상: '+state.rows.length+'단어');
+    setText('wmdc-levelqa-progress','진행: '+(state.rows.length ? state.index+1 : 0)+' / '+state.rows.length);
+    setText('wmdc-levelqa-setprogress','세트: '+sp.order+' / '+sp.total);
+    setText('wmdc-levelqa-index',state.rows.length ? '현재: '+(state.index+1)+' / '+state.rows.length : '현재: -');
+    setText('wmdc-levelqa-word',row.word||'대기');
+    var sourceHtml = row.source ? ' <span class="wmdc-levelqa-source">'+esc(row.source)+'</span>' : '';
+    var meta=byId('wmdc-levelqa-meta');
+    if(meta) meta.innerHTML='Set_ID: '+esc(row.setId||'-')+' · 단어 '+(row.wordNo||'-')+sourceHtml;
+    setText('wmdc-levelqa-repeat',state.running
+      ? '재생: '+Math.min(state.repeatDone+1,state.repeatTarget)+' / '+state.repeatTarget+(state.paused?' · 일시정지':'')
+      : '재생: 대기');
+    setText('wmdc-levelqa-url','실제 적용 음원: '+(row.url||'-'));
+    renderList();
+  }
+
+  function clearSegmentTimer(){
+    if(state.segmentTimer){ clearInterval(state.segmentTimer); state.segmentTimer=null; }
+  }
+
+  function stop(){
+    state.running=false; state.paused=false; state.repeatDone=0;
+    clearSegmentTimer();
+    if(state.audio){
+      try{ state.audio.onended=null; state.audio.onerror=null; state.audio.pause(); state.audio.currentTime=0; }catch(_){}
+    }
+    state.audio=null;
+    render();
+  }
+
+  function finishOne(){
+    if(!state.running) return;
+    state.repeatDone++;
+    if(state.repeatDone < state.repeatTarget){
+      render();
+      playCurrentRound();
+      return;
+    }
+    state.repeatDone=0;
+    if(state.index >= state.rows.length-1){
+      state.running=false; state.audio=null; render(); return;
+    }
+    state.index++;
+    render();
+    playCurrentRound();
+  }
+
+  function playCurrentRound(){
+    var row=state.rows[state.index];
+    if(!state.running || !row || !row.url) return;
+
+    clearSegmentTimer();
+    var audio=new Audio(row.url);
+    state.audio=audio;
+    audio.preload='auto';
+    audio.playbackRate=1;
+
+    audio.onerror=function(){
+      state.running=false; state.audio=null; clearSegmentTimer();
+      setText('wmdc-levelqa-repeat','재생오류: '+row.setId+' / '+row.word);
+    };
+
+    if(row.fullFile){
+      audio.onended=finishOne;
+    }else{
+      audio.onloadedmetadata=function(){
+        if(!Number.isFinite(row.start)||!Number.isFinite(row.end)||row.end<=row.start){
+          state.running=false;
+          setText('wmdc-levelqa-repeat','구간오류: '+row.setId+' / '+row.word);
+          return;
+        }
+        try{ audio.currentTime=row.start; }catch(_){}
+      };
+      audio.ontimeupdate=function(){
+        if(!state.running||state.paused) return;
+        if(Number.isFinite(row.end) && audio.currentTime >= row.end){
+          audio.pause();
+          audio.ontimeupdate=null;
+          finishOne();
+        }
+      };
+      audio.onended=function(){
+        if(state.running) finishOne();
+      };
+    }
+
+    render();
+    var p=audio.play();
+    if(p&&typeof p.catch==='function'){
+      p.catch(function(){
+        state.running=false; state.audio=null;
+        setText('wmdc-levelqa-repeat','브라우저 재생 차단/오류 - 버튼을 다시 눌러주세요.');
+      });
+    }
+  }
+
+  function start(repeat){
+    if(!state.rows.length){
+      setText('wmdc-levelqa-loadstate','먼저 레벨 목록을 불러오세요.');
+      return;
+    }
+    stop();
+    state.repeatTarget=repeat; state.repeatDone=0; state.running=true; state.paused=false;
+    render(); playCurrentRound();
+  }
+
+  function move(delta){
+    stop();
+    state.index=Math.max(0,Math.min(state.rows.length-1,state.index+delta));
+    render();
+  }
+
+  function boot(){
+    var currentParts = typeof getSetParts === 'function' ? getSetParts(currentSetId) : null;
+    var select=byId('wmdc-levelqa-level');
+    if(select && currentParts) select.value=String(currentParts.level);
+
+    var binds=[
+      ['wmdc-levelqa-load',loadLevel],
+      ['wmdc-levelqa-play1',function(){start(1);}],
+      ['wmdc-levelqa-play2',function(){start(2);}],
+      ['wmdc-levelqa-play5',function(){start(5);}],
+      ['wmdc-levelqa-stop',stop],
+      ['wmdc-levelqa-prev',function(){move(-1);}],
+      ['wmdc-levelqa-next',function(){move(1);}]
+    ];
+    binds.forEach(function(pair){var el=byId(pair[0]);if(el)el.addEventListener('click',pair[1]);});
+
+    var pause=byId('wmdc-levelqa-pause');
+    if(pause) pause.addEventListener('click',function(){
+      if(state.audio&&state.running&&!state.audio.paused){
+        state.audio.pause();state.paused=true;render();
+      }
+    });
+    var resume=byId('wmdc-levelqa-resume');
+    if(resume) resume.addEventListener('click',function(){
+      if(state.audio&&state.running&&state.paused){
+        state.paused=false;render();
+        var p=state.audio.play();if(p&&typeof p.catch==='function')p.catch(function(){});
+      }
+    });
+    var list=byId('wmdc-levelqa-list');
+    if(list) list.addEventListener('click',function(e){
+      var row=e.target.closest('[data-wmdc-levelqa-row]');
+      if(!row)return;
+      stop();state.index=Number(row.getAttribute('data-wmdc-levelqa-row'))||0;render();
+    });
+    render();
+  }
+
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',boot,{once:true});
+  }else{boot();}
+})();
+</script>
+
 
