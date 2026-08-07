@@ -1069,6 +1069,52 @@ WMDC_CURRENT_SET_RUN_AND_AUX_TESTS_V2 적용: 현재세트실행 상단 고정�
 #wmdc-root .wmdc-qa-wave{width:120px;height:34px;border:1px solid #cbd5e1;border-radius:6px;background:#fff;}
 #wmdc-root .wmdc-audio-qa-table th,#wmdc-root .wmdc-audio-qa-table td{vertical-align:top;}
 
+
+/* WMDC_185_AUDIO_FINAL_QA_V1: 185개 수정음원 전용 이어듣기 최종검수 */
+#wmdc-root .wmdc-185qa-card{
+  margin-top:20px;
+  border:2px solid #0f766e;
+  border-radius:16px;
+  background:#f0fdfa;
+  padding:18px;
+}
+#wmdc-root .wmdc-185qa-title{font-size:20px;font-weight:900;color:#134e4a;margin-bottom:6px;}
+#wmdc-root .wmdc-185qa-note{font-size:13px;line-height:1.55;color:#475569;margin-bottom:12px;}
+#wmdc-root .wmdc-185qa-tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;}
+#wmdc-root .wmdc-185qa-btn{
+  border:none;border-radius:10px;background:#0f172a;color:#fff;
+  font-size:13px;font-weight:900;padding:10px 13px;cursor:pointer;
+}
+#wmdc-root .wmdc-185qa-btn.primary{background:#0f766e;}
+#wmdc-root .wmdc-185qa-btn.stop{background:#b91c1c;}
+#wmdc-root .wmdc-185qa-btn.ok{background:#15803d;}
+#wmdc-root .wmdc-185qa-btn.error{background:#dc2626;}
+#wmdc-root .wmdc-185qa-btn:disabled{opacity:.5;cursor:not-allowed;}
+#wmdc-root .wmdc-185qa-status{
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:12px;
+}
+#wmdc-root .wmdc-185qa-stat{background:#fff;border:1px solid #99f6e4;border-radius:10px;padding:10px;font-size:13px;font-weight:800;color:#334155;}
+#wmdc-root .wmdc-185qa-now{
+  background:#fff;border:2px solid #5eead4;border-radius:14px;padding:16px;margin-bottom:12px;
+}
+#wmdc-root .wmdc-185qa-word{font-size:30px;font-weight:900;color:#111827;margin:4px 0 8px;}
+#wmdc-root .wmdc-185qa-meta{font-size:13px;color:#475569;word-break:break-all;line-height:1.55;}
+#wmdc-root .wmdc-185qa-human{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
+#wmdc-root .wmdc-185qa-list{
+  max-height:300px;overflow:auto;background:#fff;border:1px solid #ccfbf1;border-radius:12px;
+}
+#wmdc-root .wmdc-185qa-row{
+  display:grid;grid-template-columns:52px 115px minmax(130px,1fr) 80px;
+  gap:8px;align-items:center;padding:8px 10px;border-bottom:1px solid #e5e7eb;
+  font-size:12px;
+}
+#wmdc-root .wmdc-185qa-row.current{background:#ecfeff;font-weight:900;}
+#wmdc-root .wmdc-185qa-row:last-child{border-bottom:none;}
+@media(max-width:700px){
+  #wmdc-root .wmdc-185qa-status{grid-template-columns:repeat(2,minmax(0,1fr));}
+  #wmdc-root .wmdc-185qa-row{grid-template-columns:42px 100px minmax(110px,1fr) 70px;}
+}
+
 /* WMDC_SET_NAV_V7 + WMDC_TOP_DOCKING_MINI_BAR_V5: 현재세트 접두어 13px / 세트번호 26px / 로딩 32px 유지 / 상단바 세로·가로 여백 축소 / DB·음원·LOCK 로직 무변경 */
 #wmdc-root .wmdc-set-nav{
   display:flex;
@@ -3055,6 +3101,14 @@ window.addEventListener('load',function wmApplyDevActualFunctionLock_(){
 
 
 
+    <!--
+      WMDC_AUDIO_QA_FUTURE_USE_NOTE_V1
+      [보존 목적]
+      - 전체 음원 자동검수 기능은 삭제하지 않고 향후 문제 음원·신규/수정 음원 발생 시 재사용합니다.
+      - 현재 7,300여 전체 음원에 검수완료 판정을 강제 적용하지 않습니다.
+      - 기능: 실제 적용 음원 확인 + 문자 비교 + 파형 검사 + 5회 동일성 + 사람 정상/오류 판정.
+      - 현재 운영 검수의 우선 대상은 아래 별도 "185개 수정음원 최종검수" 패널입니다.
+    -->
     <div class="dev-card">
       <div class="dev-section-title">음원 자동검수 패널 <span class="wmdc-course-badge" data-wmdc-course-label>WMB 9-1-1</span></div>
       <div class="wmdc-audio-qa-topline">
@@ -3151,6 +3205,50 @@ window.addEventListener('load',function wmApplyDevActualFunctionLock_(){
         </div>
       </div>
       <!-- WMDC_BOTTOM_DEV_TEST_CONTROL_V1 END -->
+    </div>
+
+
+    <!-- WMDC_185_AUDIO_FINAL_QA_V1
+      이번 수정분 185개만 검수합니다.
+      1회/2회/5회 이어듣기는 각 독립 MP3를 "파일 끝까지" 재생한 뒤 다음 단어로 이동합니다.
+      특히 발음 종료 뒤 늦게 발생하는 잡음까지 사람이 들을 수 있도록 재생 중간에 강제 cut 하지 않습니다.
+      상단 전체 자동검수 패널과 분리되어 기존 전체 음원 판정에는 영향을 주지 않습니다.
+    -->
+    <div class="wmdc-185qa-card" id="wmdc-185qa-card">
+      <div class="wmdc-185qa-title">185개 수정음원 최종검수</div>
+      <div class="wmdc-185qa-note">
+        이번 수정분 185개만 실제 적용 MP3의 끝까지 이어듣습니다. 2회 듣기를 기본 전수검수로 권장하며,
+        1회는 빠른 재확인, 5회는 잡음·반복 이상 의심 단어 정밀확인용입니다.
+      </div>
+      <div class="wmdc-185qa-tools">
+        <button type="button" class="wmdc-185qa-btn primary" id="wmdc-185qa-play1">1회 이어듣기</button>
+        <button type="button" class="wmdc-185qa-btn primary" id="wmdc-185qa-play2">2회 이어듣기</button>
+        <button type="button" class="wmdc-185qa-btn primary" id="wmdc-185qa-play5">5회 이어듣기</button>
+        <button type="button" class="wmdc-185qa-btn" id="wmdc-185qa-pause">일시정지</button>
+        <button type="button" class="wmdc-185qa-btn" id="wmdc-185qa-resume">계속</button>
+        <button type="button" class="wmdc-185qa-btn stop" id="wmdc-185qa-stop">정지</button>
+        <button type="button" class="wmdc-185qa-btn" id="wmdc-185qa-prev">이전</button>
+        <button type="button" class="wmdc-185qa-btn" id="wmdc-185qa-next">다음</button>
+      </div>
+      <div class="wmdc-185qa-status">
+        <div class="wmdc-185qa-stat" id="wmdc-185qa-total">대상: 185</div>
+        <div class="wmdc-185qa-stat" id="wmdc-185qa-progress">진행: 0 / 185</div>
+        <div class="wmdc-185qa-stat" id="wmdc-185qa-okcount">정상: 0</div>
+        <div class="wmdc-185qa-stat" id="wmdc-185qa-errorcount">오류: 0</div>
+      </div>
+      <div class="wmdc-185qa-now">
+        <div class="wmdc-185qa-meta" id="wmdc-185qa-index">현재: 1 / 185</div>
+        <div class="wmdc-185qa-word" id="wmdc-185qa-word">대기</div>
+        <div class="wmdc-185qa-meta" id="wmdc-185qa-set">Set_ID: -</div>
+        <div class="wmdc-185qa-meta" id="wmdc-185qa-repeat">재생: 대기</div>
+        <div class="wmdc-185qa-meta" id="wmdc-185qa-url">실제 적용 MP3: -</div>
+        <div class="wmdc-185qa-human">
+          <button type="button" class="wmdc-185qa-btn ok" id="wmdc-185qa-human-ok">사람판정 정상</button>
+          <button type="button" class="wmdc-185qa-btn error" id="wmdc-185qa-human-error">사람판정 오류</button>
+          <button type="button" class="wmdc-185qa-btn" id="wmdc-185qa-replay">현재단어 다시듣기</button>
+        </div>
+      </div>
+      <div class="wmdc-185qa-list" id="wmdc-185qa-list"></div>
     </div>
 
     <!-- WM_DEVLOG_TOGGLE_LOCK_V1 -->
@@ -13513,3 +13611,276 @@ renderStart();
   }
 })();
 </script>
+
+
+<script>
+/* WMDC_185_AUDIO_FINAL_QA_V1
+   - WM_WORD_AUDIO_OVERRIDE_LOCKED_KEYS의 이번 추가분 185개만 대상으로 합니다.
+   - 현재 파일은 총 211 LOCK이며, 기존 선행 26개 + 이번 수정 185개 구조입니다.
+   - 실제 Study에 적용되는 WM_WORD_AUDIO_OVERRIDE_URLS의 독립 MP3 URL을 그대로 사용합니다.
+   - 이어듣기는 MP3 ended 이벤트를 기다리므로 발음 뒤 tail/잡음까지 파일 끝까지 청취합니다.
+   - 상단 전체 음원 자동검수는 향후 문제/신규 음원용으로 보존하며 이 모듈과 판정을 섞지 않습니다.
+*/
+(function(){
+  'use strict';
+
+  var LEGACY_LOCK_COUNT = 26;
+  var EXPECTED_FINAL_QA_COUNT = 185;
+  var keys = (typeof WM_WORD_AUDIO_OVERRIDE_LOCKED_KEYS !== 'undefined')
+    ? Array.prototype.slice.call(WM_WORD_AUDIO_OVERRIDE_LOCKED_KEYS, LEGACY_LOCK_COUNT)
+    : [];
+  var rows = keys.map(function(key, idx){
+    var splitAt = key.indexOf('|');
+    var setId = splitAt >= 0 ? key.slice(0, splitAt) : '';
+    var word = splitAt >= 0 ? key.slice(splitAt + 1) : key;
+    var url = (typeof wmGetWordAudioOverrideUrl === 'function')
+      ? wmGetWordAudioOverrideUrl(setId, word)
+      : ((typeof WM_WORD_AUDIO_OVERRIDE_URLS !== 'undefined' && WM_WORD_AUDIO_OVERRIDE_URLS[key]) || '');
+    return {index:idx, key:key, setId:setId, word:word, url:url};
+  });
+
+  var state = {
+    index:0,
+    repeatTarget:2,
+    repeatDone:0,
+    running:false,
+    paused:false,
+    audio:null,
+    decisions:{}
+  };
+
+  var storageKey = 'WMDC_185_AUDIO_FINAL_QA_DECISIONS_V1';
+
+  function byId(id){ return document.getElementById(id); }
+  function esc(v){
+    return String(v == null ? '' : v)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+
+  function loadDecisions(){
+    try{
+      var saved = JSON.parse(localStorage.getItem(storageKey) || '{}');
+      state.decisions = saved && typeof saved === 'object' ? saved : {};
+    }catch(_){
+      state.decisions = {};
+    }
+  }
+
+  function saveDecisions(){
+    try{ localStorage.setItem(storageKey, JSON.stringify(state.decisions)); }catch(_){}
+  }
+
+  function counts(){
+    var ok = 0, error = 0;
+    rows.forEach(function(row){
+      if(state.decisions[row.key] === '정상') ok++;
+      if(state.decisions[row.key] === '오류') error++;
+    });
+    return {ok:ok,error:error,done:ok+error};
+  }
+
+  function renderList(){
+    var box = byId('wmdc-185qa-list');
+    if(!box) return;
+    box.innerHTML = rows.map(function(row, idx){
+      var decision = state.decisions[row.key] || '미판정';
+      return '<div class="wmdc-185qa-row'+(idx===state.index?' current':'')+'" data-wmdc-185qa-row="'+idx+'">'
+        +'<span>'+(idx+1)+'</span>'
+        +'<span>'+esc(row.setId)+'</span>'
+        +'<span>'+esc(row.word)+'</span>'
+        +'<span>'+esc(decision)+'</span>'
+        +'</div>';
+    }).join('');
+    var current = box.querySelector('.current');
+    if(current && current.scrollIntoView){
+      current.scrollIntoView({block:'nearest'});
+    }
+  }
+
+  function render(){
+    var row = rows[state.index] || {};
+    var c = counts();
+    if(byId('wmdc-185qa-total')) byId('wmdc-185qa-total').textContent = '대상: '+rows.length;
+    if(byId('wmdc-185qa-progress')) byId('wmdc-185qa-progress').textContent = '판정: '+c.done+' / '+rows.length;
+    if(byId('wmdc-185qa-okcount')) byId('wmdc-185qa-okcount').textContent = '정상: '+c.ok;
+    if(byId('wmdc-185qa-errorcount')) byId('wmdc-185qa-errorcount').textContent = '오류: '+c.error;
+    if(byId('wmdc-185qa-index')) byId('wmdc-185qa-index').textContent = '현재: '+(state.index+1)+' / '+rows.length+' · 판정: '+(state.decisions[row.key] || '미판정');
+    if(byId('wmdc-185qa-word')) byId('wmdc-185qa-word').textContent = row.word || '대기';
+    if(byId('wmdc-185qa-set')) byId('wmdc-185qa-set').textContent = 'Set_ID: '+(row.setId || '-');
+    if(byId('wmdc-185qa-repeat')){
+      byId('wmdc-185qa-repeat').textContent = state.running
+        ? '재생: '+Math.min(state.repeatDone+1,state.repeatTarget)+' / '+state.repeatTarget+(state.paused?' · 일시정지':'')
+        : '재생: 대기';
+    }
+    if(byId('wmdc-185qa-url')) byId('wmdc-185qa-url').textContent = '실제 적용 MP3: '+(row.url || 'URL 없음');
+    renderList();
+  }
+
+  function stopAudio(){
+    state.running = false;
+    state.paused = false;
+    state.repeatDone = 0;
+    if(state.audio){
+      try{
+        state.audio.onended = null;
+        state.audio.onerror = null;
+        state.audio.pause();
+        state.audio.currentTime = 0;
+      }catch(_){}
+    }
+    state.audio = null;
+    render();
+  }
+
+  function playCurrentCycle(){
+    var row = rows[state.index];
+    if(!row || !row.url){
+      state.running = false;
+      render();
+      return;
+    }
+    if(!state.running) return;
+
+    var audio = new Audio(row.url);
+    state.audio = audio;
+    audio.preload = 'auto';
+
+    audio.onended = function(){
+      if(!state.running) return;
+      state.repeatDone++;
+      if(state.repeatDone < state.repeatTarget){
+        render();
+        playCurrentCycle();
+        return;
+      }
+      state.repeatDone = 0;
+      if(state.index >= rows.length - 1){
+        state.running = false;
+        state.audio = null;
+        render();
+        return;
+      }
+      state.index++;
+      render();
+      playCurrentCycle();
+    };
+
+    audio.onerror = function(){
+      state.running = false;
+      state.audio = null;
+      if(byId('wmdc-185qa-repeat')){
+        byId('wmdc-185qa-repeat').textContent = '재생오류: '+row.setId+' / '+row.word;
+      }
+    };
+
+    render();
+    var p = audio.play();
+    if(p && typeof p.catch === 'function'){
+      p.catch(function(){
+        state.running = false;
+        state.audio = null;
+        if(byId('wmdc-185qa-repeat')){
+          byId('wmdc-185qa-repeat').textContent = '브라우저 재생 차단/오류 - 버튼을 다시 눌러주세요.';
+        }
+      });
+    }
+  }
+
+  function startSequence(repeat){
+    stopAudio();
+    state.repeatTarget = repeat;
+    state.repeatDone = 0;
+    state.running = true;
+    state.paused = false;
+    render();
+    playCurrentCycle();
+  }
+
+  function move(delta){
+    stopAudio();
+    state.index = Math.max(0, Math.min(rows.length-1, state.index + delta));
+    render();
+  }
+
+  function decide(value){
+    var row = rows[state.index];
+    if(!row) return;
+    state.decisions[row.key] = value;
+    saveDecisions();
+    render();
+  }
+
+  function boot(){
+    loadDecisions();
+
+    if(rows.length !== EXPECTED_FINAL_QA_COUNT){
+      var card = byId('wmdc-185qa-card');
+      if(card){
+        card.insertAdjacentHTML('afterbegin',
+          '<div style="background:#fee2e2;color:#991b1b;padding:10px;border-radius:10px;margin-bottom:10px;font-weight:900;">'
+          +'검수대상 수 오류: 기대 185개 / 실제 '+rows.length+'개. 이어듣기 전 목록을 확인하세요.</div>');
+      }
+    }
+
+    var bindings = [
+      ['wmdc-185qa-play1',function(){startSequence(1);}],
+      ['wmdc-185qa-play2',function(){startSequence(2);}],
+      ['wmdc-185qa-play5',function(){startSequence(5);}],
+      ['wmdc-185qa-stop',stopAudio],
+      ['wmdc-185qa-prev',function(){move(-1);}],
+      ['wmdc-185qa-next',function(){move(1);}],
+      ['wmdc-185qa-human-ok',function(){decide('정상');}],
+      ['wmdc-185qa-human-error',function(){decide('오류');}],
+      ['wmdc-185qa-replay',function(){startSequence(1);}]
+    ];
+    bindings.forEach(function(pair){
+      var el = byId(pair[0]);
+      if(el) el.addEventListener('click',pair[1]);
+    });
+
+    var pause = byId('wmdc-185qa-pause');
+    if(pause){
+      pause.addEventListener('click',function(){
+        if(state.audio && state.running && !state.audio.paused){
+          state.audio.pause();
+          state.paused = true;
+          render();
+        }
+      });
+    }
+
+    var resume = byId('wmdc-185qa-resume');
+    if(resume){
+      resume.addEventListener('click',function(){
+        if(state.audio && state.running && state.paused){
+          state.paused = false;
+          render();
+          var p = state.audio.play();
+          if(p && typeof p.catch === 'function') p.catch(function(){});
+        }
+      });
+    }
+
+    var list = byId('wmdc-185qa-list');
+    if(list){
+      list.addEventListener('click',function(e){
+        var row = e.target.closest('[data-wmdc-185qa-row]');
+        if(!row) return;
+        stopAudio();
+        state.index = Number(row.getAttribute('data-wmdc-185qa-row')) || 0;
+        render();
+      });
+    }
+
+    render();
+  }
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded',boot,{once:true});
+  }else{
+    boot();
+  }
+})();
+</script>
+
