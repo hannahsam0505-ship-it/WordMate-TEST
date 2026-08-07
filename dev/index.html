@@ -1056,6 +1056,19 @@ WMDC_CURRENT_SET_RUN_AND_AUX_TESTS_V2 적용: 현재세트실행 상단 고정�
 }
 
 
+/* WMDC_AUDIO_QA_SIMPLE_ACTUAL_TEXT_WAVE_V1 */
+#wmdc-root .wmdc-qa-result{font-size:12px;font-weight:900;line-height:1.45;white-space:normal;min-width:110px;}
+#wmdc-root .wmdc-qa-result.ok{color:#15803d;}
+#wmdc-root .wmdc-qa-result.check{color:#b45309;}
+#wmdc-root .wmdc-qa-result.danger{color:#dc2626;}
+#wmdc-root .wmdc-qa-human-actions{display:flex;gap:5px;flex-wrap:wrap;min-width:130px;}
+#wmdc-root .wmdc-qa-mini-btn.listen{background:#7c3aed;}
+#wmdc-root .wmdc-qa-mini-btn.analyze{background:#0369a1;}
+#wmdc-root .wmdc-qa-mini-btn.human-ok{background:#16a34a;}
+#wmdc-root .wmdc-qa-mini-btn.human-error{background:#dc2626;}
+#wmdc-root .wmdc-qa-wave{width:120px;height:34px;border:1px solid #cbd5e1;border-radius:6px;background:#fff;}
+#wmdc-root .wmdc-audio-qa-table th,#wmdc-root .wmdc-audio-qa-table td{vertical-align:top;}
+
 /* WMDC_SET_NAV_V7 + WMDC_TOP_DOCKING_MINI_BAR_V5: 현재세트 접두어 13px / 세트번호 26px / 로딩 32px 유지 / 상단바 세로·가로 여백 축소 / DB·음원·LOCK 로직 무변경 */
 #wmdc-root .wmdc-set-nav{
   display:flex;
@@ -3043,7 +3056,7 @@ window.addEventListener('load',function wmApplyDevActualFunctionLock_(){
 
 
     <div class="dev-card">
-      <div class="dev-section-title">9레벨 음원 자동검수 패널 <span class="wmdc-course-badge" data-wmdc-course-label>WMB 9-1-1</span></div>
+      <div class="dev-section-title">음원 자동검수 패널 <span class="wmdc-course-badge" data-wmdc-course-label>WMB 9-1-1</span></div>
       <div class="wmdc-audio-qa-topline">
         <div class="status-box wmdc-audio-qa-status-inline">
           <div class="status-item" id="wmdc-qa-total">검수대상 : 대기</div>
@@ -3053,13 +3066,14 @@ window.addEventListener('load',function wmApplyDevActualFunctionLock_(){
         </div>
         <!-- WM_AUDIO_QA_BUTTONS_LOCK_V1 -->
         <div class="wmdc-audio-qa-tools">
+          <button class="wmdc-audio-qa-btn" type="button" id="wmdc-run-audio-qa">자동검수 실행</button>
           <button class="wmdc-audio-qa-btn red" type="button" id="wmdc-show-risk-only">확인필요만</button>
           <button class="wmdc-audio-qa-btn gray" type="button" id="wmdc-show-all-qa">세트복귀</button>
           <button class="wmdc-audio-qa-btn" type="button" id="wmdc-fix-all-qa">전체수정</button>
         </div>
       </div>
       <div id="wmdc-audio-qa-panel" class="wmdc-qa-empty">
-        DEV 학습테스트를 눌러 실제 DB 데이터를 먼저 불러오면, 9레벨 DB 콘텐츠를 확인합니다. 실제 mp3 음원 연결은 후속 작업에서 적용합니다.
+        현재세트를 실행한 뒤 자동검수를 누르면 학생에게 실제 재생되는 음원을 기준으로 문자·파형·5회 동일성을 검사합니다. 마지막에는 정답 단어를 보면서 실제음원을 듣고 정상/오류를 직접 판정합니다.
       </div>
     </div>
 
@@ -9908,7 +9922,7 @@ renderStart();
 
     panel.className = 'wmdc-audio-qa-table-wrap';
     var html = '<table class="wmdc-audio-qa-table"><thead><tr>'
-      + '<th>No</th><th>단어</th><th>Start</th><th>End</th><th>길이</th><th>상태</th><th>보정 추천값</th><th>바로듣기</th><th>판단/수정</th>'
+      + '<th>No</th><th>정답 단어</th><th>Start</th><th>End</th><th>길이</th><th>기존구간</th><th>문자·파형·5회</th><th>사람 최종검수</th><th>기존 판단/수정</th>'
       + '</tr></thead><tbody>';
 
     for(var i=0; i<visibleRows.length; i++){
@@ -9919,10 +9933,10 @@ renderStart();
         + '<td>' + wmdcFormatTime(item.start) + '</td>'
         + '<td>' + wmdcFormatTime(item.end) + '</td>'
         + '<td>' + wmdcFormatTime(item.duration) + '초</td>'
-        + '<td><span class="wmdc-qa-status ' + item.status.code + '">' + item.status.label + '</span><br><span style="font-size:12px;color:#64748b;">' + item.status.reason + '</span></td>'
-        + '<td>' + wmdcFormatTime(item.safeStart) + ' / ' + wmdcFormatTime(item.safeEnd) + '</td>'
-        + '<td><button class="wmdc-qa-mini-btn safe" type="button" data-wmdc-qa-play="safe" data-index="' + item.index + '">보정듣기</button>'
-        + '<button class="wmdc-qa-mini-btn" type="button" data-wmdc-qa-play="raw" data-index="' + item.index + '">원본듣기</button></td>'
+        + '<td><span class="wmdc-qa-status ' + item.status.code + '">' + item.status.label + '</span><br><span style="font-size:12px;color:#64748b;">' + item.status.reason + '</span><br><span style="font-size:11px;color:#64748b;">보정 '+wmdcFormatTime(item.safeStart)+' / '+wmdcFormatTime(item.safeEnd)+'</span></td>'
+        + '<td><button class="wmdc-qa-mini-btn safe" type="button" data-wmdc-qa-play="safe" data-index="' + item.index + '">보정듣기</button><button class="wmdc-qa-mini-btn" type="button" data-wmdc-qa-play="raw" data-index="' + item.index + '">원본듣기</button></td>'
+        + '<td>' + wmdcRenderActualQaResult(item) + '</td>'
+        + '<td>' + wmdcRenderHumanQa(item) + '</td>'
         + '<td>' + wmdcRenderQaDecisionButtons(item) + '</td>'
         + '</tr>';
     }
@@ -9931,6 +9945,7 @@ renderStart();
     panel.innerHTML = html;
     wmdcBindAudioQaPlayButtons();
     wmdcBindAudioQaDecisionButtons();
+    wmdcBindActualQaButtons();
   }
 
   function wmdcRenderQaDecisionButtons(item){
@@ -9965,6 +9980,124 @@ renderStart();
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#039;');
+  }
+
+
+  var WMDC_AUDIO_QA_ANALYSIS = Object.create(null);
+  var WMDC_AUDIO_QA_HUMAN = Object.create(null);
+
+  function wmdcNormalizeQaText(value){
+    return String(value || '').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim().replace(/\s+/g,' ');
+  }
+
+  function wmdcGetActualQaSource(item){
+    var setId = wmdcGetSetId();
+    var overrideUrl = '';
+    try{ if(typeof wmGetWordAudioOverrideUrl === 'function'){ overrideUrl = wmGetWordAudioOverrideUrl(setId, item.word) || ''; } }catch(e){}
+    return {
+      url: overrideUrl || wmdcGetQaAudioUrl(item),
+      start: overrideUrl ? 0 : Number(item.start),
+      end: overrideUrl ? null : Number(item.end),
+      override: !!overrideUrl,
+      signature: [overrideUrl || wmdcGetQaAudioUrl(item), overrideUrl ? 0 : Number(item.start), overrideUrl ? 'FULL' : Number(item.end)].join('|')
+    };
+  }
+
+  function wmdcArrayBufferToBase64(buffer){
+    var bytes = new Uint8Array(buffer), binary = '', chunk = 0x8000;
+    for(var i=0;i<bytes.length;i+=chunk){ binary += String.fromCharCode.apply(null, bytes.subarray(i, Math.min(i+chunk,bytes.length))); }
+    return btoa(binary);
+  }
+
+  function wmdcEncodeMonoWav(samples, sampleRate){
+    var buffer = new ArrayBuffer(44 + samples.length * 2), view = new DataView(buffer);
+    function s(o,v){ for(var i=0;i<v.length;i++) view.setUint8(o+i,v.charCodeAt(i)); }
+    s(0,'RIFF'); view.setUint32(4,36+samples.length*2,true); s(8,'WAVE'); s(12,'fmt ');
+    view.setUint32(16,16,true); view.setUint16(20,1,true); view.setUint16(22,1,true); view.setUint32(24,sampleRate,true);
+    view.setUint32(28,sampleRate*2,true); view.setUint16(32,2,true); view.setUint16(34,16,true); s(36,'data'); view.setUint32(40,samples.length*2,true);
+    var off=44;
+    for(var i=0;i<samples.length;i++,off+=2){ var x=Math.max(-1,Math.min(1,samples[i])); view.setInt16(off,x<0?x*0x8000:x*0x7fff,true); }
+    return buffer;
+  }
+
+  function wmdcDrawQaWave(canvas, samples){
+    if(!canvas || !samples || !samples.length) return;
+    var ctx=canvas.getContext('2d'), w=canvas.width=120, h=canvas.height=34; ctx.clearRect(0,0,w,h); ctx.beginPath();
+    var step=Math.max(1,Math.floor(samples.length/w));
+    for(var x=0;x<w;x++){ var min=1,max=-1; for(var j=0;j<step && x*step+j<samples.length;j++){ var v=samples[x*step+j]; if(v<min)min=v;if(v>max)max=v; } ctx.moveTo(x,(1+min)*h/2);ctx.lineTo(x,(1+max)*h/2); }
+    ctx.stroke();
+  }
+
+  async function wmdcPostQaTranscript(wavBuffer, expectedWord){
+    var body = new URLSearchParams();
+    body.set('action','audioQaTranscribe'); body.set('audioBase64',wmdcArrayBufferToBase64(wavBuffer)); body.set('expectedWord',expectedWord || ''); body.set('languageCode','en-US');
+    var response=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},body:body.toString()});
+    var data=await response.json();
+    if(!data || data.success===false) throw new Error((data&&data.message)||'음성인식 실패');
+    return data;
+  }
+
+  async function wmdcAnalyzeActualAudioQa(index, button){
+    var item=WMDC_AUDIO_QA_ROWS[Number(index)]; if(!item) return;
+    if(button){button.disabled=true;button.textContent='검수중...';}
+    try{
+      var source=wmdcGetActualQaSource(item); if(!source.url) throw new Error('실제 음원 URL 없음');
+      var signatures=[]; for(var n=0;n<5;n++) signatures.push(wmdcGetActualQaSource(item).signature);
+      var same5=signatures.every(function(v){return v===signatures[0];});
+      var ab=await (await fetch(source.url)).arrayBuffer();
+      var Ctx=window.AudioContext||window.webkitAudioContext; if(!Ctx) throw new Error('Web Audio 미지원');
+      var ctx=new Ctx(); var decoded=await ctx.decodeAudioData(ab.slice(0));
+      var sr=decoded.sampleRate, start=Math.max(0,Math.floor((source.start||0)*sr)), end=source.end===null?decoded.length:Math.min(decoded.length,Math.ceil(source.end*sr));
+      if(end<=start) throw new Error('실제 재생구간 오류');
+      var len=end-start, mono=new Float32Array(len);
+      for(var c=0;c<decoded.numberOfChannels;c++){var ch=decoded.getChannelData(c);for(var i=0;i<len;i++)mono[i]+=ch[start+i]/decoded.numberOfChannels;}
+      var sum=0,peak=0,silent=0,clip=0;
+      for(var k=0;k<len;k++){var a=Math.abs(mono[k]);sum+=a*a;if(a>peak)peak=a;if(a<0.008)silent++;if(a>0.985)clip++;}
+      var rms=Math.sqrt(sum/len), silenceRatio=silent/len, clipRatio=clip/len, duration=len/sr;
+      var wav=wmdcEncodeMonoWav(mono,sr), stt=await wmdcPostQaTranscript(wav,item.word);
+      var expected=wmdcNormalizeQaText(item.word), transcript=wmdcNormalizeQaText(stt.transcript), textMatch=!!expected && (transcript===expected || transcript.indexOf(expected)!==-1);
+      var waveOk=rms>=0.012 && silenceRatio<0.88 && clipRatio<0.03 && duration>=0.25;
+      var finalCode=(same5&&textMatch&&waveOk)?'ok':((!transcript||!same5||rms<0.006)?'danger':'check');
+      WMDC_AUDIO_QA_ANALYSIS[item.decisionKey]={source:source,transcript:stt.transcript||'',confidence:Number(stt.confidence||0),same5:same5,rms:rms,peak:peak,silenceRatio:silenceRatio,clipRatio:clipRatio,duration:duration,textMatch:textMatch,waveOk:waveOk,finalCode:finalCode,samples:mono};
+      wmdcLog('[AUDIO QA ACTUAL] '+item.word+' / 인식='+String(stt.transcript||'')+' / 5회='+same5+' / 파형='+waveOk);
+      wmdcRenderAudioQaPanel(originalWords||[],WMDC_QA_VIEW_MODE||'all');
+    }catch(error){
+      WMDC_AUDIO_QA_ANALYSIS[item.decisionKey]={finalCode:'danger',error:error&&error.message?error.message:String(error)};
+      wmdcLog('[AUDIO QA ACTUAL ERROR] '+item.word+' / '+WMDC_AUDIO_QA_ANALYSIS[item.decisionKey].error);
+      wmdcRenderAudioQaPanel(originalWords||[],WMDC_QA_VIEW_MODE||'all');
+    }
+  }
+
+  function wmdcPlayActualStudyAudio(index){
+    var row=(originalWords||[])[Number(index)]; if(!row) return;
+    try{ if(typeof playWordSegment==='function'){ playWordSegment(row,1); wmdcLog('[AUDIO QA HUMAN] 실제 Study 음원 1회 재생: '+(row.word||row.Word||'')); return; } }catch(e){}
+    wmdcPlayAudioQaRow(index,'raw');
+  }
+
+  function wmdcSetHumanQa(index,value){
+    var item=WMDC_AUDIO_QA_ROWS[Number(index)]; if(!item)return;
+    WMDC_AUDIO_QA_HUMAN[item.decisionKey]=value;
+    wmdcLog('[AUDIO QA HUMAN] '+item.word+' / '+(value==='ok'?'사람 정상':'사람 오류'));
+    wmdcRenderAudioQaPanel(originalWords||[],WMDC_QA_VIEW_MODE||'all');
+  }
+
+  function wmdcRenderActualQaResult(item){
+    var r=WMDC_AUDIO_QA_ANALYSIS[item.decisionKey];
+    if(!r) return '<button class="wmdc-qa-mini-btn analyze" type="button" data-wmdc-qa-analyze="1" data-index="'+item.index+'">문자·파형검수</button>';
+    if(r.error) return '<div class="wmdc-qa-result danger">오류: '+wmdcEscapeHtml(r.error)+'</div><button class="wmdc-qa-mini-btn analyze" type="button" data-wmdc-qa-analyze="1" data-index="'+item.index+'">재검수</button>';
+    return '<div class="wmdc-qa-result '+r.finalCode+'">인식: '+wmdcEscapeHtml(r.transcript||'인식없음')+'<br>문자: '+(r.textMatch?'일치':'확인')+' / 5회: '+(r.same5?'동일':'불일치')+'<br>파형: '+(r.waveOk?'정상':'확인')+'</div><canvas class="wmdc-qa-wave" data-wmdc-wave-key="'+wmdcEscapeHtml(item.decisionKey)+'"></canvas>';
+  }
+
+  function wmdcRenderHumanQa(item){
+    var h=WMDC_AUDIO_QA_HUMAN[item.decisionKey]||'';
+    return '<div class="wmdc-qa-human-actions"><button class="wmdc-qa-mini-btn listen" type="button" data-wmdc-qa-actual-listen="1" data-index="'+item.index+'">실제음원 듣기</button><button class="wmdc-qa-mini-btn human-ok" type="button" data-wmdc-qa-human="ok" data-index="'+item.index+'">정상</button><button class="wmdc-qa-mini-btn human-error" type="button" data-wmdc-qa-human="error" data-index="'+item.index+'">오류</button></div><div class="wmdc-qa-decision">사람판정: '+(h==='ok'?'정상':h==='error'?'오류':'대기')+'</div>';
+  }
+
+  function wmdcBindActualQaButtons(){
+    document.querySelectorAll('#wmdc-audio-qa-panel [data-wmdc-qa-analyze]').forEach(function(btn){btn.onclick=function(){wmdcAnalyzeActualAudioQa(this.getAttribute('data-index'),this);};});
+    document.querySelectorAll('#wmdc-audio-qa-panel [data-wmdc-qa-actual-listen]').forEach(function(btn){btn.onclick=function(){wmdcPlayActualStudyAudio(this.getAttribute('data-index'));};});
+    document.querySelectorAll('#wmdc-audio-qa-panel [data-wmdc-qa-human]').forEach(function(btn){btn.onclick=function(){wmdcSetHumanQa(this.getAttribute('data-index'),this.getAttribute('data-wmdc-qa-human'));};});
+    document.querySelectorAll('#wmdc-audio-qa-panel [data-wmdc-wave-key]').forEach(function(c){var key=c.getAttribute('data-wmdc-wave-key'),r=WMDC_AUDIO_QA_ANALYSIS[key];if(r&&r.samples)wmdcDrawQaWave(c,r.samples);});
   }
 
   function wmdcEnsureQaAudio(){
@@ -10780,7 +10913,7 @@ renderStart();
     wmdcInitTopNavDocking();
     wmdcLog('[MINI BAR] 상단 네비 원위치 시작 후 화면 상단 고정 docking 적용 완료');
     wmdcLog('[MERGE] DEV 학습테스트=DB 미리보기 / 빠른 이동테스트=실제 Step 실행으로 분리 완료');
-    wmdcLog('[AUDIO QA] 9레벨 음원 자동검수 패널 연결 완료');
+    wmdcLog('[AUDIO QA] 음원 자동검수 패널 연결 완료');
     wmdcLog('[LEVEL5 AUDIO LOCK] 5레벨 전체 음원 현재값 최종 고정 활성화');
     wmdcLog('[LEVEL3 AUDIO LOCK] 3레벨 전체 음원 현재값 최종 고정 활성화');
     wmdcLog('[LEVEL4 AUDIO LOCK] 4레벨 전체 음원 현재값 최종 고정 활성화');
@@ -10803,7 +10936,10 @@ renderStart();
       wmdcFixAllAudioQaWords:wmdcFixAllAudioQaWords,
       wmdcSkipAudioQaWord:wmdcSkipAudioQaWord,
       wmdcCheckNormalizedSegments:wmdcCheckNormalizedSegments,
-      wmdcCopyAudioQaFixValues:wmdcCopyAudioQaFixValues
+      wmdcCopyAudioQaFixValues:wmdcCopyAudioQaFixValues,
+      wmdcAnalyzeActualAudioQa:wmdcAnalyzeActualAudioQa,
+      wmdcPlayActualStudyAudio:wmdcPlayActualStudyAudio,
+      wmdcSetHumanQa:wmdcSetHumanQa
     })
   });
   function wmVerifyDevAudioQaPrivateLock(){
