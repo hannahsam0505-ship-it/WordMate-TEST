@@ -4740,3 +4740,88 @@ window.wmLogLevelTransitionNoticeLockStatus();
 wmLogRoundRecordRecoveryLockStatus_();
 renderStart();
 </script>
+
+
+<script>
+/* WM_STUDY_WORD_AUDIO_OVERRIDE_FINAL_LOCK_V1_20260807 */
+(function(){
+  'use strict';
+  var VERSION='WM_STUDY_WORD_AUDIO_OVERRIDE_FINAL_LOCK_V1.0';
+  var DATE='2026-08-07';
+  var REGISTRY=Object.freeze({
+    normalize:wmNormalizeWordAudioOverrideKey,
+    getOverride:wmGetWordAudioOverrideUrl,
+    verifyOverride:wmVerifyWordAudioOverrideLock,
+    playWordSegment:playWordSegment,
+    urls:WM_WORD_AUDIO_OVERRIDE_URLS,
+    lockedKeys:WM_WORD_AUDIO_OVERRIDE_LOCKED_KEYS
+  });
+
+  function protect(name,value){
+    var d=Object.getOwnPropertyDescriptor(window,name);
+    if(!d || d.configurable!==false){
+      Object.defineProperty(window,name,{value:value,writable:false,configurable:false});
+    }
+  }
+
+  protect('wmNormalizeWordAudioOverrideKey',REGISTRY.normalize);
+  protect('wmGetWordAudioOverrideUrl',REGISTRY.getOverride);
+  protect('wmVerifyWordAudioOverrideLock',REGISTRY.verifyOverride);
+  protect('playWordSegment',REGISTRY.playWordSegment);
+  protect('WM_STUDY_WORD_AUDIO_OVERRIDE_FINAL_LOCK',REGISTRY);
+
+  function locked(name,expected){
+    var d=Object.getOwnPropertyDescriptor(window,name)||{};
+    return window[name]===expected && d.writable===false && d.configurable===false;
+  }
+
+  function wmGetStudyWordAudioOverrideFinalLockStatus(){
+    var s={
+      registryFrozen:Object.isFrozen(REGISTRY),
+      urlsFrozen:Object.isFrozen(REGISTRY.urls),
+      keysFrozen:Object.isFrozen(REGISTRY.lockedKeys),
+      keyCount:REGISTRY.lockedKeys.length===211,
+      valuesVerified:REGISTRY.verifyOverride()===true,
+      normalizeProtected:locked('wmNormalizeWordAudioOverrideKey',REGISTRY.normalize),
+      getterProtected:locked('wmGetWordAudioOverrideUrl',REGISTRY.getOverride),
+      verifierProtected:locked('wmVerifyWordAudioOverrideLock',REGISTRY.verifyOverride),
+      playbackProtected:locked('playWordSegment',REGISTRY.playWordSegment),
+      exactPlayback:REGISTRY.playWordSegment===playWordSegment,
+      exactGetter:REGISTRY.getOverride===wmGetWordAudioOverrideUrl
+    };
+    s.verified=Object.keys(s).every(function(k){return k==='verified'||s[k]===true;});
+    return s;
+  }
+
+  function wmLogStudyWordAudioOverrideFinalLockStatus(){
+    var s=wmGetStudyWordAudioOverrideFinalLockStatus();
+    console.group('🔒 WORD MATE STUDY WORD AUDIO OVERRIDE LOCK STATUS');
+    console.log('LOCK VERSION :',VERSION);
+    console.log('LOCK DATE    :',DATE);
+    console.table({
+      'Registry 동결':s.registryFrozen,
+      'URL Registry 동결':s.urlsFrozen,
+      'LOCK Key Registry 동결':s.keysFrozen,
+      'LOCK Key 211개':s.keyCount,
+      '211개 URL 검증':s.valuesVerified,
+      '키 정규화 함수 보호':s.normalizeProtected,
+      'Override 조회 함수 보호':s.getterProtected,
+      '검증 함수 보호':s.verifierProtected,
+      '실제 playWordSegment 보호':s.playbackProtected,
+      '실제 재생함수 정확 참조':s.exactPlayback,
+      'Override 함수 정확 참조':s.exactGetter
+    });
+    console.log(s.verified ? '🔒 STUDY WORD AUDIO OVERRIDE ALL LOCK VERIFIED' : '❌ STUDY WORD AUDIO OVERRIDE LOCK CHECK REQUIRED');
+    console.groupEnd();
+    return s;
+  }
+
+  protect('wmGetStudyWordAudioOverrideFinalLockStatus',wmGetStudyWordAudioOverrideFinalLockStatus);
+  protect('wmLogStudyWordAudioOverrideFinalLockStatus',wmLogStudyWordAudioOverrideFinalLockStatus);
+
+  function boot(){setTimeout(window.wmLogStudyWordAudioOverrideFinalLockStatus,0);}
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',boot,{once:true});
+  }else{boot();}
+})();
+</script>
