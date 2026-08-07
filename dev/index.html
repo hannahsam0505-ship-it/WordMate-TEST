@@ -371,6 +371,39 @@ WMDC_CURRENT_SET_RUN_AND_AUX_TESTS_V2 적용: 현재세트실행 상단 고정�
   align-items:end;
 }
 
+/* WMDC_BOTTOM_DEV_TEST_CONTROL_V1: 빠른이동테스트 하단 복제 제어판 / 상단 원본·Floating 배너 유지 */
+#wmdc-root .wmdc-bottom-dev-control{
+  margin-top:16px;
+  padding:18px;
+  border:2px solid #2563eb;
+  border-radius:16px;
+  background:#f8fbff;
+}
+#wmdc-root .wmdc-bottom-dev-control-title{
+  margin-bottom:14px;
+  font-size:19px;
+  font-weight:900;
+  color:#111827;
+}
+#wmdc-root .wmdc-bottom-dev-control-actions{
+  display:flex;
+  justify-content:center;
+  margin-top:12px;
+}
+#wmdc-root .wmdc-bottom-dev-control-run{
+  min-width:220px;
+  min-height:42px;
+  border:none;
+  border-radius:12px;
+  background:#2563eb;
+  color:#fff;
+  font-size:15px;
+  font-weight:900;
+  cursor:pointer;
+  padding:10px 18px;
+}
+#wmdc-root .wmdc-bottom-dev-control-run:hover{opacity:.92;}
+
 @media (max-width:1100px){
   #wmdc-root .wmdc-deploy-grid,
   #wmdc-root .wmdc-deploy-grid.five{
@@ -3071,6 +3104,39 @@ window.addEventListener('load',function wmApplyDevActualFunctionLock_(){
         <span class="wmdc-nav-current"><span data-wmdc-nav-current><span class="wmdc-nav-prefix">현재세트</span><span class="wmdc-nav-set">9-1-1</span></span><span class="wmdc-nav-spinner" data-wmdc-nav-spinner aria-label="loading"></span></span>
         <button class="wmdc-nav-btn next" type="button" data-wmdc-nav-action="next">다음세트</button>
       </div>
+
+      <!-- WMDC_BOTTOM_DEV_TEST_CONTROL_V1 -->
+      <div class="wmdc-bottom-dev-control" id="wmdc-bottom-dev-control">
+        <div class="wmdc-bottom-dev-control-title">DEV TEST CONTROL · 하단 복제 제어판</div>
+        <div class="wmdc-dev-control-grid">
+          <div class="form-group">
+            <label class="form-label">DEV분류</label>
+            <select class="form-select" id="wmdc-bottom-student"></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">레벨</label>
+            <select class="form-select" id="wmdc-bottom-level"></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">파트</label>
+            <select class="form-select" id="wmdc-bottom-part"></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">세트</label>
+            <select class="form-select" id="wmdc-bottom-set"></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Set_ID</label>
+            <input type="text" class="form-input" id="wmdc-bottom-set-id" readonly>
+          </div>
+        </div>
+        <div class="wmdc-bottom-dev-control-actions">
+          <button class="wmdc-bottom-dev-control-run" type="button" id="wmdc-bottom-run-dev">
+            현재세트 실행
+          </button>
+        </div>
+      </div>
+      <!-- WMDC_BOTTOM_DEV_TEST_CONTROL_V1 END -->
     </div>
 
     <!-- WM_DEVLOG_TOGGLE_LOCK_V1 -->
@@ -13204,5 +13270,110 @@ renderStart();
   window.addEventListener('input',inputSync,true);
   document.addEventListener('DOMContentLoaded',function(){wmUpdateGutter5('current');wmUpdateGutter5('edit');});
   if(document.readyState!=='loading'){wmUpdateGutter5('current');wmUpdateGutter5('edit');}
+})();
+</script>
+
+<script>
+/* WMDC_BOTTOM_DEV_TEST_CONTROL_SYNC_V1: 상·하단 제어판 양방향 동일화 */
+(function(){
+  'use strict';
+
+  function byId(id){ return document.getElementById(id); }
+
+  var pairs = {
+    student:['wmdc-student','wmdc-bottom-student'],
+    level:['wmdc-level','wmdc-bottom-level'],
+    part:['wmdc-part','wmdc-bottom-part'],
+    set:['wmdc-set','wmdc-bottom-set'],
+    setId:['wmdc-set-id','wmdc-bottom-set-id']
+  };
+
+  function copyOptions(source,target){
+    if(!source || !target) return;
+    target.innerHTML = '';
+    Array.prototype.forEach.call(source.options || [], function(option){
+      target.appendChild(option.cloneNode(true));
+    });
+    target.value = source.value;
+  }
+
+  function syncBottomFromTop(){
+    copyOptions(byId(pairs.student[0]),byId(pairs.student[1]));
+    copyOptions(byId(pairs.level[0]),byId(pairs.level[1]));
+    copyOptions(byId(pairs.part[0]),byId(pairs.part[1]));
+    copyOptions(byId(pairs.set[0]),byId(pairs.set[1]));
+
+    var topSetId = byId(pairs.setId[0]);
+    var bottomSetId = byId(pairs.setId[1]);
+    if(topSetId && bottomSetId) bottomSetId.value = topSetId.value;
+  }
+
+  function dispatchTopChange(top){
+    if(!top) return;
+    top.dispatchEvent(new Event('change',{bubbles:true}));
+  }
+
+  function bindBottomToTop(bottomKey){
+    var top = byId(pairs[bottomKey][0]);
+    var bottom = byId(pairs[bottomKey][1]);
+    if(!top || !bottom) return;
+
+    bottom.addEventListener('change', function(){
+      top.value = bottom.value;
+      dispatchTopChange(top);
+      setTimeout(syncBottomFromTop,0);
+    });
+  }
+
+  function bindTopToBottom(topKey){
+    var top = byId(pairs[topKey][0]);
+    if(!top) return;
+    top.addEventListener('change', function(){
+      setTimeout(syncBottomFromTop,0);
+    });
+  }
+
+  function boot(){
+    syncBottomFromTop();
+
+    ['student','level','part','set'].forEach(bindBottomToTop);
+    ['student','level','part','set'].forEach(bindTopToBottom);
+
+    var runBottom = byId('wmdc-bottom-run-dev');
+    var runTop = byId('wmdc-run-dev');
+    if(runBottom && runTop){
+      runBottom.addEventListener('click', function(){
+        syncBottomFromTop();
+        runTop.click();
+      });
+    }
+
+    /* 이전/다음세트·현재세트 실행 등 기존 로직이 상단 값을 바꾼 뒤 하단도 즉시 갱신 */
+    var root = byId('wmdc-root');
+    if(root){
+      root.addEventListener('click', function(event){
+        var action = event.target && event.target.closest
+          ? event.target.closest('[data-wmdc-nav-action]')
+          : null;
+        if(action) setTimeout(syncBottomFromTop,0);
+      });
+    }
+
+    var topSetId = byId('wmdc-set-id');
+    if(topSetId && window.MutationObserver){
+      new MutationObserver(syncBottomFromTop).observe(topSetId,{
+        attributes:true,
+        attributeFilter:['value']
+      });
+    }
+
+    window.wmdcSyncBottomDevTestControl = syncBottomFromTop;
+  }
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded',boot,{once:true});
+  }else{
+    boot();
+  }
 })();
 </script>
