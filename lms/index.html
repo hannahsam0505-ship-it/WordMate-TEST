@@ -8774,16 +8774,31 @@ function wmCurrentProgressForStudentRow(row){
 }
 
 /* ==========================================================
-   최초배정·레벨완료조건 비활성화 기준 (현재진행_DB 기준)
+   🔒 WM_STUDENT_LEVEL_CONDITION_LOCK_FORMULA_V2
+   최초배정·레벨완료조건 비활성화 공식 (8.현재진행_DB 기준)
 
-   1. 학생ID로 학생관리_DB 행과 현재진행_DB 행을 연결한다.
-   2. 최초배정은 완료Step에 값이 한 글자라도 있으면 즉시 비활성화한다.
-   3. 레벨완료조건은 현재레벨의 첫 세트(WM현재레벨-1-1)에서
-      완료Step이 생성되는 순간 비활성화한다.
-   4. 첫 세트를 지난 뒤에는 현재레벨과 기록Set_ID의 레벨이 같은 동안
-      레벨별 마지막 세트의 현재Step=TEST까지 계속 비활성화한다.
-   5. 다음 레벨로 전환되어 새 레벨 첫 세트가 시작되면 새 기준으로 다시 판정한다.
-   6. 비활성화된 값은 화면과 저장 모두 기존 값을 유지한다.
+   [공통 연결]
+   1. 학생ID로 1.학생관리_DB 행과 8.현재진행_DB의 학생별 최신 행을 연결한다.
+
+   [최초배정 LOCK]
+   2. 완료Step 컬럼에 값이 한 글자라도 생성되면 최초배정을 즉시 비활성화한다.
+   3. 이후 세트·레벨이 이동해도 최초배정은 다시 활성화하지 않는다.
+
+   [레벨완료조건 LOCK]
+   4. 현재레벨의 첫 세트(WM현재레벨-1-1)는 완료Step이 생성되는 순간 잠근다.
+   5. 첫 세트를 통과한 뒤에는 현재레벨과 기록Set_ID의 레벨이 같은 동안 계속 잠근다.
+   6. 해당 레벨의 마지막 세트에서 현재Step=TEST인 상태까지 잠금을 유지한다.
+   7. 다음 레벨로 실제 전환되어 현재레벨과 기록Set_ID가 새 레벨을 가리키면,
+      새 레벨 첫 세트의 완료Step 생성 여부부터 새 기준으로 다시 판정한다.
+
+   [레벨별 마지막 세트]
+   - 3레벨 WM3-3-2 / 4레벨 WM4-3-2 / 5레벨 WM5-3-3 / 6레벨 WM6-2-3
+   - 7레벨 WM7-4-10 / 8레벨 WM8-4-10 / 9레벨 WM9-4-10
+   - 10레벨 WM10-5-10 / 11레벨 WM11-5-10 / 12레벨 WM12-5-10 / 13레벨 WM13-5-10
+
+   [보존]
+   8. 비활성화된 최초배정·레벨완료조건은 화면과 저장 모두 기존 DB 값을 유지한다.
+   9. 이 공식·판정 함수·레벨별 마지막세트 표·렌더·저장 연결은 LOCK 대상이다.
 ========================================================== */
 function wmInitialLevelLockState(row){
   const progress = wmCurrentProgressForStudentRow(row);
@@ -9988,18 +10003,29 @@ function wmLogStudentAssignmentLockStatus(){
 
 document.addEventListener('DOMContentLoaded', wmLogStudentAssignmentLockStatus);
 
-/* WM_LEVEL_COMPLETE_CONDITION_LOCK_V1 / 실제 실행 연결 + F12 검증 */
+/* WM_LEVEL_COMPLETE_CONDITION_LOCK_V2 / 공식·실행 연결 + F12 검증 */
 const WM_LEVEL_COMPLETE_CONDITION_LOCK_V1 = Object.freeze({
-  version: 'WM_LEVEL_COMPLETE_CONDITION_LOCK_V1.0',
-  CURRENT_PROGRESS: Object.freeze({load:loadStudents}),
-  LOCK_CHECK: Object.freeze({lockState:wmLevelConditionLockState}),
-  DISABLED_RENDER: Object.freeze({render:wmModeSelectHtml}),
+  version: 'WM_LEVEL_COMPLETE_CONDITION_LOCK_V2.0',
+  date: '2026-08-08',
+  CURRENT_PROGRESS: Object.freeze({
+    load:loadStudents,
+    findStudentProgress:wmCurrentProgressForStudentRow
+  }),
+  FIRST_ASSIGNMENT_LOCK: Object.freeze({
+    lockState:wmInitialLevelLockState,
+    render:wmLearningAssignSelectHtml
+  }),
+  LEVEL_COMPLETE_CONDITION_LOCK: Object.freeze({
+    lastSetFormula:wmLevelLastSetId,
+    lockState:wmLevelConditionLockState,
+    render:wmModeSelectHtml
+  }),
   SAVE: Object.freeze({save:saveStudentLearningModeFromRow})
 });
 
 function wmInstallLevelCompleteConditionFunctionLocks(){
   const names = [];
-  ['CURRENT_PROGRESS','LOCK_CHECK','DISABLED_RENDER','SAVE'].forEach(function(moduleName){
+  ['CURRENT_PROGRESS','FIRST_ASSIGNMENT_LOCK','LEVEL_COMPLETE_CONDITION_LOCK','SAVE'].forEach(function(moduleName){
     const module = WM_LEVEL_COMPLETE_CONDITION_LOCK_V1[moduleName];
     Object.keys(module).forEach(function(key){
       const fn = module[key];
@@ -10019,7 +10045,7 @@ const WM_LEVEL_COMPLETE_CONDITION_LOCKED_FUNCTIONS = wmInstallLevelCompleteCondi
 
 async function wmLogLevelCompleteConditionLockStatus(){
   console.info('🔒 LEVEL COMPLETE CONDITION LOCK VERIFY START');
-  const moduleNames = ['CURRENT_PROGRESS','LOCK_CHECK','DISABLED_RENDER','SAVE'];
+  const moduleNames = ['CURRENT_PROGRESS','FIRST_ASSIGNMENT_LOCK','LEVEL_COMPLETE_CONDITION_LOCK','SAVE'];
   const rows = moduleNames.map(function(moduleName){
     const module = WM_LEVEL_COMPLETE_CONDITION_LOCK_V1[moduleName];
     const functions = Object.keys(module);
@@ -10039,6 +10065,7 @@ async function wmLogLevelCompleteConditionLockStatus(){
     && !!(server && server.allVerified === true);
   console.group('🔒 WORD MATE LEVEL COMPLETE CONDITION LOCK STATUS');
   console.info('LOCK VERSION :', WM_LEVEL_COMPLETE_CONDITION_LOCK_V1.version);
+  console.info('LOCK DATE    :', WM_LEVEL_COMPLETE_CONDITION_LOCK_V1.date);
   console.table(rows);
   console.info(server && server.allVerified === true ? 'SERVER : ✅ ACTUAL LOCK' : 'SERVER : ❌ CHECK REQUIRED');
   console.info(allVerified ? '🔒 LEVEL COMPLETE CONDITION ALL LOCK VERIFIED' : '❌ LEVEL COMPLETE CONDITION LOCK VERIFY FAILED');
