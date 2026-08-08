@@ -8045,7 +8045,6 @@ document.addEventListener('DOMContentLoaded', function(){
   wmLogSettingCenterLockStatus();
   wmLogCodeGsAllLockStatusOnLms_();
   wmLogCodeGsStudentAssignmentLockStatusOnLms_();
-  wmLogLevelCompleteConditionLockStatus();
 });
 
 function setStudentIdCreateStatus(active, text){
@@ -10082,6 +10081,32 @@ function wmLogLevelCompleteConditionLockStatus(){
   console.groupEnd();
   return allVerified;
 }
+
+/* 기존 LOCK 블록과 동일한 순서: 보호 등록 완료 후 마지막에 boot 실행 */
+Object.defineProperty(window, 'wmLogLevelCompleteConditionLockStatus', {
+  value:wmLogLevelCompleteConditionLockStatus,
+  writable:false,
+  configurable:false
+});
+Object.defineProperty(window, 'WM_LEVEL_COMPLETE_CONDITION_LOCK_V1', {
+  value:WM_LEVEL_COMPLETE_CONDITION_LOCK_V1,
+  writable:false,
+  configurable:false
+});
+
+(function(){
+  function boot(){
+    setTimeout(window.wmLogLevelCompleteConditionLockStatus, 0);
+  }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', boot, {once:true});
+  }else{
+    boot();
+  }
+  window.addEventListener('load', function(){
+    window.wmLogLevelCompleteConditionLockStatus();
+  }, {once:true});
+})();
 
 
 /* WM_REPORT_PREVIEW_EXPANDED_DESIGN_LOCK_V1 / 확대 디자인 Registry + F12 검증 */
