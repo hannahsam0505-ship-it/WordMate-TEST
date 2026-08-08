@@ -8777,10 +8777,13 @@ function wmCurrentProgressForStudentRow(row){
    최초배정·레벨완료조건 비활성화 기준 (현재진행_DB 기준)
 
    1. 학생ID로 학생관리_DB 행과 현재진행_DB 행을 연결한다.
-   2. 완료Step에 값이 한 글자라도 있으면 최초배정을 즉시 비활성화한다.
-   3. 현재레벨의 시작세트(Set_ID = WM현재레벨-1-1)에서
-      완료Step이 생성되면 레벨완료조건을 비활성화한다.
-   4. 비활성화된 값은 화면과 저장 모두 기존 값을 유지한다.
+   2. 최초배정은 완료Step에 값이 한 글자라도 있으면 즉시 비활성화한다.
+   3. 레벨완료조건은 현재레벨의 첫 세트(WM현재레벨-1-1)에서
+      완료Step이 생성되는 순간 비활성화한다.
+   4. 첫 세트를 지난 뒤에는 현재레벨과 기록Set_ID의 레벨이 같은 동안
+      레벨별 마지막 세트의 현재Step=TEST까지 계속 비활성화한다.
+   5. 다음 레벨로 전환되어 새 레벨 첫 세트가 시작되면 새 기준으로 다시 판정한다.
+   6. 비활성화된 값은 화면과 저장 모두 기존 값을 유지한다.
 ========================================================== */
 function wmInitialLevelLockState(row){
   const progress = wmCurrentProgressForStudentRow(row);
@@ -8800,20 +8803,45 @@ function wmStudentDateInputHtml(studentId,key,value){
   return '<input type="date" class="wm-student-date-input" id="wmMode_'+escapeHtml(key)+'_'+safeId+'" data-student-id="'+escapeHtml(studentId)+'" value="'+escapeHtml(wmStudentDateInputValue(value))+'" onkeydown="event.preventDefault()" onpaste="event.preventDefault()" />';
 }
 
+function wmLevelLastSetId(level){
+  const n=Number(level||0);
+  const lastSets={
+    3:'WM3-3-2',4:'WM4-3-2',5:'WM5-3-3',6:'WM6-2-3',
+    7:'WM7-4-10',8:'WM8-4-10',9:'WM9-4-10',
+    10:'WM10-5-10',11:'WM11-5-10',12:'WM12-5-10',13:'WM13-5-10'
+  };
+  return lastSets[n]||'';
+}
+
 function wmLevelConditionLockState(row){
-  const progress = wmCurrentProgressForStudentRow(row);
-  if(!progress) return {locked:false, reason:''};
-  const currentLevel = Number(String(wmProgressField(progress, ['현재레벨','현재 레벨','CurrentLevel','currentLevel']) || '').match(/\d+/)?.[0] || 0);
-  const setMatch = String(wmProgressField(progress, ['Set_ID','Set ID','SetID','setId']) || '').trim().match(/^WM(\d{1,2})-(\d+)-(\d+)$/i);
-  const completedStep = String(wmProgressField(progress, ['완료Step','완료 STEP','CompletedStep','completedStep']) || '').trim();
-  if(!currentLevel || !setMatch || !completedStep) return {locked:false, reason:''};
-  const setLevel = Number(setMatch[1]);
-  const unit = Number(setMatch[2]);
-  const setNo = Number(setMatch[3]);
-  if(setLevel === currentLevel && unit === 1 && setNo === 1){
-    return {locked:true, reason:'현재레벨의 시작세트에서 완료Step이 생성되어 레벨완료조건을 수정할 수 없습니다.'};
+  const progress=wmCurrentProgressForStudentRow(row);
+  if(!progress) return {locked:false,reason:''};
+
+  const currentLevel=Number(String(wmProgressField(progress,['현재레벨','현재 레벨','CurrentLevel','currentLevel'])||'').match(/\d+/)?.[0]||0);
+  const recordSetId=String(wmProgressField(progress,['기록Set_ID','기록 Set_ID','기록SetID','recordSetId','Set_ID','Set ID','SetID','setId'])||'').trim().toUpperCase();
+  const setMatch=recordSetId.match(/^WM(\d{1,2})-(\d+)-(\d+)$/i);
+  const completedStep=String(wmProgressField(progress,['완료Step','완료 STEP','CompletedStep','completedStep'])||'').trim();
+  const currentStep=String(wmProgressField(progress,['현재Step','현재 STEP','CurrentStep','currentStep'])||'').trim().toUpperCase();
+  if(!currentLevel||!setMatch) return {locked:false,reason:''};
+
+  const setLevel=Number(setMatch[1]);
+  const unit=Number(setMatch[2]);
+  const setNo=Number(setMatch[3]);
+  if(setLevel!==currentLevel) return {locked:false,reason:''};
+
+  const isFirstSet=unit===1&&setNo===1;
+  if(isFirstSet){
+    return completedStep
+      ? {locked:true,reason:'현재레벨 첫 세트의 완료Step이 생성되어 레벨완료조건을 수정할 수 없습니다.'}
+      : {locked:false,reason:''};
   }
-  return {locked:false, reason:''};
+
+  const lastSetId=wmLevelLastSetId(currentLevel);
+  if(recordSetId===lastSetId&&currentStep==='TEST'){
+    return {locked:true,reason:'현재레벨 마지막 세트의 TEST 단계까지 레벨완료조건이 유지됩니다.'};
+  }
+
+  return {locked:true,reason:'현재레벨 첫 세트를 통과하여 레벨완료조건을 수정할 수 없습니다.'};
 }
 
 async function saveStudentLearningModeFromRow(studentId, skipLockAndToast){
