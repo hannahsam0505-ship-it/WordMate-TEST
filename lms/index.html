@@ -8045,6 +8045,7 @@ document.addEventListener('DOMContentLoaded', function(){
   wmLogSettingCenterLockStatus();
   wmLogCodeGsAllLockStatusOnLms_();
   wmLogCodeGsStudentAssignmentLockStatusOnLms_();
+  wmLogLevelCompleteConditionLockStatus();
 });
 
 function setStudentIdCreateStatus(active, text){
@@ -10082,7 +10083,6 @@ function wmLogLevelCompleteConditionLockStatus(){
   return allVerified;
 }
 
-document.addEventListener('DOMContentLoaded', wmLogLevelCompleteConditionLockStatus);
 
 /* WM_REPORT_PREVIEW_EXPANDED_DESIGN_LOCK_V1 / 확대 디자인 Registry + F12 검증 */
 const WM_REPORT_PREVIEW_EXPANDED_DESIGN_LOCK_V1 = Object.freeze({
