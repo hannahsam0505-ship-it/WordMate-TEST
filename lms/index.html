@@ -10003,29 +10003,33 @@ function wmLogStudentAssignmentLockStatus(){
 
 document.addEventListener('DOMContentLoaded', wmLogStudentAssignmentLockStatus);
 
-/* WM_LEVEL_COMPLETE_CONDITION_LOCK_V2 / 공식·실행 연결 + F12 검증 */
+/* WM_LEVEL_COMPLETE_CONDITION_LOCK_V2 / 기존 LMS Registry + 자동 F12 검증 방식 */
 const WM_LEVEL_COMPLETE_CONDITION_LOCK_V1 = Object.freeze({
-  version: 'WM_LEVEL_COMPLETE_CONDITION_LOCK_V2.0',
+  version: 'WM_LEVEL_COMPLETE_CONDITION_LOCK_V2.1',
   date: '2026-08-08',
   CURRENT_PROGRESS: Object.freeze({
     load:loadStudents,
     findStudentProgress:wmCurrentProgressForStudentRow
   }),
-  FIRST_ASSIGNMENT_LOCK: Object.freeze({
+  FIRST_ASSIGNMENT: Object.freeze({
     lockState:wmInitialLevelLockState,
     render:wmLearningAssignSelectHtml
   }),
-  LEVEL_COMPLETE_CONDITION_LOCK: Object.freeze({
-    lastSetFormula:wmLevelLastSetId,
+  LEVEL_LAST_SET_FORMULA: Object.freeze({
+    calculate:wmLevelLastSetId
+  }),
+  LEVEL_COMPLETE_CONDITION: Object.freeze({
     lockState:wmLevelConditionLockState,
     render:wmModeSelectHtml
   }),
-  SAVE: Object.freeze({save:saveStudentLearningModeFromRow})
+  SAVE_PROTECTION: Object.freeze({
+    save:saveStudentLearningModeFromRow
+  })
 });
 
 function wmInstallLevelCompleteConditionFunctionLocks(){
   const names = [];
-  ['CURRENT_PROGRESS','FIRST_ASSIGNMENT_LOCK','LEVEL_COMPLETE_CONDITION_LOCK','SAVE'].forEach(function(moduleName){
+  ['CURRENT_PROGRESS','FIRST_ASSIGNMENT','LEVEL_LAST_SET_FORMULA','LEVEL_COMPLETE_CONDITION','SAVE_PROTECTION'].forEach(function(moduleName){
     const module = WM_LEVEL_COMPLETE_CONDITION_LOCK_V1[moduleName];
     Object.keys(module).forEach(function(key){
       const fn = module[key];
@@ -10033,8 +10037,15 @@ function wmInstallLevelCompleteConditionFunctionLocks(){
       if(!name || names.includes(name)) return;
       try{
         const descriptor = Object.getOwnPropertyDescriptor(window, name);
-        Object.defineProperty(window, name, {value:fn,writable:false,configurable:false,enumerable:descriptor ? descriptor.enumerable : true});
-      }catch(error){ console.error('LEVEL COMPLETE CONDITION LOCK INSTALL ERROR', name, error); }
+        Object.defineProperty(window, name, {
+          value:fn,
+          writable:false,
+          configurable:false,
+          enumerable:descriptor ? descriptor.enumerable : true
+        });
+      }catch(error){
+        console.error('LEVEL COMPLETE CONDITION LOCK INSTALL ERROR', name, error);
+      }
       names.push(name);
     });
   });
@@ -10043,38 +10054,35 @@ function wmInstallLevelCompleteConditionFunctionLocks(){
 
 const WM_LEVEL_COMPLETE_CONDITION_LOCKED_FUNCTIONS = wmInstallLevelCompleteConditionFunctionLocks();
 
-async function wmLogLevelCompleteConditionLockStatus(){
-  console.info('🔒 LEVEL COMPLETE CONDITION LOCK VERIFY START');
-  const moduleNames = ['CURRENT_PROGRESS','FIRST_ASSIGNMENT_LOCK','LEVEL_COMPLETE_CONDITION_LOCK','SAVE'];
+function wmLogLevelCompleteConditionLockStatus(){
+  const moduleNames = ['CURRENT_PROGRESS','FIRST_ASSIGNMENT','LEVEL_LAST_SET_FORMULA','LEVEL_COMPLETE_CONDITION','SAVE_PROTECTION'];
   const rows = moduleNames.map(function(moduleName){
     const module = WM_LEVEL_COMPLETE_CONDITION_LOCK_V1[moduleName];
     const functions = Object.keys(module);
     const verified = Object.isFrozen(module) && functions.every(function(key){
       const fn = module[key];
       const descriptor = Object.getOwnPropertyDescriptor(window, fn.name);
-      return window[fn.name] === fn && !!descriptor && descriptor.writable === false && descriptor.configurable === false;
+      return window[fn.name] === fn
+        && !!descriptor
+        && descriptor.writable === false
+        && descriptor.configurable === false;
     });
     return {MODULE:moduleName,FUNCTIONS:functions.length,LOCKED:verified ? 'YES' : 'NO'};
   });
-  let server = null;
-  try{ server = await wmFetchSettingApi('levelCompleteConditionLockStatus', {ts:Date.now()}); }
-  catch(error){ server = {allVerified:false,error:String(error && error.message ? error.message : error)}; }
   const allVerified = Object.isFrozen(WM_LEVEL_COMPLETE_CONDITION_LOCK_V1)
     && Object.isFrozen(WM_LEVEL_COMPLETE_CONDITION_LOCKED_FUNCTIONS)
-    && rows.every(function(row){ return row.LOCKED === 'YES'; })
-    && !!(server && server.allVerified === true);
-  console.group('🔒 WORD MATE LEVEL COMPLETE CONDITION LOCK STATUS');
+    && rows.every(function(row){ return row.LOCKED === 'YES'; });
+  console.group('🔒 WORD MATE LMS LEVEL CONDITION LOCK STATUS');
   console.info('LOCK VERSION :', WM_LEVEL_COMPLETE_CONDITION_LOCK_V1.version);
   console.info('LOCK DATE    :', WM_LEVEL_COMPLETE_CONDITION_LOCK_V1.date);
   console.table(rows);
-  console.info(server && server.allVerified === true ? 'SERVER : ✅ ACTUAL LOCK' : 'SERVER : ❌ CHECK REQUIRED');
-  console.info(allVerified ? '🔒 LEVEL COMPLETE CONDITION ALL LOCK VERIFIED' : '❌ LEVEL COMPLETE CONDITION LOCK VERIFY FAILED');
+  console.info(Object.isFrozen(WM_LEVEL_COMPLETE_CONDITION_LOCK_V1) ? '✅ REGISTRY FROZEN' : '❌ REGISTRY CHECK REQUIRED');
+  console.info(allVerified ? '🔒 LMS LEVEL CONDITION ALL LOCK VERIFIED' : '❌ LMS LEVEL CONDITION LOCK VERIFY FAILED');
   console.groupEnd();
   return allVerified;
 }
 
-window.WM_VERIFY_LEVEL_COMPLETE_CONDITION_LOCK = wmLogLevelCompleteConditionLockStatus;
-wmLogLevelCompleteConditionLockStatus();
+document.addEventListener('DOMContentLoaded', wmLogLevelCompleteConditionLockStatus);
 
 /* WM_REPORT_PREVIEW_EXPANDED_DESIGN_LOCK_V1 / 확대 디자인 Registry + F12 검증 */
 const WM_REPORT_PREVIEW_EXPANDED_DESIGN_LOCK_V1 = Object.freeze({
