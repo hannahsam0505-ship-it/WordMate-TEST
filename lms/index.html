@@ -5793,6 +5793,46 @@ function extractRecordRowsFromResponse(data){
       }
     }
 
+    /* WM_STUDENT_ASSIGNMENT_LOCK_DATA_RESTORE_V1
+     * 학생관리 최소조회 후 최초배정·레벨완료조건 LOCK 판정에 필요한
+     * 현재진행_DB를 학생관리 렌더 전에 확보합니다. */
+    async function wmEnsureStudentAssignmentLockRows_(studentRows){
+      if(Array.isArray(WM_CURRENT_PROGRESS_ROWS) && WM_CURRENT_PROGRESS_ROWS.length) return WM_CURRENT_PROGRESS_ROWS;
+      const studentIds=(Array.isArray(studentRows)?studentRows:[])
+        .map(row=>String(row&&row['학생ID']||'').trim()).filter(Boolean);
+      try{
+        const params=new URLSearchParams();
+        params.set('mode','currentProgress');
+        params.set('initial','1');
+        params.set('limit',String(Math.max(25,studentIds.length||25)));
+        if(studentIds.length){
+          params.set('studentIds',studentIds.join(','));
+          params.set('matchMode','exactList');
+        }
+        params.set('ts',String(Date.now()));
+        const actor=String(wmLmsActorQuery()||'').replace(/^&/,'');
+        if(actor){
+          const actorParams=new URLSearchParams(actor);
+          actorParams.forEach((value,key)=>params.set(key,value));
+        }
+        const res=await fetch(WM_APPS_SCRIPT_URL+'?'+params.toString(),{method:'GET',cache:'no-store'});
+        const data=await res.json();
+        const rows=normalizeRows(data&&(data.currentProgress||data.currentProgressRows||data.rows||data.data)
+          ?(data.currentProgress||data.currentProgressRows||data.rows||data.data):data);
+        if(rows.length) WM_CURRENT_PROGRESS_ROWS=rows;
+      }catch(err){
+        console.warn('학생배정 LOCK 현재진행 조회 실패, 시트조회 fallback:',err);
+      }
+      if(!WM_CURRENT_PROGRESS_ROWS.length){
+        try{
+          WM_CURRENT_PROGRESS_ROWS=normalizeRows(await readSheetRows(['8.현재진행_DB','현재진행_DB','currentProgress','current_progress']));
+        }catch(err){
+          console.warn('학생배정 LOCK 현재진행 시트조회 실패:',err);
+        }
+      }
+      return WM_CURRENT_PROGRESS_ROWS;
+    }
+
     async function loadStudents() {
       if(WM_STUDENT_LOAD_PROMISE) return WM_STUDENT_LOAD_PROMISE;
       WM_STUDENT_LOAD_PROMISE=(async()=>{
@@ -5807,6 +5847,7 @@ function extractRecordRowsFromResponse(data){
           const res = await fetch(WM_APPS_SCRIPT_URL + '?mode=students&phase=list&initial=1&limit=25&fields='+encodeURIComponent(fields.join(','))+'&ts=' + Date.now() + wmLmsActorQuery(), {method:'GET', cache:'no-store'});
           const data = await res.json();
           WM_STUDENT_MANAGE_ROWS = normalizeRows(data && data.students ? data.students : []);
+          await wmEnsureStudentAssignmentLockRows_(WM_STUDENT_MANAGE_ROWS);
           renderStudentManageRows();
           setManageLoading('students', false);
           console.log('학생관리_DB 1차 최소조회 성공:', WM_STUDENT_MANAGE_ROWS);
