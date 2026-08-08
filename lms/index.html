@@ -812,6 +812,10 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
     .wm-hidden { display:none !important; }
 
     .wm-mode-select { min-width:104px; border:1px solid var(--wm-line); border-radius:9px; padding:7px 8px; font-size:12px; background:#fff; font-weight:800; }
+    .wm-recipient-type-wrap{display:flex;align-items:center;gap:6px;min-width:250px;}
+    .wm-recipient-type-select{min-width:78px;}
+    .wm-recipient-type-custom{width:150px;border:1px solid var(--wm-line);border-radius:9px;padding:7px 8px;font-size:12px;background:#fff;font-weight:800;}
+    .wm-recipient-type-custom:disabled{background:#f3f4f6;color:#9ca3af;cursor:not-allowed;}
     .wm-mode-save-btn { border:0; background:var(--wm-blue); color:#fff; border-radius:9px; padding:8px 10px; font-size:12px; font-weight:900; cursor:pointer; }
 
     .wm-create-factory-box { display:none; border:1px solid var(--wm-line); background:#fbfdff; border-radius:16px; padding:16px; margin:0 0 18px; }
@@ -8665,6 +8669,45 @@ function wmModeSelectHtml(studentId, key, value, options, config){
   return `<select class="wm-mode-select" data-student-id="${escapeHtml(studentId)}" data-mode-key="${escapeHtml(key)}" id="wmMode_${escapeHtml(key)}_${escapeHtml(safeId)}" ${locked ? 'disabled' : ''} ${reason ? `title="${escapeHtml(reason)}"` : ''}>${options.map(opt=>{ const pair = Array.isArray(opt) ? opt : [opt,opt]; return `<option value="${escapeHtml(pair[0])}" ${pair[0] === current ? 'selected' : ''}>${escapeHtml(pair[1])}</option>`; }).join('')}</select>${locked ? `<span title="${escapeHtml(reason)}" style="margin-left:5px;cursor:help;">🔒</span>` : ''}`;
 }
 
+
+/* WM_STUDENT_RECIPIENT_TYPE_SELECT_V1
+ * 수신자구분: 부/모 선택 + 기타 직접입력.
+ * 기존 값이 부/모가 아니면 기타로 표시하고 원래 값을 직접입력칸에 유지합니다. */
+function wmRecipientTypeInputHtml(studentId, value){
+  const safeId=String(studentId||'').replace(/[^A-Za-z0-9_-]/g,'');
+  const current=String(value||'').trim();
+  const preset=(current==='부'||current==='모')?current:(current?'기타':'');
+  const custom=(preset==='기타')?current:'';
+  return `<div class="wm-recipient-type-wrap">
+    <select class="wm-mode-select wm-recipient-type-select" id="wmMode_수신자구분_${escapeHtml(safeId)}" data-student-id="${escapeHtml(studentId)}" onchange="wmToggleRecipientTypeCustom('${escapeHtml(safeId)}')">
+      <option value="" ${preset===''?'selected':''}>선택</option>
+      <option value="부" ${preset==='부'?'selected':''}>부</option>
+      <option value="모" ${preset==='모'?'selected':''}>모</option>
+      <option value="기타" ${preset==='기타'?'selected':''}>기타</option>
+    </select>
+    <input type="text" class="wm-recipient-type-custom" id="wmMode_수신자구분기타_${escapeHtml(safeId)}" value="${escapeHtml(custom)}" placeholder="예: 삼촌, 이모, 할머니" maxlength="20" ${preset==='기타'?'':'disabled'} />
+  </div>`;
+}
+
+function wmToggleRecipientTypeCustom(safeId){
+  const select=document.getElementById(`wmMode_수신자구분_${safeId}`);
+  const input=document.getElementById(`wmMode_수신자구분기타_${safeId}`);
+  if(!select||!input)return;
+  const isCustom=select.value==='기타';
+  input.disabled=!isCustom;
+  if(isCustom){ input.focus(); }
+  else{ input.value=''; }
+}
+
+function wmRecipientTypeValueFromRow(studentId,row){
+  const safeId=String(studentId||'').replace(/[^A-Za-z0-9_-]/g,'');
+  const select=document.getElementById(`wmMode_수신자구분_${safeId}`);
+  const input=document.getElementById(`wmMode_수신자구분기타_${safeId}`);
+  if(!select) return String((row&& (row['수신자구분']||row['수신구분']||row['수신']))||'').trim();
+  if(select.value==='기타') return String(input&&input.value||'').trim();
+  return String(select.value||'').trim();
+}
+
 function wmProgressField(progress, aliases){
   if(!progress) return '';
   for(const alias of aliases){
@@ -8747,6 +8790,9 @@ async function saveStudentLearningModeFromRow(studentId, skipLockAndToast){
   const learningEndDate=String(document.getElementById(`wmMode_학습종료일_${safeId}`)?.value||'').trim();
   if(!learningStartDate){ alert('학습시작일을 달력에서 선택해주세요.'); return; }
   if(learningEndDate&&learningEndDate<learningStartDate){ alert('학습종료일은 학습시작일보다 빠를 수 없습니다.'); return; }
+  const recipientType=wmRecipientTypeValueFromRow(studentId,row);
+  const recipientSelect=document.getElementById(`wmMode_수신자구분_${safeId}`);
+  if(recipientSelect&&recipientSelect.value==='기타'&&!recipientType){ alert('기타 수신자 관계를 입력해주세요.'); return; }
   const params = new URLSearchParams({
     mode:'saveStudentLearningMode',
     studentId:String(studentId || '').trim(),
@@ -8760,6 +8806,7 @@ async function saveStudentLearningModeFromRow(studentId, skipLockAndToast){
     levelCompleteCondition:getSel('레벨완료조건'),
     nextLevel:String(nextLevel || ''),
     nextLevelCompleteCondition:getSel('다음레벨완료조건'),
+    recipientType:recipientType,
     ts:String(Date.now())
   });
   if(!skipLockAndToast) wmSetSaveWaiting(true, '학생 정보를 저장 중입니다...');
@@ -9265,7 +9312,7 @@ function renderStudentManageRows(){
       <td>${escapeHtml(row['교사명'] || '')}</td>
       <td>${escapeHtml(row['학교'] || '')}</td>
       <td>${escapeHtml(wmNormalizeGradeDisplay(row['학년'] || ''))}</td>
-      <td>${escapeHtml(row['수신자구분'] || row['수신구분'] || row['수신'] || '')}</td>
+      <td>${wmRecipientTypeInputHtml(studentId, row['수신자구분'] || row['수신구분'] || row['수신'] || '')}</td>
       <td>${escapeHtml(row['학부모명'] || '')}</td>
       <td>${escapeHtml(row['학부모연락처'] || '')}</td>
       <td>${escapeHtml(displayCellValue(row['최종결제']))}</td>
