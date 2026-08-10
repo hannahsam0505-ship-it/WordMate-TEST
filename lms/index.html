@@ -2066,7 +2066,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
         <span class="wmr-auto-comment-line">학습 결과는 <strong class="wmr-auto-comment-emphasis">출석점수 4점 · 학업집중도 10점 · 점수추이 10점</strong>입니다.</span>
         <span class="wmr-auto-comment-line">이에 따라 이번 주 성적은 <strong class="wmr-auto-comment-key">최종점수 23.1점</strong><span class="wmr-auto-comment-score-sub">(23.1/30)</span>, <strong class="wmr-auto-comment-key">등급은 1.8등급</strong>입니다.</span>
         <span class="wmr-auto-comment-line">다음 주에도 현재 학습 리듬을 유지하며 최고 등급에 도전해 보세요.</span>
-      </p><aside class="wmr-grade-guide" aria-label="성적등급 안내"><span class="wmr-grade-guide-note" data-wmr-grade-guide></span><div class="wmr-auto-comment-created" data-wmr-grade-created></div></aside></div>
+      </p><aside class="wmr-grade-guide" aria-label="성적등급 안내"><span class="wmr-grade-guide-note" data-wmr-grade-guide></span></aside></div>
       <span class="wmr-legacy-comment-bind" data-wmr-teacher-comment data-wm-bind="teacherComment"></span>
       <span class="wmr-legacy-comment-bind" data-wmr-message data-wm-bind="encouragementMessage"></span>
     </div>
@@ -4733,6 +4733,8 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
     function formatGradeCommentCreatedAt(value){
       const raw=String(value||'').trim();
       if(!raw) return '';
+      const d=raw.match(/^(\d{4})[-./](\d{1,2})[-./](\d{1,2})$/);
+      if(d) return d[1]+'.'+Number(d[2])+'.'+Number(d[3]);
       const m=raw.match(/(\d{4})[-./](\d{1,2})[-./](\d{1,2})[ T](\d{1,2}):(\d{1,2})/);
       if(!m) return raw;
       return m[1].slice(-2)+'.'+String(m[2]).padStart(2,'0')+'.'+String(m[3]).padStart(2,'0')+' '+String(m[4]).padStart(2,'0')+':'+String(m[5]).padStart(2,'0');
@@ -4798,13 +4800,10 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
         }).join('');
         const guideEl=sheet.querySelector('[data-wmr-grade-guide]');
         if(guideEl) guideEl.textContent=guideLine;
+        const issued=formatGradeCommentCreatedAt(data['발행일']);
+        const lastLine=commentEl.querySelector('.wmr-auto-comment-line:last-child');
+        if(lastLine&&issued) lastLine.appendChild(document.createTextNode(' '+issued));
       }
-      let created=sheet.querySelector('[data-wmr-grade-created]');
-      if(!created){
-        const box=sheet.querySelector('.wmr-auto-comment');
-        if(box){created=document.createElement('div');created.className='wmr-auto-comment-created';created.setAttribute('data-wmr-grade-created','');box.appendChild(created);}
-      }
-      if(created) created.textContent=formatGradeCommentCreatedAt(data['생성일시']);
       sheet.setAttribute('data-wmr-grade-db-connected','true');
       sheet.setAttribute('data-wmr-grade-final-score',score);
       sheet.setAttribute('data-wmr-grade-left-right-verified','true');
