@@ -5129,7 +5129,18 @@ function escapeJs(value){
 
 async function wmLogout(){
   const studentId = wmCurrentStudent && wmCurrentStudent.학생ID ? String(wmCurrentStudent.학생ID).trim().toUpperCase() : '';
-  const sessionToken = wmGetCurrentSessionToken();
+
+  /* WM_LOGOUT_CURRENT_TOKEN_PRIORITY_V1_20260813
+     로그아웃은 현재 로그인으로 Map에 전달된 최신 토큰을 우선 사용합니다.
+     과거 window.WM_SESSION_TOKEN 값이 남아 최신 세션보다 먼저 선택되는 경우를 차단합니다.
+     공용 세션판정·LOCK은 수정하지 않습니다. */
+  const sessionToken = String(
+    wmGetUrlParam('sessionToken') ||
+    wmGetUrlParam('wmSessionToken') ||
+    (wmCurrentStudent && (wmCurrentStudent.sessionToken || wmCurrentStudent.현재세션 || wmCurrentStudent.wmSessionToken)) ||
+    wmGetCurrentSessionToken() ||
+    ''
+  ).trim();
 
   /* WM_LOGOUT_SERVER_CONFIRM_V1_20260813
      서버 DB에서 현재세션 공백 + 세션상태 LOGOUT이 확인된 경우에만
@@ -5142,6 +5153,7 @@ async function wmLogout(){
 
   const logoutUrl = wmGetApiBaseUrl()
     + '?action=studentLogout'
+    + '&mode=studentLogout'
     + '&studentId=' + encodeURIComponent(studentId)
     + '&sessionToken=' + encodeURIComponent(sessionToken)
     + '&t=' + Date.now();
