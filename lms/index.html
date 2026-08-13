@@ -54,7 +54,7 @@
      *
      * 기능 추가 및 구조 변경은 새로운 LOCK 버전에서만 진행한다.
      ****************************************************************************************************/
-    const WM_ENV = 'TEST';
+    const WM_ENV = 'REAL';
 
     const WM_ENV_CONFIG = {
       TEST: {
@@ -8899,6 +8899,8 @@ async function saveStudentLearningModeFromRow(studentId, skipLockAndToast){
     nextLevel:String(nextLevel || ''),
     nextLevelCompleteCondition:getSel('다음레벨완료조건'),
     recipientType:recipientType,
+    activeStatus:getSel('활성상태'),
+    sessionStatus:getSel('세션상태'),
     ts:String(Date.now())
   });
   if(!skipLockAndToast) wmSetSaveWaiting(true, '학생 정보를 저장 중입니다...');
@@ -8956,7 +8958,9 @@ function wmStudentEditableValues(row, safeId){
       '레벨완료조건':wmNormalizeStudentModeValue(row, '레벨완료조건', '2회'),
       'S4실루엣단계':(s4Raw === '전체' || s4Raw === '0단계') ? '1단계' : s4Raw,
       'S6테스트모드':wmNormalizeStudentModeValue(row, 'S6테스트모드', row['학습모드'] || '기본전체'),
-      '다음레벨완료조건':wmNormalizeStudentModeValue(row, '다음레벨완료조건', '2회')
+      '다음레벨완료조건':wmNormalizeStudentModeValue(row, '다음레벨완료조건', '2회'),
+      '활성상태':String(row['활성상태'] || 'ACTIVE').trim().toUpperCase(),
+      '세션상태':String(row['세션상태'] || 'LOGOUT').trim().toUpperCase()
     },
     current:{
       '학습시작일':read('학습시작일'),
@@ -8968,7 +8972,9 @@ function wmStudentEditableValues(row, safeId){
       '레벨완료조건':read('레벨완료조건'),
       'S4실루엣단계':read('S4실루엣단계'),
       'S6테스트모드':read('S6테스트모드'),
-      '다음레벨완료조건':read('다음레벨완료조건')
+      '다음레벨완료조건':read('다음레벨완료조건'),
+      '활성상태':read('활성상태'),
+      '세션상태':read('세션상태')
     }
   };
 }
@@ -9422,10 +9428,10 @@ function renderStudentManageRows(){
       <td>${escapeHtml(row['재등록횟수'] || '')}</td>
       <td>${escapeHtml(row['총등록기간'] || '')}</td>
       <td>${escapeHtml(row['등록상태'] || '')}</td>
-      <td>${escapeHtml(row['활성상태'] || '')}</td>
+      <td>${wmModeSelectHtml(studentId, '활성상태', String(row['활성상태'] || 'ACTIVE').trim().toUpperCase(), ['ACTIVE','INACTIVE'])}</td>
       <td>${escapeHtml(row['반ID'] || '')}</td>
       <td>${escapeHtml(row['교사ID'] || '')}</td>
-      <td>${escapeHtml(row['세션상태'] || '')}</td>
+      <td>${wmModeSelectHtml(studentId, '세션상태', String(row['세션상태'] || 'LOGOUT').trim().toUpperCase(), ['LOGIN','LOGOUT','EXPIRED'])}</td>
       <td>${escapeHtml(displayCellValue(row['최종로그인']))}</td>
       <td>${escapeHtml(row['접속기기'] || '')}</td>
       <td>${escapeHtml(wmStripMoveHandlerText(row['비고'] || ''))}</td>
