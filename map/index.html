@@ -4911,12 +4911,12 @@ wmInitHomeworkSearchEnterKey();
  * LMS 성적표생성 최근성적표와 동일한 /shared/report-renderer.js를 클릭 시점에만 사용합니다.
  * 로그인·학습맵 초기 진입에는 파일 요청·성적표 API 호출을 추가하지 않습니다.
  */
-const WM_SHARED_REPORT_RENDERER_URL='/shared/report-renderer.js?v=2';
+const WM_SHARED_REPORT_RENDERER_URL='/shared/report-renderer.js?v=3';
 let WM_SHARED_REPORT_RENDERER_PROMISE=null;
 let wmMapRecentReportState_={loaded:false,loading:false,months:[],defaultYearMonth:'',studentId:'',cache:new Map()};
 
 function wmLoadSharedReportRenderer_(){
-  if(window.WMSharedRecentReport&&window.WMSharedRecentReport.version==='V2'&&typeof window.WMSharedRecentReport.render==='function'){
+  if(window.WMSharedRecentReport&&window.WMSharedRecentReport.version==='V3'&&typeof window.WMSharedRecentReport.render==='function'){
     return Promise.resolve(window.WMSharedRecentReport);
   }
   if(WM_SHARED_REPORT_RENDERER_PROMISE) return WM_SHARED_REPORT_RENDERER_PROMISE;
@@ -4924,9 +4924,9 @@ function wmLoadSharedReportRenderer_(){
     const script=document.createElement('script');
     script.src=WM_SHARED_REPORT_RENDERER_URL;
     script.async=true;
-    script.dataset.wmSharedReportRenderer='V2';
+    script.dataset.wmSharedReportRenderer='V3';
     script.onload=function(){
-      if(window.WMSharedRecentReport&&window.WMSharedRecentReport.version==='V2'&&typeof window.WMSharedRecentReport.render==='function') resolve(window.WMSharedRecentReport);
+      if(window.WMSharedRecentReport&&window.WMSharedRecentReport.version==='V3'&&typeof window.WMSharedRecentReport.render==='function') resolve(window.WMSharedRecentReport);
       else reject(new Error('공통 성적표 렌더러를 확인할 수 없습니다.'));
     };
     script.onerror=function(){ reject(new Error('공통 성적표 렌더러를 불러오지 못했습니다.')); };

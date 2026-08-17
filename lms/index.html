@@ -781,10 +781,6 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
     .wm-report-button-group { display:flex; align-items:center; gap:7px; }
     .wm-recent-report-btn { border:1px solid #0d55c8; background:#fff; color:#0d55c8; border-radius:9px; padding:8px 10px; font-size:12px; font-weight:900; cursor:pointer; white-space:nowrap; }
     .wm-recent-report-btn:hover { background:#eef4ff; }
-    .wm-recent-report-select { min-width:150px; border:1px solid #9fbce8; border-radius:9px; background:#fff; color:#173b75; padding:8px 10px; font-size:13px; font-weight:900; }
-    #wmRecentReportModal .wm-report-preview-modal-card { display:flex; flex-direction:column; }
-    #wmRecentReportModal .wm-report-preview-modal-head { position:relative; top:auto; flex:0 0 auto; }
-    #wmRecentReportModal .wm-report-preview-modal-body { flex:1 1 auto; min-height:140px; overflow:auto; }
     .wm-current-progress-pager { display:flex; justify-content:center; align-items:center; gap:10px; margin:12px 0 0; flex-wrap:wrap; }
     .wm-current-progress-pager button { border:1px solid var(--wm-line); background:#fff; color:var(--wm-dark); border-radius:10px; padding:8px 13px; font-size:13px; font-weight:900; cursor:pointer; }
     .wm-current-progress-pager button:disabled { opacity:.45; cursor:not-allowed; }
@@ -4555,11 +4551,11 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
     }
 
 
-    const WM_SHARED_REPORT_RENDERER_URL='/shared/report-renderer.js?v=2';
+    const WM_SHARED_REPORT_RENDERER_URL='/shared/report-renderer.js?v=3';
     let WM_SHARED_REPORT_RENDERER_PROMISE=null;
 
     function wmLoadSharedReportRenderer_(){
-      if(window.WMSharedRecentReport&&window.WMSharedRecentReport.version==='V2'&&typeof window.WMSharedRecentReport.render==='function'){
+      if(window.WMSharedRecentReport&&window.WMSharedRecentReport.version==='V3'&&typeof window.WMSharedRecentReport.render==='function'){
         return Promise.resolve(window.WMSharedRecentReport);
       }
       if(WM_SHARED_REPORT_RENDERER_PROMISE) return WM_SHARED_REPORT_RENDERER_PROMISE;
@@ -4567,9 +4563,9 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
         const script=document.createElement('script');
         script.src=WM_SHARED_REPORT_RENDERER_URL;
         script.async=true;
-        script.dataset.wmSharedReportRenderer='V2';
+        script.dataset.wmSharedReportRenderer='V3';
         script.onload=function(){
-          if(window.WMSharedRecentReport&&window.WMSharedRecentReport.version==='V2'&&typeof window.WMSharedRecentReport.render==='function') resolve(window.WMSharedRecentReport);
+          if(window.WMSharedRecentReport&&window.WMSharedRecentReport.version==='V3'&&typeof window.WMSharedRecentReport.render==='function') resolve(window.WMSharedRecentReport);
           else reject(new Error('공통 성적표 렌더러를 확인할 수 없습니다.'));
         };
         script.onerror=function(){ reject(new Error('공통 성적표 렌더러를 불러오지 못했습니다.')); };
