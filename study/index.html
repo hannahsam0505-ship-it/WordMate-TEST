@@ -294,7 +294,31 @@ const WM_LMS_URL = WM_CONFIG.LMS_URL;
 8. 학습 몰입형 Fullscreen 및 직접입력 유도 기능 적용
 -->
 
-<div id="wordmate-app"></div>
+<!-- WM_STUDY_LEVEL_BANNER_SHELL_V1: 공통 곤색 배너 + 레벨별 상단 테두리 + 실제 학습화면 통합 프레임 -->
+<main id="wm-study-shell" class="wm-study-shell wm-level-elementary">
+  <header id="wm-study-banner" class="wm-study-banner" aria-label="현재 학습 세트">
+    <div class="wm-study-system-title">English Learning System</div>
+    <div class="wm-study-brand-title">영어잡는 Word Mate</div>
+    <div class="wm-study-meta" aria-label="학습 과정 정보">
+      <span id="wm-study-set-chip" class="wm-study-meta-chip wm-study-set-chip">Basic 6-1-1</span>
+      <span id="wm-study-grade-chip" class="wm-study-meta-chip">초6과정</span>
+      <span id="wm-study-word-chip" class="wm-study-meta-chip">10단어</span>
+    </div>
+  </header>
+
+  <section class="wm-study-content">
+    <nav id="wm-main-progress" class="wm-main-progress" aria-label="학습단계">
+      <span class="wm-main-step" data-step="flash">Flash Card</span>
+      <span class="wm-main-step" data-step="choose-ek">Choose EK</span>
+      <span class="wm-main-step" data-step="choose-ke">Choose KE</span>
+      <span class="wm-main-step" data-step="memory">Memory</span>
+      <span class="wm-main-step" data-step="review">Review</span>
+      <span id="wm-main-test-step" class="wm-main-step" data-step="test">TEST(4종)</span>
+    </nav>
+    <nav id="wm-test-progress" class="wm-test-progress" aria-label="시험 진행단계" hidden></nav>
+    <div id="wordmate-app"></div>
+  </section>
+</main>
 
 <audio id="wordAudio" preload="auto" playsinline></audio>
 
@@ -764,6 +788,311 @@ const WM_LMS_URL = WM_CONFIG.LMS_URL;
   }
 
 
+  /* =========================================================
+     WM_STUDY_LEVEL_BANNER_SHELL_V1
+     곤색 공통배너 안에 실제 학습화면을 배치하고,
+     레벨군 색상은 상단 테두리와 세트 강조에만 사용합니다.
+     추가 API·DB조회·타이머·이미지 로딩 없이 현재 Set_ID만 사용합니다.
+  ========================================================= */
+  .wm-study-shell{
+    --wm-level-accent:#f59e0b;
+    --wm-level-accent-text:#08285f;
+    width:calc(100% - 32px);
+    max-width:980px;
+    margin:30px auto;
+    overflow:hidden;
+    border-top:6px solid var(--wm-level-accent);
+    border-radius:24px;
+    background:#eaf4ff;
+    box-shadow:0 10px 28px rgba(15,43,92,.12);
+    box-sizing:border-box;
+    font-family:Arial,sans-serif;
+  }
+  .wm-study-shell.wm-level-elementary{--wm-level-accent:#f59e0b;--wm-level-accent-text:#08285f;}
+  .wm-study-shell.wm-level-middle{--wm-level-accent:#38bdf8;--wm-level-accent-text:#08285f;}
+  .wm-study-shell.wm-level-high{--wm-level-accent:#22c55e;--wm-level-accent-text:#062b1b;}
+  .wm-study-shell.wm-level-csat{--wm-level-accent:#a78bfa;--wm-level-accent-text:#ffffff;}
+
+  .wm-study-banner{
+    padding:22px 24px 21px;
+    background:#0c2b63;
+    color:#fff;
+    text-align:center;
+    box-sizing:border-box;
+  }
+  .wm-study-system-title{
+    color:#ffd438;
+    font-size:21px;
+    font-weight:900;
+    line-height:1.2;
+    letter-spacing:.01em;
+  }
+  .wm-study-brand-title{
+    margin-top:7px;
+    color:#fff;
+    font-size:28px;
+    font-weight:900;
+    line-height:1.2;
+    letter-spacing:-.025em;
+  }
+  .wm-study-meta{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:9px;
+    margin-top:13px;
+    white-space:nowrap;
+  }
+  .wm-study-meta-chip{
+    display:inline-flex;
+    min-height:34px;
+    padding:7px 14px;
+    align-items:center;
+    justify-content:center;
+    border:1px solid var(--wm-level-accent);
+    border-radius:999px;
+    background:rgba(255,255,255,.08);
+    color:#fff;
+    font-size:15px;
+    font-weight:900;
+    line-height:1;
+    box-sizing:border-box;
+  }
+  .wm-study-set-chip{
+    min-height:40px;
+    padding:8px 20px;
+    border-color:var(--wm-level-accent);
+    background:var(--wm-level-accent);
+    color:var(--wm-level-accent-text);
+    font-size:20px;
+    letter-spacing:.015em;
+    box-shadow:0 4px 12px rgba(0,0,0,.16);
+  }
+
+  .wm-study-content{
+    padding:16px 24px 24px;
+    background:#eaf4ff;
+    box-sizing:border-box;
+  }
+  .wm-main-progress,
+  .wm-test-progress{
+    width:100%;
+    max-width:820px;
+    margin:0 auto;
+    border:1px solid var(--wm-level-accent);
+    border-radius:999px;
+    background:#fff;
+    box-sizing:border-box;
+  }
+  .wm-main-progress{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:7px;
+    min-height:46px;
+    padding:6px 13px;
+  }
+  .wm-main-progress[hidden]{display:none;}
+  .wm-main-step{
+    position:relative;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:28px;
+    padding:5px 9px;
+    border-radius:999px;
+    color:#08285f;
+    font-size:13px;
+    font-weight:900;
+    line-height:1.15;
+    white-space:nowrap;
+    box-sizing:border-box;
+  }
+  .wm-main-step:not(:last-child){margin-right:9px;}
+  .wm-main-step:not(:last-child)::after{
+    content:"→";
+    position:absolute;
+    left:calc(100% + 7px);
+    top:50%;
+    transform:translateY(-50%);
+    color:var(--wm-level-accent);
+    font-weight:900;
+  }
+  .wm-main-step.is-complete{
+    color:#475569;
+    background:#f1f5f9;
+  }
+  .wm-main-step.is-complete::before{
+    content:"✓";
+    margin-right:4px;
+    color:#16a34a;
+    font-weight:900;
+  }
+  .wm-main-step.is-active{
+    background:var(--wm-level-accent);
+    color:var(--wm-level-accent-text);
+    box-shadow:0 2px 8px rgba(15,43,92,.14);
+  }
+
+  .wm-test-progress{
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:7px;
+    padding:7px;
+    border-radius:16px;
+  }
+  .wm-test-progress[hidden]{display:none;}
+  .wm-test-progress.is-count-2{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .wm-test-progress.is-count-3{grid-template-columns:repeat(3,minmax(0,1fr));}
+  .wm-test-step{
+    display:flex;
+    min-height:38px;
+    padding:7px 8px;
+    align-items:center;
+    justify-content:center;
+    border:1px solid #dbe3ee;
+    border-radius:10px;
+    background:#f8fafc;
+    color:#64748b;
+    font-size:13px;
+    font-weight:900;
+    line-height:1.2;
+    text-align:center;
+    box-sizing:border-box;
+  }
+  .wm-test-step.is-complete{
+    border-color:#bbf7d0;
+    background:#f0fdf4;
+    color:#15803d;
+  }
+  .wm-test-step.is-complete::before{content:"✓";margin-right:5px;}
+  .wm-test-step.is-active{
+    border-color:var(--wm-level-accent);
+    background:var(--wm-level-accent);
+    color:var(--wm-level-accent-text);
+    box-shadow:0 2px 8px rgba(15,43,92,.12);
+  }
+
+  .wm-study-shell #wordmate-app{
+    max-width:760px;
+    margin:16px auto 0;
+  }
+  .wm-study-shell .wm-card{
+    padding:22px 26px;
+  }
+  .wm-study-shell .wm-title{
+    margin-bottom:12px;
+  }
+  .wm-study-shell .wm-learning-guide{
+    margin-bottom:10px;
+  }
+  .wm-study-shell .word-progress,
+  .wm-study-shell .memory-progress{
+    margin-top:7px;
+    margin-bottom:11px;
+  }
+  .wm-study-shell .wm-word{
+    margin-top:10px;
+    margin-bottom:7px;
+  }
+  .wm-study-shell .wm-meaning{
+    margin-top:12px;
+    margin-bottom:12px;
+  }
+  .wm-study-shell .wm-btn{
+    margin-top:9px;
+  }
+  .wm-study-shell .wm-option{
+    margin-top:8px;
+  }
+  .wm-study-shell .test-question{
+    padding:12px 14px;
+    margin-top:10px;
+  }
+  .wm-study-shell .test-option{
+    margin:6px 0;
+  }
+  .wm-study-shell .test-input{
+    margin-top:12px;
+  }
+  .wm-test-screen-title .wm-test-title-order,
+  .wm-test-screen-title .wm-test-title-name{
+    display:block;
+  }
+  .wm-test-screen-title .wm-test-title-order{
+    color:var(--wm-level-accent);
+    font-size:18px;
+    line-height:1.2;
+    margin-bottom:4px;
+  }
+  .wm-test-screen-title .wm-test-title-name{
+    color:#111;
+    font-size:25px;
+    line-height:1.25;
+  }
+
+  @media(max-width:640px){
+    .wm-study-shell{
+      width:calc(100% - 16px);
+      margin:14px auto;
+      border-top-width:5px;
+      border-radius:18px;
+    }
+    .wm-study-banner{padding:17px 10px 16px;}
+    .wm-study-system-title{font-size:18px;}
+    .wm-study-brand-title{margin-top:5px;font-size:24px;}
+    .wm-study-meta{gap:5px;margin-top:10px;}
+    .wm-study-meta-chip{
+      min-height:30px;
+      padding:6px 9px;
+      font-size:13px;
+    }
+    .wm-study-set-chip{
+      min-height:34px;
+      padding:7px 12px;
+      font-size:16px;
+    }
+    .wm-study-content{padding:10px 9px 14px;}
+    .wm-main-progress{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:5px;
+      padding:6px;
+      border-radius:15px;
+    }
+    .wm-main-step{
+      min-height:31px;
+      padding:5px 4px;
+      font-size:12px;
+      white-space:normal;
+      text-align:center;
+    }
+    .wm-main-step:not(:last-child){margin-right:0;}
+    .wm-main-step:not(:last-child)::after{content:none;}
+    .wm-test-progress,
+    .wm-test-progress.is-count-3{
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:5px;
+      padding:6px;
+    }
+    .wm-test-progress.is-count-2{grid-template-columns:repeat(2,minmax(0,1fr));}
+    .wm-test-step{min-height:36px;padding:6px 4px;font-size:12px;}
+    .wm-study-shell #wordmate-app{margin-top:10px;}
+    .wm-study-shell .wm-card{padding:19px 15px;}
+    .wm-study-shell .wm-title{margin-bottom:9px;}
+    .wm-study-shell .wm-learning-guide{margin-bottom:7px;}
+    .wm-study-shell .word-progress,
+    .wm-study-shell .memory-progress{margin-top:6px;margin-bottom:8px;}
+    .wm-study-shell .wm-word{margin-top:8px;margin-bottom:5px;}
+    .wm-study-shell .wm-meaning{margin-top:9px;margin-bottom:9px;}
+    .wm-study-shell .wm-btn{margin-top:7px;}
+    .wm-study-shell .wm-option{margin-top:6px;}
+    .wm-study-shell .test-question{padding:10px 11px;margin-top:8px;}
+    .wm-study-shell .test-option{margin:5px 0;}
+    .wm-study-shell .test-input{margin-top:9px;}
+  }
+
+
 @keyframes wmSpin{
   to{transform:rotate(360deg);}
 }
@@ -1169,9 +1498,99 @@ function makeSetName(setId){
 }
 
 function wmSetBadgeHtml(){
-  const parts = getSetParts(currentSetId);
-  const label = parts ? `WM Basic ${parts.level}-${parts.part}-${parts.set}` : `WM ${makeSetName(currentSetId)}`;
-  return `<div class="wm-set-badge">${label}</div>`;
+  /* 세트 정보는 공통 상단 배너에서 한 번만 표시합니다. */
+  return "";
+}
+
+function wmGetStudyLevelBannerInfo(setId){
+  const parts = getSetParts(setId) || {level:5,part:1,set:1};
+  const level = Number(parts.level || 5);
+  let groupClass = "wm-level-elementary";
+  let course = `초${level}과정`;
+
+  if(level >= 7 && level <= 9){
+    groupClass = "wm-level-middle";
+    course = `중${level - 6}과정`;
+  }else if(level >= 10 && level <= 12){
+    groupClass = "wm-level-high";
+    course = `고${level - 9}과정`;
+  }else if(level >= 13){
+    groupClass = "wm-level-csat";
+    course = "수능과정";
+  }
+
+  return {
+    groupClass,
+    setName:`Basic ${parts.level}-${parts.part}-${parts.set}`,
+    course,
+    wordCount:level <= 6 ? 10 : 20
+  };
+}
+
+function wmGetTestShortLabel(test){
+  if(test && test.type === "choice" && test.direction === "eng-ko") return "영한 객관식";
+  if(test && test.type === "choice" && test.direction === "ko-eng") return "한영 객관식";
+  if(test && test.type === "write" && test.direction === "eng-ko") return "영한 주관식";
+  if(test && test.type === "write" && test.direction === "ko-eng") return "한영 주관식";
+  return "TEST";
+}
+
+function wmGetTestScreenTitle(test){
+  const tests = getTestList();
+  const order = Math.min(Number(testIndex || 0) + 1, Math.max(1, tests.length));
+  return `<span class="wm-test-screen-title"><span class="wm-test-title-order">TEST ${order}/${tests.length}</span><span class="wm-test-title-name">${wmGetTestShortLabel(test)}</span></span>`;
+}
+
+function wmSyncStudyShell(){
+  const shell = document.getElementById("wm-study-shell");
+  if(!shell) return;
+
+  const info = wmGetStudyLevelBannerInfo(currentSetId);
+  shell.classList.remove("wm-level-elementary","wm-level-middle","wm-level-high","wm-level-csat");
+  shell.classList.add(info.groupClass);
+
+  const setChip = document.getElementById("wm-study-set-chip");
+  const gradeChip = document.getElementById("wm-study-grade-chip");
+  const wordChip = document.getElementById("wm-study-word-chip");
+  if(setChip) setChip.textContent = info.setName;
+  if(gradeChip) gradeChip.textContent = info.course;
+  if(wordChip) wordChip.textContent = `${info.wordCount}단어`;
+
+  const tests = getTestList();
+  const mainProgress = document.getElementById("wm-main-progress");
+  const testProgress = document.getElementById("wm-test-progress");
+  const mainTestStep = document.getElementById("wm-main-test-step");
+  if(mainTestStep) mainTestStep.textContent = `TEST(${tests.length}종)`;
+
+  const testLearningActive = stage === 5 || stage === 7 || stage === 9 || (stage === 4 && afterMemoryAction === "testRetake");
+  if(mainProgress) mainProgress.hidden = testLearningActive;
+
+  const stageKeys = ["flash","choose-ek","choose-ke","memory","review","test"];
+  const stageKeyByNumber = {1:"flash",2:"choose-ek",3:"choose-ke",4:"memory",5:"test",6:"review",7:"test",9:"test"};
+  const activeKey = stageKeyByNumber[stage] || "";
+  const activePosition = stageKeys.indexOf(activeKey);
+
+  document.querySelectorAll("#wm-main-progress .wm-main-step").forEach(function(stepEl){
+    const key = String(stepEl.getAttribute("data-step") || "");
+    const position = stageKeys.indexOf(key);
+    stepEl.classList.remove("is-active","is-complete");
+    if(stage === 8 || (activePosition >= 0 && position < activePosition)) stepEl.classList.add("is-complete");
+    if(activeKey && key === activeKey) stepEl.classList.add("is-active");
+  });
+
+  if(!testProgress) return;
+  testProgress.hidden = !testLearningActive;
+  testProgress.className = `wm-test-progress is-count-${tests.length}`;
+  if(!testLearningActive){
+    testProgress.innerHTML = "";
+    return;
+  }
+
+  const circled = ["①","②","③","④"];
+  testProgress.innerHTML = tests.map(function(test,i){
+    const stateClass = i < testIndex ? " is-complete" : (i === testIndex ? " is-active" : "");
+    return `<span class="wm-test-step${stateClass}">${circled[i] || (i + 1)} ${wmGetTestShortLabel(test)}</span>`;
+  }).join("");
 }
 
 function wmGetLevelPartSetCounts(level){
@@ -3527,6 +3946,7 @@ function protectDirectTypingInputs(){
 }
 
 function afterScreenRender(){
+  wmSyncStudyShell();
   ensureExitControls();
   protectDirectTypingInputs();
 }
@@ -3576,6 +3996,7 @@ function renderStart(){
 
       <button id="wmStartBtn" class="wm-btn" onclick="startLearning()">학습 시작</button>
     </div>`;
+  wmSyncStudyShell();
   setTimeout(wmWarmCurrentStudySet, 50);
 }
 
@@ -3827,11 +4248,11 @@ function nextMemory(){
 }
 
 function renderBeforeTest(){
-  app.innerHTML=`<div class="wm-card">
+  app.innerHTML=`<div class="wm-card wm-test-intro-card">
     ${wmSetBadgeHtml()}
-    <div class="wm-title" style="font-size:23px;font-weight:500;margin-bottom:50px;color:#000;">이제 시험을 시작합니다.</div>
-    <div class="wm-meaning" style="font-size:18px;color:#555;line-height:2;margin-bottom:20px;">${getActiveTestGuideText()}</div>
-    <div class="wm-meaning" style="font-size:18px;color:#555;margin-bottom:40px;">시험이 진행됩니다.</div>
+    <div class="wm-title" style="font-size:23px;font-weight:500;margin-bottom:20px;color:#000;">이제 시험을 시작합니다.</div>
+    <div class="wm-meaning" style="font-size:18px;color:#555;line-height:1.7;margin-bottom:12px;">${getActiveTestGuideText()}</div>
+    <div class="wm-meaning" style="font-size:18px;color:#555;margin-bottom:20px;">시험이 진행됩니다.</div>
     <button class="wm-btn" onclick="startTest()">Start Test</button>
   </div>`;
 }
@@ -3858,17 +4279,17 @@ function nextOneMoreFlashCard(){
 }
 
 function renderStartTestOnly(){
-  app.innerHTML=`<div class="wm-card">
+  app.innerHTML=`<div class="wm-card wm-test-intro-card">
     ${wmSetBadgeHtml()}
-    <div class="wm-title" style="font-size:23px;font-weight:500;color:#000;margin-bottom:40px;">
+    <div class="wm-title" style="font-size:23px;font-weight:500;color:#000;margin-bottom:20px;">
       이제 시험을 시작합니다.
     </div>
 
-    <div class="wm-meaning" style="font-size:18px;color:#555;line-height:2;margin-bottom:20px;">
+    <div class="wm-meaning" style="font-size:18px;color:#555;line-height:1.7;margin-bottom:12px;">
       ${getActiveTestGuideText()}
     </div>
 
-    <div class="wm-meaning" style="font-size:18px;color:#555;margin-bottom:40px;">
+    <div class="wm-meaning" style="font-size:18px;color:#555;margin-bottom:20px;">
       시험이 진행됩니다.
     </div>
 
@@ -3894,7 +4315,7 @@ function renderTest(){
   timeLeft=getTestTime(testWords.length);
   activeTestQuestionIndex=null;
   const guideMessage = testGuide(test);
-  app.innerHTML=`<div class="wm-card">${wmSetBadgeHtml()}<div class="wm-title">${test.title}</div><div class="timer" id="timer">${formatTime(timeLeft)}</div><div class="wm-small">${isRetest?"오답 재시험입니다.":"첫 시험 점수가 기록됩니다."}</div>${guideMessage}<div id="testArea">${testWords.map((item,i)=>renderTestQuestion(test,item,i)).join("")}</div><button class="wm-btn" onclick="submitTest()">제출하기</button></div>`;
+  app.innerHTML=`<div class="wm-card">${wmSetBadgeHtml()}<div class="wm-title">${wmGetTestScreenTitle(test)}</div><div class="timer" id="timer">${formatTime(timeLeft)}</div><div class="wm-small">${isRetest?"오답 재시험입니다.":"첫 시험 점수가 기록됩니다."}</div>${guideMessage}<div id="testArea">${testWords.map((item,i)=>renderTestQuestion(test,item,i)).join("")}</div><button class="wm-btn" onclick="submitTest()">제출하기</button></div>`;
   activateTestQuestionEvents();
   addWritingEnterMove();
   wmActiveFirstTestStartTime = isRetest ? 0 : Date.now();
@@ -4027,7 +4448,7 @@ function submitTest(){
 
 function renderTestResult(test,score,total,wrongs){
   const percent=Math.round((score/total)*100);
-  app.innerHTML=`<div class="wm-card">${wmSetBadgeHtml()}<div class="wm-title">${test.title}</div><div class="score-area"><div class="score-big">${percent}점</div><div class="score-side-info">날짜 : ${todayString()}<br>이름 : ${STUDENT_NAME}</div></div><div class="wm-small">${score} / ${total}</div><div class="result-list">${currentTestResults.map((r,i)=>`<div class="result-item"><div class="result-num-wrap"><div class="result-num">${i+1}</div>${r.isCorrect?`<div class="mark-circle"></div>`:`<div class="mark-slash"></div>`}</div><div><div class="q-blue">문제 : ${r.question}</div><div class="a-black">내답 : ${r.userAnswer || "(빈칸)"}</div><div class="a-red">정답 : ${r.correctAnswer}</div></div></div>`).join("")}</div><button class="wm-btn" onclick="continueAfterTestResult()">다음</button></div>`;
+  app.innerHTML=`<div class="wm-card">${wmSetBadgeHtml()}<div class="wm-title">${wmGetTestScreenTitle(test)}</div><div class="score-area"><div class="score-big">${percent}점</div><div class="score-side-info">날짜 : ${todayString()}<br>이름 : ${STUDENT_NAME}</div></div><div class="wm-small">${score} / ${total}</div><div class="result-list">${currentTestResults.map((r,i)=>`<div class="result-item"><div class="result-num-wrap"><div class="result-num">${i+1}</div>${r.isCorrect?`<div class="mark-circle"></div>`:`<div class="mark-slash"></div>`}</div><div><div class="q-blue">문제 : ${r.question}</div><div class="a-black">내답 : ${r.userAnswer || "(빈칸)"}</div><div class="a-red">정답 : ${r.correctAnswer}</div></div></div>`).join("")}</div><button class="wm-btn" onclick="continueAfterTestResult()">다음</button></div>`;
   afterScreenRender();
 }
 
