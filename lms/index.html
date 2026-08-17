@@ -4563,6 +4563,33 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       return data;
     }
 
+
+    const WM_SHARED_REPORT_RENDERER_URL='/shared/report-renderer.js';
+    let WM_SHARED_REPORT_RENDERER_PROMISE=null;
+
+    function wmLoadSharedReportRenderer_(){
+      if(window.WMSharedRecentReport&&typeof window.WMSharedRecentReport.render==='function'){
+        return Promise.resolve(window.WMSharedRecentReport);
+      }
+      if(WM_SHARED_REPORT_RENDERER_PROMISE) return WM_SHARED_REPORT_RENDERER_PROMISE;
+      WM_SHARED_REPORT_RENDERER_PROMISE=new Promise(function(resolve,reject){
+        const script=document.createElement('script');
+        script.src=WM_SHARED_REPORT_RENDERER_URL;
+        script.async=true;
+        script.dataset.wmSharedReportRenderer='V1';
+        script.onload=function(){
+          if(window.WMSharedRecentReport&&typeof window.WMSharedRecentReport.render==='function') resolve(window.WMSharedRecentReport);
+          else reject(new Error('공통 성적표 렌더러를 확인할 수 없습니다.'));
+        };
+        script.onerror=function(){ reject(new Error('공통 성적표 렌더러를 불러오지 못했습니다.')); };
+        document.head.appendChild(script);
+      }).catch(function(error){
+        WM_SHARED_REPORT_RENDERER_PROMISE=null;
+        throw error;
+      });
+      return WM_SHARED_REPORT_RENDERER_PROMISE;
+    }
+
     async function wmFetchRecentReportMonths(){
       const response=await fetch(WM_APPS_SCRIPT_URL+'?mode=recentReportMonths&ts='+Date.now()+wmLmsActorQuery(),{method:'GET',cache:'no-store'});
       const text=await response.text();
@@ -4598,19 +4625,22 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       const select=document.getElementById('wmRecentReportMonthSelect');
       const body=document.getElementById('wmRecentReportModalBody');
       const title=document.getElementById('wmRecentReportModalTitle');
-      const template=document.getElementById('wmReportTemplate');
       const item=WM_RECENT_REPORT_MONTHS.find(month=>month.yearMonth===String(select&&select.value||''));
-      if(!item||!body||!template) return;
+      if(!item||!body) return;
       if(title) title.textContent='최근성적표보기 · '+(WM_RECENT_REPORT_STUDENT_NAME||'조회 중')+' · '+item.label;
       body.innerHTML='<div class="wm-report-detail-loading"><span class="wm-loading-spinner"></span><span>성적표를 불러오는 중입니다.</span></div>';
+      const startedAt=performance.now();
       try{
-        const data=await wmFetchRecentReportData(WM_RECENT_REPORT_STUDENT_ID,item);
+        const results=await Promise.all([
+          wmFetchRecentReportData(WM_RECENT_REPORT_STUDENT_ID,item),
+          wmLoadSharedReportRenderer_()
+        ]);
+        const data=results[0];
+        const renderer=results[1];
         WM_RECENT_REPORT_STUDENT_NAME=String(data&&data.student&&data.student.studentName||'').trim();
         if(title) title.textContent='최근성적표보기 · '+(WM_RECENT_REPORT_STUDENT_NAME||'이름 없음')+' · '+item.label;
-        const parser=document.createElement('div');
-        parser.innerHTML=bindMonthlyReportSingleValues(template.innerHTML,data);
-        bindReportGradeComment(parser.querySelector('.wmr-sheet'),data.grade||{});
-        body.innerHTML=parser.innerHTML;
+        body.innerHTML=renderer.render(data);
+        console.log('LMS 공통 최근성적표 표시시간(ms):',Math.round(performance.now()-startedAt));
       }catch(err){
         console.error('최근성적표 월간 데이터 조회 실패:',err);
         body.innerHTML='<div class="wm-note">성적 내용이 없습니다.</div>';
@@ -4630,7 +4660,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       if(title) title.textContent='최근성적표보기 · 학생 조회 중';
       body.innerHTML='<div class="wm-report-detail-loading"><span class="wm-loading-spinner"></span><span>최근 4개월을 불러오는 중입니다.</span></div>';
       try{
-        const result=await wmFetchRecentReportMonths();
+        const [result]=await Promise.all([wmFetchRecentReportMonths(),wmLoadSharedReportRenderer_()]);
         WM_RECENT_REPORT_MONTHS=result.months;
         select.innerHTML=WM_RECENT_REPORT_MONTHS.map(item=>'<option value="'+escapeHtml(item.yearMonth)+'">'+escapeHtml(item.label)+'</option>').join('');
         select.value=result.defaultYearMonth||WM_RECENT_REPORT_MONTHS[0].yearMonth;
