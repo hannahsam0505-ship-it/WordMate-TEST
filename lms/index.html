@@ -1484,12 +1484,12 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
   .wmr-grade-summary-row.total .wmr-grade-summary-label,.wmr-grade-summary-row.total .wmr-grade-summary-value{background:#e43c31;color:#fff;border-color:#f28f88}
   .wmr-auto-comment{border:1px solid #f5c168;border-radius:14px;padding:7px 12px;min-height:105px;background:#fffaf0;overflow:hidden}
   .wmr-auto-comment h3{margin:0 0 3px;font-size:15px;line-height:1.1;color:#ef8b00;text-align:center}
-  .wmr-auto-comment-body{display:grid;grid-template-columns:minmax(0,1fr) 160px;gap:8px;min-height:78px;align-items:stretch}
+  .wmr-auto-comment-body{display:grid;grid-template-columns:minmax(0,1fr) 105px;gap:8px;min-height:78px;align-items:stretch}
   .wmr-auto-comment p{margin:0;font-size:11px;line-height:1.25;letter-spacing:-.35px;color:#173b75;text-align:left;white-space:normal;overflow:hidden;max-height:69px;word-break:keep-all;overflow-wrap:normal}
-  .wmr-grade-guide{border:1px solid #e8b861;border-radius:7px;padding:4px 5px 3px;background:#fffdf6;color:#596579;font-size:6.3px;line-height:1.28;letter-spacing:-.55px;text-align:left;display:flex;flex-direction:column;justify-content:center;overflow:hidden;transform:translateY(-13px)}
-  .wmr-grade-guide-note{display:block;word-break:keep-all;overflow-wrap:normal}
-  .wmr-grade-guide-title{display:block;margin-bottom:2px;color:#ef8b00;font-size:7px;font-weight:950;letter-spacing:-.35px;text-align:center;white-space:nowrap}
-  .wmr-grade-guide-line{display:block;white-space:nowrap}
+  .wmr-grade-guide{border:1px solid #e8b861;border-radius:7px;padding:4px 5px 3px;background:#fffdf6;color:#596579;font-size:7.2px;line-height:1.25;letter-spacing:-.25px;text-align:left;display:flex;flex-direction:column;justify-content:center;overflow:hidden;transform:translateY(-13px)}
+  .wmr-grade-guide-note{display:block;word-break:keep-all;overflow-wrap:break-word}
+  .wmr-grade-guide-title{display:block;margin-bottom:1px;color:#ef8b00;font-size:8px;font-weight:950;letter-spacing:-.25px;text-align:center;white-space:nowrap}
+  .wmr-grade-guide-body{display:block;white-space:normal;word-break:keep-all;overflow-wrap:break-word}
   .wmr-auto-comment-line{display:block;white-space:nowrap;overflow:hidden;text-overflow:clip;color:#173b75;font-weight:400;text-align:left}
   .wmr-auto-comment-emphasis{color:#173b75;font-weight:400}
   .wmr-auto-comment-key{color:#173b75;font-weight:950}
@@ -4728,9 +4728,8 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
     function wmBindGradeGuide(guideEl,guideText){
       if(!guideEl) return;
       const lines=String(guideText||'').split(/\r?\n/).map(v=>v.trim()).filter(Boolean);
-      guideEl.innerHTML=lines.map(function(line,index){
-        return '<span class="'+(index===0?'wmr-grade-guide-title':'wmr-grade-guide-line')+'">'+escapeHtml(line)+'</span>';
-      }).join('');
+      const title=lines.shift()||'';
+      guideEl.innerHTML='<span class="wmr-grade-guide-title">'+escapeHtml(title)+'</span><span class="wmr-grade-guide-body">'+escapeHtml(lines.join(' '))+'</span>';
     }
 
     function bindReportGradeComment(sheet,gradeData){
