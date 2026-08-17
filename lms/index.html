@@ -1086,6 +1086,11 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
     .wm-lms-logout-btn { border:1px solid var(--wm-line); background:#fff; color:var(--wm-dark); border-radius:999px; padding:9px 13px; font-size:13px; font-weight:900; cursor:pointer; }
     @media (max-width:520px) { .wm-lms-login-card { padding:32px 22px 30px; border-radius:22px; } .wm-lms-login-title { font-size:24px !important; } }
 
+    /* WM_LMS_SHARED_RECENT_REPORT_VIEW_V1
+     * 학습맵에서도 이 LMS 최근성적표 화면 자체를 그대로 실행합니다. */
+    html.wm-lms-shared-report-only #wm-test-booth-banner { display:none !important; }
+    html.wm-lms-shared-report-only body.wm-test-booth-active { margin-top:0 !important; }
+
   </style>
 </head>
 <body>
@@ -4583,6 +4588,11 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       params.set('yearMonth',item.yearMonth);
       params.set('reportWeek',item.yearMonth+'-'+Number(item.selectedWeek||0)+'주차');
       params.set('reportType','월간');
+      const sharedBoot=window.WM_LMS_SHARED_REPORT_BOOT||null;
+      if(sharedBoot){
+        params.set('requestSource','map');
+        params.set('sessionToken',String(sharedBoot.sessionToken||''));
+      }
       const actorId=(typeof wmGetSettingActorTeacherId==='function')?wmGetSettingActorTeacherId():'';
       if(actorId) params.set('actorTeacherId',actorId);
       params.set('ts',Date.now());
@@ -4649,6 +4659,9 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       const modal=document.getElementById('wmRecentReportModal');
       if(modal) modal.classList.remove('active');
       document.body.classList.remove('wm-report-preview-open');
+      if(window.WM_LMS_SHARED_REPORT_BOOT&&window.parent!==window){
+        window.parent.postMessage({type:'WM_LMS_SHARED_REPORT_CLOSE'},'*');
+      }
     }
 
     function wmRecentReportBackdropClose(event){
@@ -12174,6 +12187,24 @@ document.addEventListener('keydown',function(e){
   }
 })();
 /* 🔒 LMS PHASE 5 INTEGRATED ALL LOCK VERIFICATION V1 END */
+</script>
+
+<script id="wm-lms-shared-recent-report-boot">
+(function(){
+  'use strict';
+  const boot=window.WM_LMS_SHARED_REPORT_BOOT;
+  if(!boot) return;
+  document.documentElement.classList.add('wm-lms-shared-report-only');
+  function openSharedReport(){
+    if(typeof window.openRecentReportDetail==='function'){
+      window.openRecentReportDetail(String(boot.studentId||''));
+      return;
+    }
+    window.setTimeout(openSharedReport,30);
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',openSharedReport,{once:true});
+  else openSharedReport();
+})();
 </script>
 
 </body>
