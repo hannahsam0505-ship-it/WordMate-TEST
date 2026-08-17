@@ -717,8 +717,8 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
     .wm-setting-access-always{display:inline-flex;align-items:center;justify-content:center;min-width:70px;padding:6px 8px;border-radius:8px;background:#e8f7ef;color:#08783f;font-weight:900;}
     #gradeLevelTableWrap { border-radius:0 0 14px 14px; max-height:620px; overflow:auto; }
     #gradeLevelTableWrap thead th { position:sticky; top:0; z-index:30; background:#f9fafb; }
-    /* WM_GRADE_LEVEL_34_COLUMN_WIDTH_V1: 실제 데이터 최대 글자수 기준 34개 컬럼 폭 */
-    #gradeLevelManageTable { width:3097px; min-width:3097px; table-layout:fixed; }
+    /* WM_GRADE_LEVEL_35_COLUMN_WIDTH_V1: 성적표 공통보기 컬럼 포함 */
+    #gradeLevelManageTable { width:3277px; min-width:3277px; table-layout:fixed; }
     #gradeLevelManageTable tbody tr:nth-child(odd) { background:#fff; }
     #gradeLevelManageTable tbody tr:nth-child(even) { background:#eef4ff; }
     #gradeLevelManageTable tbody td { background-color:inherit; overflow:hidden; text-overflow:ellipsis; }
@@ -1484,10 +1484,12 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
   .wmr-grade-summary-row.total .wmr-grade-summary-label,.wmr-grade-summary-row.total .wmr-grade-summary-value{background:#e43c31;color:#fff;border-color:#f28f88}
   .wmr-auto-comment{border:1px solid #f5c168;border-radius:14px;padding:7px 12px;min-height:105px;background:#fffaf0;overflow:hidden}
   .wmr-auto-comment h3{margin:0 0 3px;font-size:15px;line-height:1.1;color:#ef8b00;text-align:center}
-  .wmr-auto-comment-body{display:grid;grid-template-columns:minmax(0,1fr) 105px;gap:8px;min-height:78px;align-items:stretch}
+  .wmr-auto-comment-body{display:grid;grid-template-columns:minmax(0,1fr) 160px;gap:8px;min-height:78px;align-items:stretch}
   .wmr-auto-comment p{margin:0;font-size:11px;line-height:1.25;letter-spacing:-.35px;color:#173b75;text-align:left;white-space:normal;overflow:hidden;max-height:69px;word-break:keep-all;overflow-wrap:normal}
-  .wmr-grade-guide{border:1px solid #e8b861;border-radius:7px;padding:4px 5px 3px;background:#fffdf6;color:#596579;font-size:7.2px;line-height:1.25;letter-spacing:-.25px;text-align:left;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden;transform:translateY(-13px)}
-  .wmr-grade-guide-note{display:flex;flex:1 1 auto;align-items:center;word-break:keep-all;overflow-wrap:break-word}
+  .wmr-grade-guide{border:1px solid #e8b861;border-radius:7px;padding:4px 5px 3px;background:#fffdf6;color:#596579;font-size:6.3px;line-height:1.28;letter-spacing:-.55px;text-align:left;display:flex;flex-direction:column;justify-content:center;overflow:hidden;transform:translateY(-13px)}
+  .wmr-grade-guide-note{display:block;word-break:keep-all;overflow-wrap:normal}
+  .wmr-grade-guide-title{display:block;margin-bottom:2px;color:#ef8b00;font-size:7px;font-weight:950;letter-spacing:-.35px;text-align:center;white-space:nowrap}
+  .wmr-grade-guide-line{display:block;white-space:nowrap}
   .wmr-auto-comment-line{display:block;white-space:nowrap;overflow:hidden;text-overflow:clip;color:#173b75;font-weight:400;text-align:left}
   .wmr-auto-comment-emphasis{color:#173b75;font-weight:400}
   .wmr-auto-comment-key{color:#173b75;font-weight:950}
@@ -1683,8 +1685,6 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
   }
 
   /* 7. 성적 결산표 + 자동코멘트 */
-  .wmr-auto-comment-created{margin-top:3px;text-align:center;font-size:7.2px;line-height:1.15;color:#64748b;font-weight:600;white-space:nowrap;}
-
   .wmr-sheet[data-wmr-template-lock="V1"] [data-wmr-section="7"].wmr-comments{
     display:grid !important;
     grid-template-columns:minmax(0,28%) minmax(0,72%) !important;
@@ -2432,9 +2432,9 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       <div class="wm-record-scroll-top" id="gradeLevelTopScroll"><div class="wm-record-scroll-inner" id="gradeLevelTopScrollInner"></div></div>
       <div class="wm-table-wrap" id="gradeLevelTableWrap">
         <table id="gradeLevelManageTable">
-          <colgroup><col style="width:72px"><col style="width:120px"><col style="width:90px"><col style="width:110px"><col style="width:90px"><col style="width:68px"><col style="width:50px"><col style="width:60px"><col style="width:90px"><col style="width:78px"><col style="width:78px"><col style="width:78px"><col style="width:88px"><col style="width:78px"><col style="width:78px"><col style="width:70px"><col style="width:65px"><col style="width:105px"><col style="width:96px"><col style="width:88px"><col style="width:88px"><col style="width:110px"><col style="width:88px"><col style="width:78px"><col style="width:92px"><col style="width:112px"><col style="width:112px"><col style="width:78px"><col style="width:112px"><col style="width:145px"><col style="width:105px"><col style="width:105px"></colgroup>
-          <thead><tr><th>일련번호</th><th>학생ID</th><th>학생이름</th><th>반명</th><th>교사명</th><th>연도</th><th>월</th><th>주차</th><th>리포트유형</th><th>출석약속</th><th>세트약속</th><th class="wm-grade-yellow-col">출석점수</th><th class="wm-grade-yellow-col">참여집중도</th><th class="wm-grade-yellow-col">점수추이</th><th class="wm-grade-green-col">최종점수</th><th class="wm-grade-green-col">Grade</th><th class="wm-grade-green-col">Class</th><th>자동코멘트</th><th>학습시작일</th><th>학습종료일</th><th>실제출석일수</th><th>완료세트수</th><th>학습단어수</th><th>총학습시간</th><th>평균원점수</th><th>출석률</th><th>세트진행률</th><th>1세트평균시간</th><th>원점수환산점수</th><th>표준점수</th><th>성적표반영상태</th><th>생성일시</th><th>등록일</th><th>수정일</th></tr></thead>
-          <tbody><tr><td colspan="34">6.성적등급_DB 조회 준비 중입니다.</td></tr></tbody>
+          <colgroup><col style="width:72px"><col style="width:120px"><col style="width:90px"><col style="width:110px"><col style="width:90px"><col style="width:68px"><col style="width:50px"><col style="width:60px"><col style="width:90px"><col style="width:78px"><col style="width:78px"><col style="width:78px"><col style="width:88px"><col style="width:78px"><col style="width:78px"><col style="width:70px"><col style="width:65px"><col style="width:105px"><col style="width:180px"><col style="width:96px"><col style="width:88px"><col style="width:88px"><col style="width:110px"><col style="width:88px"><col style="width:78px"><col style="width:92px"><col style="width:112px"><col style="width:112px"><col style="width:78px"><col style="width:112px"><col style="width:145px"><col style="width:105px"><col style="width:105px"></colgroup>
+          <thead><tr><th>일련번호</th><th>학생ID</th><th>학생이름</th><th>반명</th><th>교사명</th><th>연도</th><th>월</th><th>주차</th><th>리포트유형</th><th>출석약속</th><th>세트약속</th><th class="wm-grade-yellow-col">출석점수</th><th class="wm-grade-yellow-col">참여집중도</th><th class="wm-grade-yellow-col">점수추이</th><th class="wm-grade-green-col">최종점수</th><th class="wm-grade-green-col">Grade</th><th class="wm-grade-green-col">Class</th><th>자동코멘트</th><th>성적표보기</th><th>학습시작일</th><th>학습종료일</th><th>실제출석일수</th><th>완료세트수</th><th>학습단어수</th><th>총학습시간</th><th>평균원점수</th><th>출석률</th><th>세트진행률</th><th>1세트평균시간</th><th>원점수환산점수</th><th>표준점수</th><th>성적표반영상태</th><th>생성일시</th><th>등록일</th><th>수정일</th></tr></thead>
+          <tbody><tr><td colspan="35">6.성적등급_DB 조회 준비 중입니다.</td></tr></tbody>
         </table>
       </div>
       <div class="wm-grade-level-pager" id="wmGradeLevelPager">
@@ -4716,78 +4716,28 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
     });
     async function fetchReportGradeComment(clickedReportRow){
       if(!clickedReportRow) return {success:false,found:false,message:'성적표 기준 행이 없습니다.'};
-      const studentId=reportDetailStudentId(clickedReportRow);
-      const date=parseDateValue(reportDetailDate(clickedReportRow));
-      const monthKey=reportDetailMonthKey(clickedReportRow);
-      const monthMatch=String(monthKey||'').match(/(\d{4})-(\d{1,2})/);
-      const year=monthMatch?monthMatch[1]:(date?String(date.getFullYear()):'');
-      const month=monthMatch?String(Number(monthMatch[2])):(date?String(date.getMonth()+1):'');
-      const week=String(reportDetailWeek(clickedReportRow)||'');
-      const reportMemo=String(reportDetailFirst(clickedReportRow,['비고','memo','Memo'])||'').trim();
-      const reportType=String(reportDetailFirst(clickedReportRow,['리포트유형','Report_Type','reportType'])||(/Monthly Report|월간/i.test(reportMemo)?'월간':'주간')).trim();
-      const params=new URLSearchParams();
-      params.set('mode','reportGradeComment');
-      params.set('action','reportGradeComment');
-      params.set('studentId',studentId);
-      params.set('year',year);
-      params.set('month',month);
-      params.set('week',week);
-      params.set('reportType',reportType);
-      const actorId=(typeof wmGetSettingActorTeacherId==='function') ? wmGetSettingActorTeacherId() : '';
-      if(actorId) params.set('actorTeacherId',actorId);
-      params.set('ts',Date.now());
-      const response=await fetch(WM_APPS_SCRIPT_URL+'?'+params.toString(),{method:'GET',cache:'no-store'});
-      const text=await response.text();
-      if(!response.ok) return {success:false,found:false,message:'reportGradeComment HTTP '+response.status};
-      try{return JSON.parse(text)||{};}catch(err){return {success:false,found:false,message:'reportGradeComment JSON 파싱 실패'};}
-    }
-
-    function formatGradeCommentCreatedAt(value){
-      const raw=String(value||'').trim();
-      if(!raw) return '';
-      const d=raw.match(/^(\d{4})[-./](\d{1,2})[-./](\d{1,2})$/);
-      if(d) return d[1]+'.'+Number(d[2])+'.'+Number(d[3]);
-      const m=raw.match(/(\d{4})[-./](\d{1,2})[-./](\d{1,2})[ T](\d{1,2}):(\d{1,2})/);
-      if(!m) return raw;
-      return m[1].slice(-2)+'.'+String(m[2]).padStart(2,'0')+'.'+String(m[3]).padStart(2,'0')+' '+String(m[4]).padStart(2,'0')+':'+String(m[5]).padStart(2,'0');
+      const result=await fetchMonthlyReportSingleData(clickedReportRow);
+      const grade=result&&result.success&&result.data?result.data.grade:null;
+      return {success:!!(result&&result.success),found:!!(grade&&grade.found),gradeComment:grade&&grade.gradeComment||null,guide:grade&&grade.guide||'',message:result&&result.message||''};
     }
 
     function wmBuildGradeCommentFromRow(data){
-      const serverComment=String(data&&data['자동코멘트']||'').trim();
-      if(serverComment) return serverComment;
-      const studentName=String(data['학생이름']||data['학생명']||'').trim();
-      const year=String(data['연도']||'').trim();
-      const month=String(data['월']||'').trim();
-      const week=String(data['주차']||data['리포트주차']||'').replace(/[^0-9]/g,'');
-      const reportType=String(data['리포트유형']||data['유형']||'').trim();
-      const monthly=/월간|monthly/i.test(reportType);
-      const attendancePromise=String(data['출석약속']||'').replace(/[^0-9.]/g,'');
-      const setPromise=String(data['세트약속']||'').replace(/[^0-9.]/g,'');
-      const attendanceScore=String(data['출석점수']||'').replace(/점/g,'').trim();
-      const focusScore=String(data['참여집중도']||data['학업집중도']||'').replace(/점/g,'').trim();
-      const trendScore=String(data['점수추이']||'').replace(/점/g,'').trim();
-      const finalScore=String(data['최종점수']||'').replace(/점/g,'').trim();
-      const grade=String(data['Grade']||'').trim();
-      const classValue=String(data['Class']||'').trim();
-      const periodTitle=year+'년 '+month+'월'+(monthly?'':' '+week+'주');
-      const currentPeriod=monthly?'이번 달':'이번 주';
-      const nextPeriod=monthly?'다음 달':'다음 주';
-      let goal='';
-      if(Number(grade)===1) goal=nextPeriod+'에도 현재 학습 리듬을 유지하며 최고 등급에 도전해 보세요.';
-      else if(Number(grade)===2) goal=nextPeriod+'에는 출석과 세트학습을 꾸준히 실천하여 1등급에 도전해 보세요.';
-      else if(Number(grade)===3) goal=nextPeriod+'에는 약속한 학습계획을 꾸준히 실천하여 더 높은 등급에 도전해 보세요.';
-      return [
-        studentName+' 학생의 '+periodTitle+' 학습결과 보고서입니다.',
-        studentName+' 학생의 학습약속은 출석 주 '+attendancePromise+'회, 세트 '+setPromise+'세트로',
-        '학습 결과는 출석점수 '+attendanceScore+'점 · 학업집중도 '+focusScore+'점 · 점수추이 '+trendScore+'점입니다.',
-        '이에 따라 '+currentPeriod+' 성적은 최종점수 '+finalScore+'점('+finalScore+'/30), 등급은 '+grade+'.'+classValue+'등급입니다.',
-        goal
-      ].filter(Boolean).join('\n');
+      return String(data&&data['자동코멘트']||'').trim();
+    }
+
+    function wmBindGradeGuide(guideEl,guideText){
+      if(!guideEl) return;
+      const lines=String(guideText||'').split(/\r?\n/).map(v=>v.trim()).filter(Boolean);
+      guideEl.innerHTML=lines.map(function(line,index){
+        return '<span class="'+(index===0?'wmr-grade-guide-title':'wmr-grade-guide-line')+'">'+escapeHtml(line)+'</span>';
+      }).join('');
     }
 
     function bindReportGradeComment(sheet,gradeData){
+      if(!sheet) return false;
+      wmBindGradeGuide(sheet.querySelector('[data-wmr-grade-guide]'),gradeData&&gradeData.guide);
       const data=gradeData&&gradeData.found&&gradeData.gradeComment?gradeData.gradeComment:null;
-      if(!sheet || !data) return false;
+      if(!data) return false;
       const setText=(selector,value)=>{const el=sheet.querySelector(selector);if(el)el.textContent=value==null?'':String(value);};
       const score=String(data['최종점수']||'').trim();
       const grade=String(data['Grade']||'').trim();
@@ -4802,19 +4752,13 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       const commentEl=sheet.querySelector('[data-wmr-auto-comment]');
       if(commentEl){
         const allLines=wmBuildGradeCommentFromRow(data).split(/\r?\n/).map(v=>v.trim()).filter(Boolean);
-        const guideLine=allLines.find(v=>/^\*/.test(v))||'';
-        const lines=allLines.filter(v=>!/^\*/.test(v)).slice(0,5);
+        const lines=allLines.filter(v=>!/^\s*(?:\*|\[성적등급산정법\])/.test(v)).slice(0,5);
         commentEl.innerHTML=lines.map(function(line){
           var html=escapeHtml(line);
           html=html.replace(/\(([-+]?\d+(?:\.\d+)?)\/30\)/g,'<span class="wmr-auto-comment-score-sub">($1/30)</span>');
           html=html.replace(/(\d+\.\d+등급)/g,'<strong class="wmr-auto-comment-key">$1</strong>');
           return '<span class="wmr-auto-comment-line">'+html+'</span>';
         }).join('');
-        const guideEl=sheet.querySelector('[data-wmr-grade-guide]');
-        if(guideEl) guideEl.textContent=guideLine;
-        const issued=formatGradeCommentCreatedAt(data['발행일']);
-        const lastLine=commentEl.querySelector('.wmr-auto-comment-line:last-child');
-        if(lastLine&&issued) lastLine.appendChild(document.createTextNode(' '+issued));
       }
       sheet.setAttribute('data-wmr-grade-db-connected','true');
       sheet.setAttribute('data-wmr-grade-final-score',score);
@@ -6684,7 +6628,7 @@ function extractRecordRowsFromResponse(data){
      */
     const WM_GRADE_LEVEL_HEADERS = [
       '일련번호','학생ID','학생이름','반명','교사명','연도','월','주차','리포트유형',
-      '출석약속','세트약속','출석점수','참여집중도','점수추이','최종점수','Grade','Class','자동코멘트','학습시작일','학습종료일',
+      '출석약속','세트약속','출석점수','참여집중도','점수추이','최종점수','Grade','Class','자동코멘트','성적표보기','학습시작일','학습종료일',
       '실제출석일수','완료세트수','학습단어수','총학습시간','평균원점수','출석률','세트진행률',
       '1세트평균시간','원점수환산점수','표준점수','성적표반영상태','생성일시','등록일','수정일'
     ];
@@ -6705,7 +6649,7 @@ function extractRecordRowsFromResponse(data){
 
     async function loadGradeLevelRows(){
       const tbody = document.querySelector('#gradeLevelManageTable tbody');
-      if(tbody) tbody.innerHTML='<tr><td colspan="34">6.성적등급_DB 조회 중입니다.</td></tr>';
+      if(tbody) tbody.innerHTML='<tr><td colspan="'+WM_GRADE_LEVEL_HEADERS.length+'">6.성적등급_DB 조회 중입니다.</td></tr>';
       try{
         let rows=[];
         const urls=[
@@ -6728,7 +6672,7 @@ function extractRecordRowsFromResponse(data){
         return WM_GRADE_LEVEL_ROWS;
       }catch(err){
         console.error('6.성적등급_DB 조회 실패',err);
-        if(tbody) tbody.innerHTML='<tr><td colspan="34">6.성적등급_DB 조회 실패: '+escapeHtml(err && err.message ? err.message : err)+'</td></tr>';
+        if(tbody) tbody.innerHTML='<tr><td colspan="'+WM_GRADE_LEVEL_HEADERS.length+'">6.성적등급_DB 조회 실패: '+escapeHtml(err && err.message ? err.message : err)+'</td></tr>';
         return [];
       }
     }
@@ -6796,6 +6740,44 @@ function extractRecordRowsFromResponse(data){
       if(top) top.scrollLeft=wrap ? wrap.scrollLeft : 0;
     }
 
+    async function wmOpenGradeLevelReport(source){
+      const data=source&&source.dataset?source.dataset:{};
+      const year=String(data.year||'').trim();
+      const month=String(data.month||'').padStart(2,'0');
+      const week=Math.max(1,Math.min(5,Number(data.week||1)));
+      const row={
+        '학생ID':String(data.studentId||'').trim(),
+        '학생이름':String(data.studentName||'').trim(),
+        '학습날짜':year+'-'+month+'-01',
+        '리포트주차':year+'-'+month+'-'+week+'주차'
+      };
+      const template=document.getElementById('wmReportTemplate');
+      const modal=document.getElementById('wmReportDesignPreviewModal');
+      const modalBody=document.getElementById('wmReportDesignPreviewModalBody');
+      const modalTitle=document.querySelector('.wm-report-preview-modal-title');
+      if(!row['학생ID']||!year||!month||!template||!modal||!modalBody) return;
+      modal.classList.add('active');
+      document.body.classList.add('wm-report-preview-open');
+      if(modalTitle) modalTitle.textContent='성적표보기 · 조회 중';
+      modalBody.innerHTML='<div class="wm-report-detail-loading"><span class="wm-loading-spinner"></span><span>성적표를 불러오는 중입니다.</span></div>';
+      try{
+        const result=await fetchMonthlyReportSingleData(row);
+        if(!result||!result.success||!result.data) throw new Error(result&&result.message||'성적 내용이 없습니다.');
+        const reportHtml=wmBuildSharedActualReportHtml(template.innerHTML,result.data);
+        setReportActualPreview(reportHtml,'GRADE-'+row['학생ID']+'-'+year+month+'-'+week,row);
+        openReportDesignPreview();
+      }catch(err){
+        console.error('성적등급 공통 성적표 조회 실패:',err);
+        if(modalTitle) modalTitle.textContent='성적표보기';
+        modalBody.innerHTML='<div class="wm-note">성적 내용이 없습니다.</div>';
+      }
+    }
+
+    function wmOpenGradeLevelRecentReport(source){
+      const studentId=source&&source.dataset?String(source.dataset.studentId||'').trim():'';
+      if(studentId) openRecentReportDetail(studentId);
+    }
+
     function renderGradeLevelRows(){
       const table=document.getElementById('gradeLevelManageTable');
       const thead=table ? table.querySelector('thead') : null;
@@ -6840,6 +6822,10 @@ function extractRecordRowsFromResponse(data){
           if(header==='자동코멘트'){
             const comment=String(value||'');
             return '<td'+classAttr+'><button type="button" class="wm-grade-comment-btn" data-comment="'+escapeHtml(comment)+'" onclick="wmOpenGradeComment(this)">코멘트보기</button></td>';
+          }
+          if(header==='성적표보기'){
+            const attrs=' data-student-id="'+escapeHtml(wmGradeLevelValue(row,'학생ID'))+'" data-student-name="'+escapeHtml(wmGradeLevelValue(row,'학생이름'))+'" data-year="'+escapeHtml(wmGradeLevelValue(row,'연도'))+'" data-month="'+escapeHtml(wmGradeLevelValue(row,'월'))+'" data-week="'+escapeHtml(wmGradeLevelValue(row,'주차'))+'"';
+            return '<td><div class="wm-report-button-group"><button type="button" class="wm-action-btn"'+attrs+' onclick="wmOpenGradeLevelReport(this)">성적표보기</button><button type="button" class="wm-recent-report-btn"'+attrs+' onclick="wmOpenGradeLevelRecentReport(this)">최근성적표보기</button></div></td>';
           }
           return '<td'+classAttr+' title="'+escapeHtml(value)+'">'+escapeHtml(value)+'</td>';
         }).join('')+'</tr>';
