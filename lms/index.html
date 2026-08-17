@@ -705,10 +705,16 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
     #studentManageTable tbody tr:nth-child(even) .wm-student-fixed{
       background:#eef4ff !important;
     }
-    #studentManageTable th:not(.wm-student-fixed),
-    #studentManageTable td:not(.wm-student-fixed){
+    #studentManageTable thead th:not(.wm-student-fixed){
+      position:sticky !important;top:0;left:auto !important;z-index:30;background:#f9fafb;
+    }
+    #studentManageTable tbody td:not(.wm-student-fixed){
       position:static !important;left:auto !important;
     }
+    .wm-student-edit-input{width:132px;border:1px solid var(--wm-line);border-radius:8px;padding:7px 8px;background:#fff;color:#111827;font-size:12px;font-weight:800;}
+    .wm-student-readonly-status{display:inline-flex;align-items:center;justify-content:center;min-width:72px;padding:7px 9px;border:1px solid #d1d5db;border-radius:8px;background:#f3f4f6;color:#6b7280;font-size:12px;font-weight:900;cursor:not-allowed;}
+    .wm-setting-access-select{min-width:70px;margin-right:4px;}
+    .wm-setting-access-always{display:inline-flex;align-items:center;justify-content:center;min-width:70px;padding:6px 8px;border-radius:8px;background:#e8f7ef;color:#08783f;font-weight:900;}
     #gradeLevelTableWrap { border-radius:0 0 14px 14px; max-height:620px; overflow:auto; }
     #gradeLevelTableWrap thead th { position:sticky; top:0; z-index:30; background:#f9fafb; }
     /* WM_GRADE_LEVEL_34_COLUMN_WIDTH_V1: 실제 데이터 최대 글자수 기준 34개 컬럼 폭 */
@@ -1258,17 +1264,17 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
             <input type="text" id="wmStudentRegisterTeacher" placeholder="반을 선택하면 자동 표시" readonly disabled />
           </label>
           <label>학교<input type="text" id="wmStudentRegisterSchool" placeholder="학교명" /></label>
-          <label>학년<input type="text" id="wmStudentRegisterGrade" placeholder="예: 4" /></label>
+          <label>학년<select id="wmStudentRegisterGrade"><option value="">학년을 선택하세요.</option><option value="3">3(초3)</option><option value="4">4(초4)</option><option value="5">5(초5)</option><option value="6">6(초6)</option><option value="7">7(중1)</option><option value="8">8(중2)</option><option value="9">9(중3)</option><option value="10">10(고1)</option><option value="11">11(고2)</option><option value="12">12(고3)</option><option value="13">13(수능)</option></select></label>
           <label>주소<input type="text" id="wmStudentRegisterAddress" placeholder="주소" /></label>
-          <label>학부모명<input type="text" id="wmStudentRegisterParent" placeholder="학부모명" /></label>
-          <label>학부모연락처<input type="text" id="wmStudentRegisterParentPhone" placeholder="010-0000-0000" /></label>
-          <label>최종결제<input type="date" id="wmStudentRegisterLastPayment" /></label>
-          <label>등록일<input type="date" id="wmStudentRegisterDate" onchange="wmSyncStudentRegisterLearningStartDate()" /></label>
-          <label>최초등록일<input type="date" id="wmStudentRegisterFirstDate" /></label>
-          <label>최근결제일<input type="date" id="wmStudentRegisterRecentPayment" /></label>
-          <label class="wm-auto-managed">결제공백일수<input type="text" id="wmStudentRegisterPaymentGap" placeholder="자동관리" readonly /></label>
-          <label class="wm-auto-managed">재등록횟수<input type="text" id="wmStudentRegisterReregisterCount" placeholder="자동관리" readonly /></label>
-          <label class="wm-auto-managed">총등록기간<input type="text" id="wmStudentRegisterTotalPeriod" placeholder="자동관리" readonly /></label>
+          <label data-wm-student-sensitive="parent">학부모명<input type="text" id="wmStudentRegisterParent" placeholder="학부모명" /></label>
+          <label data-wm-student-sensitive="parent">학부모연락처<input type="text" id="wmStudentRegisterParentPhone" placeholder="010-0000-0000" /></label>
+          <label data-wm-student-sensitive="payment">최종결제<input type="date" id="wmStudentRegisterLastPayment" /></label>
+          <label data-wm-student-sensitive="payment">등록일<input type="date" id="wmStudentRegisterDate" onchange="wmSyncStudentRegisterLearningStartDate()" /></label>
+          <label data-wm-student-sensitive="payment">최초등록일<input type="date" id="wmStudentRegisterFirstDate" /></label>
+          <label data-wm-student-sensitive="payment">최근결제일<input type="date" id="wmStudentRegisterRecentPayment" /></label>
+          <label class="wm-auto-managed" data-wm-student-sensitive="payment">결제공백일수<input type="text" id="wmStudentRegisterPaymentGap" placeholder="자동관리" readonly /></label>
+          <label class="wm-auto-managed" data-wm-student-sensitive="payment">재등록횟수<input type="text" id="wmStudentRegisterReregisterCount" placeholder="자동관리" readonly /></label>
+          <label class="wm-auto-managed" data-wm-student-sensitive="payment">총등록기간<input type="text" id="wmStudentRegisterTotalPeriod" placeholder="자동관리" readonly /></label>
           <label>등록상태<select id="wmStudentRegisterStatusValue"><option>재원중</option><option>신규</option><option>휴원</option><option>퇴원</option></select></label>
           <label>활성상태<select id="wmStudentRegisterActive"><option>ACTIVE</option><option>INACTIVE</option></select></label>
           <label class="wm-auto-managed">반ID<input type="text" id="wmStudentRegisterClassId" placeholder="자동관리" readonly /></label>
@@ -2319,7 +2325,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
         <div class="wm-filter-actions"><button class="wm-action-btn" onclick="runFilter('classes')">검색</button><button class="wm-action-btn sub" onclick="resetFilter('classes')">초기화</button><button class="wm-action-btn sub" onclick="WM_SETTING_CENTER_LOCK_V1.load()">새로고침</button></div>
       </div>
 
-      <div class="wm-table-wrap" data-setting-db-view="teacher"><table id="settingCenterTable"><thead><tr><th>일련번호</th><th>교사명</th><th>교사ID</th><th>비밀번호</th><th>교사등급</th><th>담당리더</th><th>담당반목록</th><th>총담당반</th><th>총학생수</th><th>월학생수</th><th>월발송기록</th><th>상태</th><th>수정일</th><th>메모</th></tr></thead><tbody id="settingCenterTbody"><tr><td colspan="14">7-1.교사관리_DB 조회 준비 중입니다.</td></tr></tbody></table></div>
+      <div class="wm-table-wrap" data-setting-db-view="teacher"><table id="settingCenterTable"><thead><tr><th>일련번호</th><th>교사명</th><th>교사ID</th><th>비밀번호</th><th>교사등급</th><th>학부모정보권한</th><th>결제정보권한</th><th>권한저장</th><th>담당리더</th><th>담당반목록</th><th>총담당반</th><th>총학생수</th><th>월학생수</th><th>월발송기록</th><th>상태</th><th>수정일</th><th>메모</th></tr></thead><tbody id="settingCenterTbody"><tr><td colspan="17">7-1.교사관리_DB 조회 준비 중입니다.</td></tr></tbody></table></div>
       <div id="settingClassStudentDetail" class="wm-class-detail-box wm-setting-db-hidden" data-setting-db-view="class"></div>
 
       <!-- WM_CLASS_DB_COLUMN_HEADER_PREVIEW_V1: 7-2.반관리_DB 하단 실제 컬럼명 우선 표시 -->
@@ -2514,6 +2520,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       if(visibleViewRangeText) visibleViewRangeText.textContent = (typeof roleViewText !== 'undefined' && roleViewText[role]) ? roleViewText[role] : '허용된 LMS 범위';
       if(typeof wmScheduleDashboardFirstLoad === 'function') wmScheduleDashboardFirstLoad();
       if(typeof wmApplySettingCenterRoleUI === 'function') wmApplySettingCenterRoleUI(role, []);
+      if(typeof wmApplyStudentSensitiveRegistrationAccess_ === 'function') wmApplyStudentSensitiveRegistrationAccess_();
     }
     function wmRestoreLmsAuth(){
       try{
@@ -2765,8 +2772,12 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       /* WM_LMS_FIRST_SCREEN_SPEED_LOCK_V1: 첫화면에서는 무거운 탭 DB를 자동조회하지 않고, 탭 진입 시 1회 지연로딩합니다. */
       if(panelName === 'students'){
         setTimeout(function(){
-          if(typeof loadStudents === 'function' && (!WM_STUDENT_MANAGE_ROWS || !WM_STUDENT_MANAGE_ROWS.length)) loadStudents();
-          else if(typeof renderStudentManageRows === 'function') renderStudentManageRows();
+          const studentLoad=(typeof loadStudents === 'function' && (!WM_STUDENT_MANAGE_ROWS || !WM_STUDENT_MANAGE_ROWS.length))
+            ? loadStudents()
+            : (typeof renderStudentManageRows === 'function' ? renderStudentManageRows() : null);
+          Promise.resolve(studentLoad).then(function(){
+            if(typeof wmEnsureStudentEditOptions_ === 'function') wmEnsureStudentEditOptions_();
+          }).catch(function(){});
         }, 0);
       }
       if(panelName === 'records'){
@@ -2873,6 +2884,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
        * 이 클래스는 열 숨김용이 아니라 renderStudentManageRows가
        * 권한별 실제 th/td 배열을 새로 생성하는 기준값입니다. */
       document.body.classList.toggle('wm-show-student-serial', adminLike);
+      if(typeof wmApplyStudentSensitiveRegistrationAccess_ === 'function') wmApplyStudentSensitiveRegistrationAccess_();
       updateStudentCreatePreview();
       if(typeof renderStudentManageRows === "function") renderStudentManageRows();
       const devPanel = document.getElementById('panel-dev');
@@ -6981,6 +6993,24 @@ let wmSettingClassSearch = {
 let WM_SETTING_CENTER_FIRST_LOAD_DONE = false;
 let wmSettingCenterActorRole = '';
 let wmSettingTeacherIdChecked = '';
+let WM_STUDENT_EDIT_OPTIONS_LOADING = false;
+
+async function wmEnsureStudentEditOptions_(){
+  if(WM_SETTING_CENTER_FIRST_LOAD_DONE){
+    wmApplyStudentSensitiveRegistrationAccess_();
+    renderStudentManageRows();
+    return;
+  }
+  if(WM_STUDENT_EDIT_OPTIONS_LOADING) return;
+  WM_STUDENT_EDIT_OPTIONS_LOADING = true;
+  try{
+    await loadSettingCenterDB();
+    wmApplyStudentSensitiveRegistrationAccess_();
+    renderStudentManageRows();
+  }finally{
+    WM_STUDENT_EDIT_OPTIONS_LOADING = false;
+  }
+}
 
 function setSettingStatus(id, text, ok){
   const el = document.getElementById(id);
@@ -7490,7 +7520,7 @@ function renderSettingClassDbRows(rows, headers){
 async function loadSettingCenterDB(){
   wmLockStatusMessage('SettingCenter_Search_LOCK','설정센터 조회·검색');
   const tbody = document.getElementById('settingCenterTbody');
-  if(tbody) tbody.innerHTML = '<tr><td colspan="14">7-1.교사관리_DB 조회 중입니다.</td></tr>';
+  if(tbody) tbody.innerHTML = '<tr><td colspan="17">7-1.교사관리_DB 조회 중입니다.</td></tr>';
   const classTableBody = document.querySelector('#wmSettingClassDbColumnTable tbody');
   if(classTableBody && !wmSettingClassRows.length) classTableBody.innerHTML = '<tr><td colspan="12">7-2.반관리_DB 조회 중입니다.</td></tr>';
   try{
@@ -7499,6 +7529,11 @@ async function loadSettingCenterDB(){
     wmSettingClassRows = (data && data.classRows) || [];
     WM_SETTING_CENTER_FIRST_LOAD_DONE = true;
     wmSettingCenterActorRole = String((data && data.actorRole) || '').trim().toUpperCase();
+    if(window.WM_LMS_AUTH_TEACHER){
+      window.WM_LMS_AUTH_TEACHER.학부모정보권한 = String((data && data.actorParentAccess) || window.WM_LMS_AUTH_TEACHER.학부모정보권한 || 'OFF').toUpperCase();
+      window.WM_LMS_AUTH_TEACHER.결제정보권한 = String((data && data.actorPaymentAccess) || window.WM_LMS_AUTH_TEACHER.결제정보권한 || 'OFF').toUpperCase();
+    }
+    wmApplyStudentSensitiveRegistrationAccess_();
     WM_SETTING_CENTER_LOCK_V1.render(wmSettingCenterRows);
     renderSettingClassDbRows(wmSettingClassRows, (data && data.classHeaders) || []);
     WM_SETTING_CENTER_LOCK_V1.fillOptions((data && data.allowedGrades) || []);
@@ -7507,7 +7542,7 @@ async function loadSettingCenterDB(){
       wmFillStudentRegisterClassOptions(document.getElementById('wmStudentRegisterClass').value);
     }
   }catch(err){
-    if(tbody) tbody.innerHTML = '<tr><td colspan="14">7-1.교사관리_DB 조회 실패: '+escapeHtml(err.message || err)+'</td></tr>';
+    if(tbody) tbody.innerHTML = '<tr><td colspan="17">7-1.교사관리_DB 조회 실패: '+escapeHtml(err.message || err)+'</td></tr>';
     const failedBody = document.querySelector('#wmSettingClassDbColumnTable tbody');
     if(failedBody) failedBody.innerHTML = '<tr><td colspan="12">7-2.반관리_DB 조회 실패: '+escapeHtml(err.message || err)+'</td></tr>';
   }
@@ -7518,20 +7553,39 @@ function renderSettingCenterRows(rows){
   const tbody = document.getElementById('settingCenterTbody');
   if(!tbody) return;
   if(!rows || !rows.length){
-    tbody.innerHTML = '<tr><td colspan="14">등록된 교사/반 데이터가 없습니다.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="17">등록된 교사/반 데이터가 없습니다.</td></tr>';
     return;
   }
   const canChangeStatus = wmSettingCenterActorRole === 'SUPER_ADMIN' || wmSettingCenterActorRole === 'SPECIAL_ADMIN';
-  const headers = ['교사명','교사ID','비밀번호','교사등급','담당리더','담당반목록','총담당반','총학생수','월학생수','월발송기록','상태','수정일','메모'];
+  const headers = ['교사명','교사ID','비밀번호','교사등급','학부모정보권한','결제정보권한','권한저장','담당리더','담당반목록','총담당반','총학생수','월학생수','월발송기록','상태','수정일','메모'];
   tbody.innerHTML = rows.map((row,index)=>'<tr><td>'+(index+1)+'</td>'+headers.map(h=>{
     const value = row[h] || '';
+    const rowRole = String(row['교사등급'] || 'TEACHER').trim().toUpperCase();
+    const lowerRole = rowRole === 'TEACHER' || rowRole === 'SUB_LEADER';
+    const teacherId = String(row['교사ID'] || '').trim();
+    if(h === '학부모정보권한' || h === '결제정보권한'){
+      if(!lowerRole) return '<td><span class="wm-setting-access-always">항상 ON</span></td>';
+      const currentAccess = wmNormalizeStudentAccessFlag_(value);
+      if(canChangeStatus){
+        const accessType = h === '학부모정보권한' ? 'parent' : 'payment';
+        return '<td><select class="wm-mode-select wm-setting-access-select" data-access-type="'+accessType+'" data-teacher-id="'+escapeHtml(teacherId)+'">'
+          +'<option value="OFF"'+(currentAccess === 'OFF' ? ' selected' : '')+'>OFF</option>'
+          +'<option value="ON"'+(currentAccess === 'ON' ? ' selected' : '')+'>ON</option>'
+          +'</select></td>';
+      }
+      return '<td>'+escapeHtml(currentAccess)+'</td>';
+    }
+    if(h === '권한저장'){
+      return lowerRole && canChangeStatus
+        ? '<td><button type="button" class="wm-mode-save-btn" data-teacher-id="'+escapeHtml(teacherId)+'" onclick="saveSettingTeacherDataAccess(this)">저장</button></td>'
+        : '<td>-</td>';
+    }
     if(h === '담당반목록'){
       const classes = splitSettingClasses(value);
       const html = classes.length ? classes.map(c=>'<button type="button" class="wm-link-btn" onclick="WM_SETTING_CENTER_LOCK_V1.openClassStudents(\''+escapeJs(c)+'\')">'+escapeHtml(c)+'</button>').join(' ') : escapeHtml(value || '-');
       return '<td>'+html+'</td>';
     }
     if(h === '상태' && canChangeStatus){
-      const teacherId = String(row['교사ID'] || '').trim();
       const currentStatus = /^Inactive$/i.test(String(value || '')) ? 'Inactive' : 'Active';
       return '<td><select class="wm-mode-select wm-setting-status-select" data-teacher-id="'+escapeHtml(teacherId)+'">'
         +'<option value="Active"'+(currentStatus === 'Active' ? ' selected' : '')+'>Active</option>'
@@ -7540,6 +7594,30 @@ function renderSettingCenterRows(rows){
     }
     return '<td>'+escapeHtml(value || '-')+'</td>';
   }).join('')+'</tr>').join('');
+}
+
+async function saveSettingTeacherDataAccess(button){
+  const row = button && button.closest ? button.closest('tr') : null;
+  if(!row) return;
+  const teacherId = String(button.dataset.teacherId || '').trim();
+  const parentSelect = row.querySelector('.wm-setting-access-select[data-access-type="parent"]');
+  const paymentSelect = row.querySelector('.wm-setting-access-select[data-access-type="payment"]');
+  if(!teacherId || !parentSelect || !paymentSelect) return;
+  button.disabled = true;
+  try{
+    const data = await wmFetchSettingApi('saveSettingTeacherDataAccess', {
+      teacherId:teacherId,
+      parentAccess:parentSelect.value,
+      paymentAccess:paymentSelect.value
+    });
+    if(!data || !data.success) throw new Error((data && data.message) || '교사 정보권한 저장 실패');
+    alert(data.message || '교사 정보권한 저장 완료');
+    await WM_SETTING_CENTER_LOCK_V1.load();
+  }catch(err){
+    alert(err && err.message ? err.message : err);
+  }finally{
+    button.disabled = false;
+  }
 }
 
 async function saveSettingTeacherStatus(button){
@@ -8527,6 +8605,12 @@ function wmCollectStudentRegisterPayload(){
     device:wmStudentRegisterValue('wmStudentRegisterDevice').trim(),
     memo:wmStudentRegisterValue('wmStudentRegisterMemo').trim()
   };
+  const access=wmStudentDataAccessForCurrentActor_();
+  if(!access.parent){ payload.parentName=''; payload.parentPhone=''; }
+  if(!access.payment){
+    payload.lastPayment='';payload.registerDate='';payload.firstRegisterDate='';payload.recentPaymentDate='';
+    payload.paymentGapDays='';payload.reregisterCount='';payload.totalRegisterPeriod='';
+  }
   Object.assign(payload, {
     '학생일련번호':payload.studentSerial,
     '학생ID':payload.studentId,
@@ -8616,7 +8700,7 @@ async function wmApplyStudentRegister(){
     alert('학습종료일은 학습시작일보다 빠를 수 없습니다.');
     return;
   }
-  const params = new URLSearchParams(Object.assign({mode:'saveStudentToDB', ts:String(Date.now())}, payload));
+  const params = new URLSearchParams(Object.assign({mode:'saveStudentToDB', actorTeacherId:wmGetSettingActorTeacherId(), ts:String(Date.now())}, payload));
   const submitButton = document.getElementById('wmStudentRegisterSubmitBtn');
   if(submitButton) submitButton.disabled = true;
   wmSetStudentRegisterStatus('', '학생정보 등록 중입니다.');
@@ -8678,6 +8762,122 @@ function wmNormalizeGradeDisplay(value){
     if(mm === 12 && dd === 31) return '';
   }
   return raw;
+}
+
+/* WM_LMS_STUDENT_SENSITIVE_ACCESS_TEST_V1
+ * SUPER_ADMIN / SPECIAL_ADMIN은 항상 학부모·결제정보를 확인합니다.
+ * SUB_LEADER / TEACHER는 7-1.교사관리_DB의 두 권한이 ON일 때만 해당 열을 생성합니다. */
+function wmNormalizeStudentAccessFlag_(value){
+  return /^(ON|Y|YES|TRUE|1|사용|공개)$/i.test(String(value || '').trim()) ? 'ON' : 'OFF';
+}
+
+function wmStudentDataAccessForCurrentActor_(){
+  const teacher = window.WM_LMS_AUTH_TEACHER || {};
+  const role = String(teacher.권한 || getCurrentRole() || 'TEACHER').trim().toUpperCase();
+  const adminLike = role === 'SUPER_ADMIN' || role === 'SPECIAL_ADMIN';
+  return {
+    role:role,
+    parent:adminLike || wmNormalizeStudentAccessFlag_(teacher.학부모정보권한) === 'ON',
+    payment:adminLike || wmNormalizeStudentAccessFlag_(teacher.결제정보권한) === 'ON'
+  };
+}
+
+function wmApplyStudentSensitiveRegistrationAccess_(){
+  const access = wmStudentDataAccessForCurrentActor_();
+  document.querySelectorAll('[data-wm-student-sensitive]').forEach(function(el){
+    const group = String(el.getAttribute('data-wm-student-sensitive') || '').trim();
+    const visible = group === 'parent' ? access.parent : (group === 'payment' ? access.payment : true);
+    el.style.display = visible ? '' : 'none';
+    el.querySelectorAll('input,select,button').forEach(function(control){ control.disabled = !visible; });
+  });
+  return access;
+}
+
+function wmStudentTextInputHtml(studentId,key,value,config){
+  const safeId=String(studentId||'').replace(/[^A-Za-z0-9_-]/g,'');
+  const type=String(config&&config.type||'text');
+  const maxLength=Number(config&&config.maxLength||0);
+  const placeholder=String(config&&config.placeholder||'');
+  return '<input type="'+escapeHtml(type)+'" class="wm-student-edit-input" id="wmMode_'+escapeHtml(key)+'_'+safeId+'" data-student-id="'+escapeHtml(studentId)+'" value="'+escapeHtml(String(value||''))+'" placeholder="'+escapeHtml(placeholder)+'"'+(maxLength?' maxlength="'+maxLength+'"':'')+' />';
+}
+
+function wmUniqueStudentOptionValues_(values,current){
+  const out=[];
+  const seen=new Set();
+  [current].concat(values||[]).forEach(function(value){
+    const text=String(value||'').trim();
+    const key=text.toUpperCase();
+    if(!text||seen.has(key))return;
+    seen.add(key);out.push(text);
+  });
+  return out;
+}
+
+function wmStudentClassOptionValues_(current){
+  const values=[];
+  (wmSettingClassRows||[]).forEach(function(row){
+    if(!/^Inactive$/i.test(String(row&&row['상태']||'Active')))values.push(row&&row['반명']);
+  });
+  (WM_STUDENT_MANAGE_ROWS||[]).forEach(function(row){ values.push(row&& (row['반명']||row['반']||row['Class'])); });
+  return wmUniqueStudentOptionValues_(values,current);
+}
+
+function wmStudentTeacherOptionValues_(current){
+  const values=[];
+  (wmSettingCenterRows||[]).forEach(function(row){
+    if(!/^Inactive$/i.test(String(row&&row['상태']||'Active')))values.push(row&&row['교사명']);
+  });
+  (wmSettingClassRows||[]).forEach(function(row){ values.push(row&&row['담당교사명']); });
+  (WM_STUDENT_MANAGE_ROWS||[]).forEach(function(row){ values.push(row&&row['교사명']); });
+  return wmUniqueStudentOptionValues_(values,current);
+}
+
+function wmStudentTeacherIdByName_(teacherName){
+  const target=String(teacherName||'').trim().toUpperCase();
+  const row=(wmSettingCenterRows||[]).find(function(item){return String(item&&item['교사명']||'').trim().toUpperCase()===target;});
+  return String(row&&row['교사ID']||'').trim();
+}
+
+function wmStudentSimpleSelectHtml_(studentId,key,current,options,attributes){
+  const safeId=String(studentId||'').replace(/[^A-Za-z0-9_-]/g,'');
+  const selected=String(current||'').trim();
+  const list=wmUniqueStudentOptionValues_(options,selected);
+  return '<select class="wm-mode-select" data-student-id="'+escapeHtml(studentId)+'" data-mode-key="'+escapeHtml(key)+'" id="wmMode_'+escapeHtml(key)+'_'+safeId+'" '+String(attributes||'')+'><option value="">선택</option>'+list.map(function(value){return '<option value="'+escapeHtml(value)+'"'+(value===selected?' selected':'')+'>'+escapeHtml(value)+'</option>';}).join('')+'</select>';
+}
+
+function wmStudentClassSelectHtml_(studentId,value){
+  const safeId=String(studentId||'').replace(/[^A-Za-z0-9_-]/g,'');
+  return wmStudentSimpleSelectHtml_(studentId,'반명',value,wmStudentClassOptionValues_(value),'onchange="wmSyncStudentTeacherByClass_(\''+escapeJs(safeId)+'\')"');
+}
+
+function wmStudentTeacherSelectHtml_(studentId,value){
+  return wmStudentSimpleSelectHtml_(studentId,'교사명',value,wmStudentTeacherOptionValues_(value),'');
+}
+
+function wmStudentGradeSelectHtml_(studentId,value){
+  const current=wmNormalizeGradeDisplay(value);
+  const labels={'3':'3(초3)','4':'4(초4)','5':'5(초5)','6':'6(초6)','7':'7(중1)','8':'8(중2)','9':'9(중3)','10':'10(고1)','11':'11(고2)','12':'12(고3)','13':'13(수능)'};
+  const safeId=String(studentId||'').replace(/[^A-Za-z0-9_-]/g,'');
+  const values=wmUniqueStudentOptionValues_(Object.keys(labels),current);
+  return '<select class="wm-mode-select" data-student-id="'+escapeHtml(studentId)+'" data-mode-key="학년" id="wmMode_학년_'+safeId+'"><option value="">선택</option>'+values.map(function(v){return '<option value="'+escapeHtml(v)+'"'+(v===current?' selected':'')+'>'+escapeHtml(labels[v]||v)+'</option>';}).join('')+'</select>';
+}
+
+function wmSyncStudentTeacherByClass_(safeId){
+  const classSelect=document.getElementById('wmMode_반명_'+safeId);
+  const teacherSelect=document.getElementById('wmMode_교사명_'+safeId);
+  if(!classSelect||!teacherSelect)return;
+  const className=String(classSelect.value||'').trim();
+  const classRow=(wmSettingClassRows||[]).find(function(row){return String(row&&row['반명']||'').trim()===className;});
+  const teacherName=String(classRow&&classRow['담당교사명']||'').trim();
+  if(!teacherName)return;
+  if(!Array.from(teacherSelect.options||[]).some(function(option){return option.value===teacherName;}))teacherSelect.add(new Option(teacherName,teacherName));
+  teacherSelect.value=teacherName;
+}
+
+function wmStudentSessionStatusHtml_(value){
+  const raw=String(value||'LOGOUT').trim().toUpperCase();
+  const label=raw==='LOGIN'?'Login':(raw==='EXPIRED'?'Expired':'Logout');
+  return '<span class="wm-student-readonly-status" aria-disabled="true" title="세션상태는 로그인 시스템에서 자동 관리됩니다.">'+label+'</span>';
 }
 
 function wmRepairShiftedStudentModeRow(row){
@@ -8885,8 +9085,10 @@ async function saveStudentLearningModeFromRow(studentId, skipLockAndToast){
   const recipientType=wmRecipientTypeValueFromRow(studentId,row);
   const recipientSelect=document.getElementById(`wmMode_수신자구분_${safeId}`);
   if(recipientSelect&&recipientSelect.value==='기타'&&!recipientType){ alert('기타 수신자 관계를 입력해주세요.'); return; }
-  const params = new URLSearchParams({
+  const access=wmStudentDataAccessForCurrentActor_();
+  const saveValues={
     mode:'saveStudentLearningMode',
+    actorTeacherId:wmGetSettingActorTeacherId(),
     studentId:String(studentId || '').trim(),
     learningStartDate:learningStartDate,
     learningEndDate:learningEndDate,
@@ -8899,10 +9101,19 @@ async function saveStudentLearningModeFromRow(studentId, skipLockAndToast){
     nextLevel:String(nextLevel || ''),
     nextLevelCompleteCondition:getSel('다음레벨완료조건'),
     recipientType:recipientType,
+    className:getSel('반명'),
+    teacherName:getSel('교사명'),
+    assignedTeacherId:wmStudentTeacherIdByName_(getSel('교사명')),
+    school:getSel('학교'),
+    grade:getSel('학년'),
     activeStatus:getSel('활성상태'),
-    sessionStatus:getSel('세션상태'),
     ts:String(Date.now())
-  });
+  };
+  if(access.parent){
+    saveValues.parentName=getSel('학부모명');
+    saveValues.parentPhone=getSel('학부모연락처');
+  }
+  const params = new URLSearchParams(saveValues);
   if(!skipLockAndToast) wmSetSaveWaiting(true, '학생 정보를 저장 중입니다...');
   try{
     const res = await fetch(WM_APPS_SCRIPT_URL + '?' + params.toString(), {method:'GET', cache:'no-store'});
@@ -8947,8 +9158,8 @@ function wmStudentEditableValues(row, safeId){
     ? (recipientSelect.value==='기타' ? String(recipientCustom?.value||'').trim() : String(recipientSelect.value||'').trim())
     : String(row['수신자구분']||row['수신구분']||row['수신']||'').trim();
   const s4Raw = wmNormalizeStudentModeValue(row, 'S4실루엣단계', '4단계');
-  return {
-    previous:{
+  const access=wmStudentDataAccessForCurrentActor_();
+  const previous={
       '학습시작일':wmStudentDateInputValue(row['학습시작일'] || row['등록일'] || ''),
       '학습종료일':wmStudentDateInputValue(row['학습종료일'] || ''),
       '출석약속':String(row['출석약속'] || '3').replace(/[^1-7]/g, '').slice(0,1) || '3',
@@ -8959,10 +9170,13 @@ function wmStudentEditableValues(row, safeId){
       'S4실루엣단계':(s4Raw === '전체' || s4Raw === '0단계') ? '1단계' : s4Raw,
       'S6테스트모드':wmNormalizeStudentModeValue(row, 'S6테스트모드', row['학습모드'] || '기본전체'),
       '다음레벨완료조건':wmNormalizeStudentModeValue(row, '다음레벨완료조건', '2회'),
-      '활성상태':String(row['활성상태'] || 'ACTIVE').trim().toUpperCase(),
-      '세션상태':String(row['세션상태'] || 'LOGOUT').trim().toUpperCase()
-    },
-    current:{
+      '반명':String(row['반명']||row['반']||row['Class']||'').trim(),
+      '교사명':String(row['교사명']||'').trim(),
+      '학교':String(row['학교']||'').trim(),
+      '학년':wmNormalizeGradeDisplay(row['학년']||''),
+      '활성상태':String(row['활성상태'] || 'ACTIVE').trim().toUpperCase()
+    };
+  const current={
       '학습시작일':read('학습시작일'),
       '학습종료일':read('학습종료일'),
       '출석약속':read('출석약속'),
@@ -8973,10 +9187,19 @@ function wmStudentEditableValues(row, safeId){
       'S4실루엣단계':read('S4실루엣단계'),
       'S6테스트모드':read('S6테스트모드'),
       '다음레벨완료조건':read('다음레벨완료조건'),
-      '활성상태':read('활성상태'),
-      '세션상태':read('세션상태')
-    }
-  };
+      '반명':read('반명'),
+      '교사명':read('교사명'),
+      '학교':read('학교'),
+      '학년':read('학년'),
+      '활성상태':read('활성상태')
+    };
+  if(access.parent){
+    previous['학부모명']=String(row['학부모명']||'').trim();
+    previous['학부모연락처']=String(row['학부모연락처']||'').trim();
+    current['학부모명']=read('학부모명');
+    current['학부모연락처']=read('학부모연락처');
+  }
+  return {previous:previous,current:current};
 }
 
 function wmStudentChangedItems(row, safeId){
@@ -9341,22 +9564,26 @@ function wmSortStudentRowsLatestFirst(rows){
  * 하위 권한은 학생일련번호가 존재하지 않는 3개 고정열입니다. */
 function wmRenderStudentManageHeaderByRole_(){
   const thead = document.getElementById('studentManageThead');
-  if(!thead) return false;
+  if(!thead) return {showSerial:false,parent:false,payment:false};
   const showSerial = document.body.classList.contains('wm-show-student-serial');
+  const access = wmStudentDataAccessForCurrentActor_();
   const fixedHeaders = showSerial
     ? '<th class="wm-student-fixed wm-fixed-rowno">일련번호</th><th class="wm-student-fixed wm-fixed-seq">학생일련번호</th><th class="wm-student-fixed wm-fixed-id">학생ID</th><th class="wm-student-fixed wm-fixed-name">학생이름</th>'
     : '<th class="wm-student-fixed wm-fixed-rowno">일련번호</th><th class="wm-student-fixed wm-fixed-id">학생ID</th><th class="wm-student-fixed wm-fixed-name">학생이름</th>';
+  const parentHeaders = access.parent ? '<th>학부모명</th><th>학부모연락처</th>' : '';
+  const paymentHeaders = access.payment ? '<th>최종결제</th><th>등록일</th><th>최초등록일</th><th>최근결제일</th><th>결제공백일수</th><th>재등록횟수</th><th>총등록기간</th>' : '';
   thead.innerHTML = '<tr>'+fixedHeaders+
-    '<th>비밀번호</th><th>학습시작일</th><th>학습종료일</th><th>출석약속</th><th>세트약속</th><th>최초배정</th><th>레벨완료조건</th><th>S4실루엣단계</th><th>S6테스트모드</th><th>현재세트</th><th>다음레벨완료조건</th><th>반명</th><th>교사명</th><th>학교</th><th>학년</th><th>수신자구분</th><th>학부모명</th><th>학부모연락처</th><th>최종결제</th><th>등록일</th><th>최초등록일</th><th>최근결제일</th><th>결제공백일수</th><th>재등록횟수</th><th>총등록기간</th><th>등록상태</th><th>활성상태</th><th>반ID</th><th>교사ID</th><th>세션상태</th><th>최종로그인</th><th>접속기기</th><th>비고</th><th>저장</th></tr>';
-  return showSerial;
+    '<th>비밀번호</th><th>학습시작일</th><th>학습종료일</th><th>출석약속</th><th>세트약속</th><th>최초배정</th><th>레벨완료조건</th><th>S4실루엣단계</th><th>S6테스트모드</th><th>현재세트</th><th>다음레벨완료조건</th><th>반명</th><th>교사명</th><th>학교</th><th>학년</th><th>수신자구분</th>'+parentHeaders+paymentHeaders+'<th>등록상태</th><th>활성상태</th><th>반ID</th><th>교사ID</th><th>세션상태</th><th>최종로그인</th><th>접속기기</th><th>비고</th><th>저장</th></tr>';
+  return {showSerial:showSerial,parent:access.parent,payment:access.payment};
 }
 
 function renderStudentManageRows(){
   wmLockStatusMessage('StudentDB_Pagination_V1_LOCK','학생관리 하단 25줄 페이지');
   const tbody = document.getElementById('studentManageTbody');
   if(!tbody) return;
-  const showStudentSerial = wmRenderStudentManageHeaderByRole_();
-  const studentColumnCount = showStudentSerial ? 38 : 37;
+  const studentAccess = wmRenderStudentManageHeaderByRole_();
+  const showStudentSerial = !!studentAccess.showSerial;
+  const studentColumnCount = (showStudentSerial ? 38 : 37) - (studentAccess.parent ? 0 : 2) - (studentAccess.payment ? 0 : 7);
 
   const rows = getStudentManageFilteredRows(WM_STUDENT_MANAGE_ROWS || []);
   const totalRows = rows.length;
@@ -9413,25 +9640,18 @@ function renderStudentManageRows(){
       <td>${wmModeSelectHtml(studentId, 'S6테스트모드', s6, ['기본전체','객관식(2개)','객관식+영한','객관식+한영'])}</td>
       <td>${escapeHtml(wmCurrentSetDisplayValue(row['현재세트']))}</td>
       <td>${wmModeSelectHtml(studentId, '다음레벨완료조건', nextComplete, ['1회','2회','3회'])}</td>
-      <td>${escapeHtml(row['반명'] || row['반'] || row['Class'] || '')}</td>
-      <td>${escapeHtml(row['교사명'] || '')}</td>
-      <td>${escapeHtml(row['학교'] || '')}</td>
-      <td>${escapeHtml(wmNormalizeGradeDisplay(row['학년'] || ''))}</td>
+      <td>${wmStudentClassSelectHtml_(studentId, row['반명'] || row['반'] || row['Class'] || '')}</td>
+      <td>${wmStudentTeacherSelectHtml_(studentId, row['교사명'] || '')}</td>
+      <td>${wmStudentTextInputHtml(studentId, '학교', row['학교'] || '', {maxLength:50,placeholder:'학교명'})}</td>
+      <td>${wmStudentGradeSelectHtml_(studentId, row['학년'] || '')}</td>
       <td>${wmRecipientTypeInputHtml(studentId, row['수신자구분'] || row['수신구분'] || row['수신'] || '')}</td>
-      <td>${escapeHtml(row['학부모명'] || '')}</td>
-      <td>${escapeHtml(row['학부모연락처'] || '')}</td>
-      <td>${escapeHtml(displayCellValue(row['최종결제']))}</td>
-      <td>${escapeHtml(displayCellValue(row['등록일']))}</td>
-      <td>${escapeHtml(displayCellValue(row['최초등록일']))}</td>
-      <td>${escapeHtml(displayCellValue(row['최근결제일']))}</td>
-      <td>${escapeHtml(row['결제공백일수'] || '')}</td>
-      <td>${escapeHtml(row['재등록횟수'] || '')}</td>
-      <td>${escapeHtml(row['총등록기간'] || '')}</td>
+      ${studentAccess.parent ? `<td>${wmStudentTextInputHtml(studentId, '학부모명', row['학부모명'] || '', {maxLength:30,placeholder:'학부모명'})}</td><td>${wmStudentTextInputHtml(studentId, '학부모연락처', row['학부모연락처'] || '', {maxLength:20,placeholder:'010-0000-0000'})}</td>` : ''}
+      ${studentAccess.payment ? `<td>${escapeHtml(displayCellValue(row['최종결제']))}</td><td>${escapeHtml(displayCellValue(row['등록일']))}</td><td>${escapeHtml(displayCellValue(row['최초등록일']))}</td><td>${escapeHtml(displayCellValue(row['최근결제일']))}</td><td>${escapeHtml(row['결제공백일수'] || '')}</td><td>${escapeHtml(row['재등록횟수'] || '')}</td><td>${escapeHtml(row['총등록기간'] || '')}</td>` : ''}
       <td>${escapeHtml(row['등록상태'] || '')}</td>
       <td>${wmModeSelectHtml(studentId, '활성상태', String(row['활성상태'] || 'ACTIVE').trim().toUpperCase(), ['ACTIVE','INACTIVE'])}</td>
       <td>${escapeHtml(row['반ID'] || '')}</td>
       <td>${escapeHtml(row['교사ID'] || '')}</td>
-      <td>${wmModeSelectHtml(studentId, '세션상태', String(row['세션상태'] || 'LOGOUT').trim().toUpperCase(), ['LOGIN','LOGOUT','EXPIRED'])}</td>
+      <td>${wmStudentSessionStatusHtml_(row['세션상태'])}</td>
       <td>${escapeHtml(displayCellValue(row['최종로그인']))}</td>
       <td>${escapeHtml(row['접속기기'] || '')}</td>
       <td>${escapeHtml(wmStripMoveHandlerText(row['비고'] || ''))}</td>
