@@ -712,31 +712,7 @@ const WM_LMS_URL = WM_CONFIG.LMS_URL;
 
 
   <!-- 3. 하단 학습기록_DB 구조 -->
-<style id="wm-map-report-modal-style">
-.wm-map-report-modal{position:fixed;left:0;right:0;top:0;bottom:0;z-index:120000;display:none;align-items:flex-start;justify-content:center;padding:18px;background:rgba(15,23,42,.72);overflow:hidden;box-sizing:border-box}
-body.wm-test-booth-active .wm-map-report-modal{top:var(--wm-test-booth-height);padding-top:12px}
-.wm-map-report-modal.active{display:flex}
-.wm-map-report-card{width:min(1120px,96vw);height:100%;max-height:100%;display:flex;flex-direction:column;background:#fff;border-radius:18px;box-shadow:0 28px 80px rgba(0,0,0,.35);overflow:hidden}
-.wm-map-report-head{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:12px;background:#fff;border-bottom:1px solid #d8e1ee;padding:12px 16px}
-.wm-map-report-title{font-size:16px;font-weight:950;color:#173b75;white-space:nowrap}
-.wm-map-report-select{min-width:220px;height:40px;border:1px solid #8fb3e8;border-radius:10px;padding:0 12px;background:#fff;color:#173b75;font-weight:800}
-.wm-map-report-close{margin-left:auto;border:0;border-radius:10px;background:#173b75;color:#fff;padding:10px 16px;font-weight:900;cursor:pointer}
-.wm-map-report-body{padding:18px;background:#eaf0f8;display:flex;justify-content:center;min-height:0;flex:1 1 auto;overflow:auto}
-.wm-map-report-message{margin:auto;padding:36px 24px;color:#334155;font-size:18px;font-weight:900;text-align:center}
-body.wm-map-report-open{overflow:hidden}
-@media(max-width:768px){.wm-map-report-modal{padding:6px}.wm-map-report-head{flex-wrap:wrap}.wm-map-report-select{order:3;width:100%}.wm-map-report-body{padding:6px;justify-content:flex-start}}
-</style>
-<div id="wmMapReportModal" class="wm-map-report-modal" role="dialog" aria-modal="true" aria-label="최근성적표보기">
-  <div class="wm-map-report-card">
-    <div class="wm-map-report-head">
-      <div class="wm-map-report-title">최근성적표보기</div>
-      <select id="wmMapReportPeriodSelect" class="wm-map-report-select" aria-label="성적표 기간 선택"></select>
-      <button id="wmMapReportClose" class="wm-map-report-close" type="button">닫기</button>
-    </div>
-    <div id="wmMapReportBody" class="wm-map-report-body"></div>
-  </div>
-</div>
-<!-- 성적표 템플릿·렌더링은 /shared/report-renderer.js 단일 파일에서 제공합니다. -->
+<div id="wmRecentReportMount"></div>
 
 
   <div id="wm-learning-record-widget">
@@ -4935,12 +4911,12 @@ wmInitHomeworkSearchEnterKey();
  * LMS 성적표생성 최근성적표와 동일한 /shared/report-renderer.js를 클릭 시점에만 사용합니다.
  * 로그인·학습맵 초기 진입에는 파일 요청·성적표 API 호출을 추가하지 않습니다.
  */
-const WM_SHARED_REPORT_RENDERER_URL='/shared/report-renderer.js';
+const WM_SHARED_REPORT_RENDERER_URL='/shared/report-renderer.js?v=2';
 let WM_SHARED_REPORT_RENDERER_PROMISE=null;
 let wmMapRecentReportState_={loaded:false,loading:false,months:[],defaultYearMonth:'',studentId:'',cache:new Map()};
 
 function wmLoadSharedReportRenderer_(){
-  if(window.WMSharedRecentReport&&typeof window.WMSharedRecentReport.render==='function'){
+  if(window.WMSharedRecentReport&&window.WMSharedRecentReport.version==='V2'&&typeof window.WMSharedRecentReport.render==='function'){
     return Promise.resolve(window.WMSharedRecentReport);
   }
   if(WM_SHARED_REPORT_RENDERER_PROMISE) return WM_SHARED_REPORT_RENDERER_PROMISE;
@@ -4948,9 +4924,9 @@ function wmLoadSharedReportRenderer_(){
     const script=document.createElement('script');
     script.src=WM_SHARED_REPORT_RENDERER_URL;
     script.async=true;
-    script.dataset.wmSharedReportRenderer='V1';
+    script.dataset.wmSharedReportRenderer='V2';
     script.onload=function(){
-      if(window.WMSharedRecentReport&&typeof window.WMSharedRecentReport.render==='function') resolve(window.WMSharedRecentReport);
+      if(window.WMSharedRecentReport&&window.WMSharedRecentReport.version==='V2'&&typeof window.WMSharedRecentReport.render==='function') resolve(window.WMSharedRecentReport);
       else reject(new Error('공통 성적표 렌더러를 확인할 수 없습니다.'));
     };
     script.onerror=function(){ reject(new Error('공통 성적표 렌더러를 불러오지 못했습니다.')); };
@@ -4998,54 +4974,53 @@ async function wmMapRecentData_(item){
 }
 
 async function wmMapRecentRender_(){
-  const select=document.getElementById('wmMapReportPeriodSelect');
-  const body=document.getElementById('wmMapReportBody');
-  const title=document.querySelector('#wmMapReportModal .wm-map-report-title');
+  const select=document.getElementById('wmRecentReportMonthSelect');
+  const body=document.getElementById('wmRecentReportModalBody');
+  const title=document.getElementById('wmRecentReportModalTitle');
   const item=wmMapRecentReportState_.months.find(month=>month.yearMonth===String(select&&select.value||''));
   if(!item||!body) return;
-  body.innerHTML='<div class="wm-map-report-message">성적표를 불러오는 중입니다.</div>';
+  body.innerHTML='<div class="wm-report-detail-loading"><span class="wm-loading-spinner"></span><span>성적표를 불러오는 중입니다.</span></div>';
   const startedAt=performance.now();
   try{
     const results=await Promise.all([wmMapRecentData_(item),wmLoadSharedReportRenderer_()]);
     const data=results[0];
     const name=String(data&&data.student&&data.student.studentName||'').trim();
     if(title) title.textContent='최근성적표보기 · '+name+' · '+item.label;
-    body.innerHTML=wmMapBindRecentReport_(data)||'<div class="wm-map-report-message">성적 내용이 없습니다.</div>';
+    results[1].prepareModal();
+    body.innerHTML=wmMapBindRecentReport_(data)||'<div class="wm-note">성적 내용이 없습니다.</div>';
     console.log('MAP 공통 최근성적표 표시시간(ms):',Math.round(performance.now()-startedAt));
   }catch(err){
-    body.innerHTML='<div class="wm-map-report-message">'+escapeHtml(String(err&&err.message||err))+'</div>';
+    body.innerHTML='<div class="wm-note">성적 내용이 없습니다.</div>';
   }
 }
 
 async function wmOpenLmsRecentReportModal_(){
-  const modal=document.getElementById('wmMapReportModal');
-  const body=document.getElementById('wmMapReportBody');
-  const select=document.getElementById('wmMapReportPeriodSelect');
   const studentId=String(wmCurrentStudent&&wmCurrentStudent.학생ID||'').trim().toUpperCase();
   const sessionToken=wmGetCurrentSessionToken();
-  if(!modal||!body||!select) return;
-  modal.classList.add('active');
-  document.body.classList.add('wm-map-report-open');
-  select.style.display='';
-  if(!studentId||!sessionToken){
-    body.innerHTML='<div class="wm-map-report-message">학생 로그인 정보를 확인할 수 없습니다.</div>';
-    return;
-  }
-  wmMapRecentReportState_.studentId=studentId;
-  if(wmMapRecentReportState_.loaded){
-    if(!select.options.length){
-      select.innerHTML=wmMapRecentReportState_.months.map(item=>'<option value="'+escapeHtml(item.yearMonth)+'">'+escapeHtml(item.label)+'</option>').join('');
-      select.value=wmMapRecentReportState_.defaultYearMonth;
-    }
-    await wmMapRecentRender_();
-    return;
-  }
-  if(wmMapRecentReportState_.loading) return;
-  wmMapRecentReportState_.loading=true;
-  body.innerHTML='<div class="wm-map-report-message">최근 4개월을 불러오는 중입니다.</div>';
+  if(!studentId||!sessionToken) return;
+  if(!wmMapRecentReportState_.loaded&&wmMapRecentReportState_.loading) return;
+  if(!wmMapRecentReportState_.loaded) wmMapRecentReportState_.loading=true;
+  const monthsPromise=wmMapRecentReportState_.loaded?null:wmMapRecentMonths_();
+  let body=null;
   try{
-    const results=await Promise.all([wmMapRecentMonths_(),wmLoadSharedReportRenderer_()]);
-    const data=results[0];
+    const renderer=await wmLoadSharedReportRenderer_();
+    const refs=renderer.openModal();
+    const title=refs.title;
+    const select=refs.select;
+    body=refs.body;
+    select.style.display='';
+    if(title) title.textContent='최근성적표보기 · 학생 조회 중';
+    wmMapRecentReportState_.studentId=studentId;
+    if(wmMapRecentReportState_.loaded){
+      if(!select.options.length){
+        select.innerHTML=wmMapRecentReportState_.months.map(item=>'<option value="'+escapeHtml(item.yearMonth)+'">'+escapeHtml(item.label)+'</option>').join('');
+        select.value=wmMapRecentReportState_.defaultYearMonth;
+      }
+      await wmMapRecentRender_();
+      return;
+    }
+    body.innerHTML='<div class="wm-report-detail-loading"><span class="wm-loading-spinner"></span><span>최근 4개월을 불러오는 중입니다.</span></div>';
+    const data=await monthsPromise;
     wmMapRecentReportState_.months=data.months;
     wmMapRecentReportState_.defaultYearMonth=data.defaultYearMonth||data.months[0].yearMonth;
     wmMapRecentReportState_.loaded=true;
@@ -5053,7 +5028,8 @@ async function wmOpenLmsRecentReportModal_(){
     select.value=wmMapRecentReportState_.defaultYearMonth;
     await wmMapRecentRender_();
   }catch(err){
-    body.innerHTML='<div class="wm-map-report-message">'+escapeHtml(String(err&&err.message||err))+'</div>';
+    if(monthsPromise) monthsPromise.catch(function(){});
+    if(body) body.innerHTML='<div class="wm-note">성적 내용이 없습니다.</div>';
   }finally{
     wmMapRecentReportState_.loading=false;
   }
@@ -5065,22 +5041,32 @@ function wmMapReportFillSelect_(){ return wmOpenLmsRecentReportModal_(); }
 function wmOpenPublishedReportModal_(){ return wmOpenLmsRecentReportModal_(); }
 async function wmMapReportBindGradeComment_(){ return false; }
 function wmClosePublishedReportModal_(){
-  const modal=document.getElementById('wmMapReportModal');
+  if(window.WMSharedRecentReport&&typeof window.WMSharedRecentReport.closeModal==='function'){
+    window.WMSharedRecentReport.closeModal();
+    return;
+  }
+  const modal=document.getElementById('wmRecentReportModal');
   if(modal) modal.classList.remove('active');
-  document.body.classList.remove('wm-map-report-open');
+  document.body.classList.remove('wm-report-preview-open');
+}
+
+function closeRecentReportModal(){
+  return wmClosePublishedReportModal_();
+}
+
+function changeRecentReportMonth(){
+  return wmMapRecentRender_();
+}
+
+function wmRecentReportBackdropClose(event){
+  if(event&&event.target&&event.target.id==='wmRecentReportModal') wmClosePublishedReportModal_();
 }
 
 function wmInitPublishedReportModal_(){
   const open=document.getElementById('wm-report-view-button');
   const recent=document.getElementById('wm-recent-report-view-button');
-  const close=document.getElementById('wmMapReportClose');
-  const select=document.getElementById('wmMapReportPeriodSelect');
-  const modal=document.getElementById('wmMapReportModal');
   if(open) open.addEventListener('click',wmOpenLmsCurrentReportModal_);
   if(recent) recent.addEventListener('click',wmOpenLmsRecentReportModal_);
-  if(close) close.addEventListener('click',wmClosePublishedReportModal_);
-  if(select) select.addEventListener('change',wmMapRecentRender_);
-  if(modal) modal.addEventListener('click',event=>{if(event.target===modal)wmClosePublishedReportModal_();});
   document.addEventListener('keydown',event=>{if(event.key==='Escape')wmClosePublishedReportModal_();});
 }
 
@@ -5125,7 +5111,7 @@ function wmInitPublishedReportModal_(){
     recentReport:{
       label:'성적표 최근 4개월·드롭다운·모달·월 누적·학생 세션',
       functions:['wmMapRecentMonths_','wmMapRecentData_','wmMapRecentRender_','wmOpenLmsCurrentReportModal_','wmOpenLmsRecentReportModal_','wmMapBindRecentReport_','wmInitPublishedReportModal_','wmGetCurrentSessionToken'],
-      selectors:['#wm-report-view-button','#wm-recent-report-view-button','#wmMapReportModal','#wmMapReportPeriodSelect','#wmMapReportBody']
+      selectors:['#wm-report-view-button','#wm-recent-report-view-button','#wmRecentReportMount']
     },
     homeworkBlueDesign:{
       label:'숙제검사·학습기록 블루 디자인·검색·요약정보',
@@ -5146,7 +5132,7 @@ function wmInitPublishedReportModal_(){
     loadingEmptyError:{
       label:'조회 중·자료 없음·오류 표시 처리',
       functions:['wmShowMapLoadingState_','wmStopMapLoadingState_','wmShowMapMessage','wmShowMapUnavailable_','wmMapRecentRender_'],
-      selectors:['#setMap','#wmMapReportBody','#homeworkTableBody']
+      selectors:['#setMap','#wmRecentReportMount','#homeworkTableBody']
     }
   };
 

@@ -1117,16 +1117,7 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
       <div id="wmReportDesignPreviewModalBody" class="wm-report-preview-modal-body"></div>
     </div>
   </div>
-  <div id="wmRecentReportModal" class="wm-report-preview-modal" role="dialog" aria-modal="true" aria-label="최근 4개월 성적표 보기" onclick="wmRecentReportBackdropClose(event)">
-    <div class="wm-report-preview-modal-card">
-      <div class="wm-report-preview-modal-head">
-        <div id="wmRecentReportModalTitle" class="wm-report-preview-modal-title">최근성적표보기</div>
-        <select id="wmRecentReportMonthSelect" class="wm-recent-report-select" aria-label="최근성적표 월 선택" onchange="changeRecentReportMonth()"></select>
-        <button type="button" class="wm-action-btn sub" aria-label="최근성적표 닫기" onclick="closeRecentReportModal()">×</button>
-      </div>
-      <div id="wmRecentReportModalBody" class="wm-report-preview-modal-body"></div>
-    </div>
-  </div>
+  <div id="wmRecentReportMount"></div>
   <main class="wm-admin-wrap">
     <h1 class="wm-top-title">Word Mate LMS ADMIN CENTER V3</h1>
     <section class="wm-user-bar">
@@ -4564,11 +4555,11 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
     }
 
 
-    const WM_SHARED_REPORT_RENDERER_URL='/shared/report-renderer.js';
+    const WM_SHARED_REPORT_RENDERER_URL='/shared/report-renderer.js?v=2';
     let WM_SHARED_REPORT_RENDERER_PROMISE=null;
 
     function wmLoadSharedReportRenderer_(){
-      if(window.WMSharedRecentReport&&typeof window.WMSharedRecentReport.render==='function'){
+      if(window.WMSharedRecentReport&&window.WMSharedRecentReport.version==='V2'&&typeof window.WMSharedRecentReport.render==='function'){
         return Promise.resolve(window.WMSharedRecentReport);
       }
       if(WM_SHARED_REPORT_RENDERER_PROMISE) return WM_SHARED_REPORT_RENDERER_PROMISE;
@@ -4576,9 +4567,9 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
         const script=document.createElement('script');
         script.src=WM_SHARED_REPORT_RENDERER_URL;
         script.async=true;
-        script.dataset.wmSharedReportRenderer='V1';
+        script.dataset.wmSharedReportRenderer='V2';
         script.onload=function(){
-          if(window.WMSharedRecentReport&&typeof window.WMSharedRecentReport.render==='function') resolve(window.WMSharedRecentReport);
+          if(window.WMSharedRecentReport&&window.WMSharedRecentReport.version==='V2'&&typeof window.WMSharedRecentReport.render==='function') resolve(window.WMSharedRecentReport);
           else reject(new Error('공통 성적표 렌더러를 확인할 수 없습니다.'));
         };
         script.onerror=function(){ reject(new Error('공통 성적표 렌더러를 불러오지 못했습니다.')); };
@@ -4639,6 +4630,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
         const renderer=results[1];
         WM_RECENT_REPORT_STUDENT_NAME=String(data&&data.student&&data.student.studentName||'').trim();
         if(title) title.textContent='최근성적표보기 · '+(WM_RECENT_REPORT_STUDENT_NAME||'이름 없음')+' · '+item.label;
+        renderer.prepareModal();
         body.innerHTML=renderer.render(data);
         console.log('LMS 공통 최근성적표 표시시간(ms):',Math.round(performance.now()-startedAt));
       }catch(err){
@@ -4648,26 +4640,28 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
     }
 
     async function openRecentReportDetail(studentId){
-      const modal=document.getElementById('wmRecentReportModal');
-      const body=document.getElementById('wmRecentReportModalBody');
-      const title=document.getElementById('wmRecentReportModalTitle');
-      const select=document.getElementById('wmRecentReportMonthSelect');
       WM_RECENT_REPORT_STUDENT_ID=String(studentId||'').trim();
       WM_RECENT_REPORT_STUDENT_NAME='';
-      if(!WM_RECENT_REPORT_STUDENT_ID||!modal||!body||!select) return;
-      modal.classList.add('active');
-      document.body.classList.add('wm-report-preview-open');
-      if(title) title.textContent='최근성적표보기 · 학생 조회 중';
-      body.innerHTML='<div class="wm-report-detail-loading"><span class="wm-loading-spinner"></span><span>최근 4개월을 불러오는 중입니다.</span></div>';
+      if(!WM_RECENT_REPORT_STUDENT_ID) return;
+      const monthsPromise=wmFetchRecentReportMonths();
+      let body=null;
       try{
-        const [result]=await Promise.all([wmFetchRecentReportMonths(),wmLoadSharedReportRenderer_()]);
+        const renderer=await wmLoadSharedReportRenderer_();
+        const refs=renderer.openModal();
+        const title=refs.title;
+        const select=refs.select;
+        body=refs.body;
+        if(title) title.textContent='최근성적표보기 · 학생 조회 중';
+        body.innerHTML='<div class="wm-report-detail-loading"><span class="wm-loading-spinner"></span><span>최근 4개월을 불러오는 중입니다.</span></div>';
+        const result=await monthsPromise;
         WM_RECENT_REPORT_MONTHS=result.months;
         select.innerHTML=WM_RECENT_REPORT_MONTHS.map(item=>'<option value="'+escapeHtml(item.yearMonth)+'">'+escapeHtml(item.label)+'</option>').join('');
         select.value=result.defaultYearMonth||WM_RECENT_REPORT_MONTHS[0].yearMonth;
         await renderRecentReportMonth();
       }catch(err){
+        monthsPromise.catch(function(){});
         console.error('최근성적표 4개월 목록 조회 실패:',err);
-        body.innerHTML='<div class="wm-note">성적 내용이 없습니다.</div>';
+        if(body) body.innerHTML='<div class="wm-note">성적 내용이 없습니다.</div>';
       }
     }
 
@@ -4676,6 +4670,10 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
     }
 
     function closeRecentReportModal(){
+      if(window.WMSharedRecentReport&&typeof window.WMSharedRecentReport.closeModal==='function'){
+        window.WMSharedRecentReport.closeModal();
+        return;
+      }
       const modal=document.getElementById('wmRecentReportModal');
       if(modal) modal.classList.remove('active');
       document.body.classList.remove('wm-report-preview-open');
@@ -11390,9 +11388,8 @@ document.addEventListener('keydown',function(e){
 
     var recentStatus={
       functions:groupFunctionsVerified('recentReport'),
-      modal:exists('#wmRecentReportModal'),
-      monthSelect:exists('#wmRecentReportMonthSelect'),
-      modalBody:exists('#wmRecentReportModalBody'),
+      modalMount:exists('#wmRecentReportMount'),
+      lazyRenderer:typeof window.wmLoadSharedReportRenderer_==='function',
       spinnerOrLoading:document.documentElement.innerHTML.indexOf('조회 중')!==-1,
       fixedFourMonths:typeof window.wmFetchRecentReportMonths==='function',
       currentPlusPreviousThree:document.documentElement.innerHTML.indexOf('최근 4개월')!==-1,
@@ -12042,7 +12039,7 @@ document.addEventListener('keydown',function(e){
     phases:PHASES,
     requiredDom:Object.freeze([
       '#panel-dashboard','#panel-students','#settingCenterTable',
-      '#panel-reports','#gradeLevelManageTable','#wmRecentReportModal',
+      '#panel-reports','#gradeLevelManageTable','#wmRecentReportMount',
       '#panel-profile','#panel-sendLog'
     ]),
     requiredCss:Object.freeze([
