@@ -1264,7 +1264,7 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
             <input type="text" id="wmStudentRegisterTeacher" placeholder="반을 선택하면 자동 표시" readonly disabled />
           </label>
           <label>학교<input type="text" id="wmStudentRegisterSchool" placeholder="학교명" /></label>
-          <label>학년<select id="wmStudentRegisterGrade"><option value="">학년을 선택하세요.</option><option value="3">3(초3)</option><option value="4">4(초4)</option><option value="5">5(초5)</option><option value="6">6(초6)</option><option value="7">7(중1)</option><option value="8">8(중2)</option><option value="9">9(중3)</option><option value="10">10(고1)</option><option value="11">11(고2)</option><option value="12">12(고3)</option><option value="13">13(수능)</option></select></label>
+          <label>학년<select id="wmStudentRegisterGrade"><option value="">학년을 선택하세요.</option><option value="초1">초1</option><option value="초2">초2</option><option value="초3">초3</option><option value="초4">초4</option><option value="초5">초5</option><option value="초6">초6</option><option value="중1">중1</option><option value="중2">중2</option><option value="중3">중3</option><option value="고1">고1</option><option value="고2">고2</option><option value="고3">고3</option></select></label>
           <label>주소<input type="text" id="wmStudentRegisterAddress" placeholder="주소" /></label>
           <label data-wm-student-sensitive="parent">학부모명<input type="text" id="wmStudentRegisterParent" placeholder="학부모명" /></label>
           <label data-wm-student-sensitive="parent">학부모연락처<input type="text" id="wmStudentRegisterParentPhone" placeholder="010-0000-0000" /></label>
@@ -2325,7 +2325,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
         <div class="wm-filter-actions"><button class="wm-action-btn" onclick="runFilter('classes')">검색</button><button class="wm-action-btn sub" onclick="resetFilter('classes')">초기화</button><button class="wm-action-btn sub" onclick="WM_SETTING_CENTER_LOCK_V1.load()">새로고침</button></div>
       </div>
 
-      <div class="wm-table-wrap" data-setting-db-view="teacher"><table id="settingCenterTable"><thead><tr><th>일련번호</th><th>교사명</th><th>교사ID</th><th>비밀번호</th><th>교사등급</th><th>학부모정보권한</th><th>결제정보권한</th><th>권한저장</th><th>담당리더</th><th>담당반목록</th><th>총담당반</th><th>총학생수</th><th>월학생수</th><th>월발송기록</th><th>상태</th><th>수정일</th><th>메모</th></tr></thead><tbody id="settingCenterTbody"><tr><td colspan="17">7-1.교사관리_DB 조회 준비 중입니다.</td></tr></tbody></table></div>
+      <div class="wm-table-wrap" data-setting-db-view="teacher"><table id="settingCenterTable"><thead id="settingCenterThead"><tr><th>일련번호</th><th>교사명</th><th>교사ID</th><th>비밀번호</th><th>교사등급</th><th>담당리더</th><th>담당반목록</th><th>총담당반</th><th>총학생수</th><th>월학생수</th><th>월발송기록</th><th>상태</th><th>수정일</th><th>메모</th></tr></thead><tbody id="settingCenterTbody"><tr><td colspan="14">7-1.교사관리_DB 조회 준비 중입니다.</td></tr></tbody></table></div>
       <div id="settingClassStudentDetail" class="wm-class-detail-box wm-setting-db-hidden" data-setting-db-view="class"></div>
 
       <!-- WM_CLASS_DB_COLUMN_HEADER_PREVIEW_V1: 7-2.반관리_DB 하단 실제 컬럼명 우선 표시 -->
@@ -7517,10 +7517,28 @@ function renderSettingClassDbRows(rows, headers){
   if(next) next.disabled = wmSettingClassPage >= totalPages;
 }
 
+function wmSettingTeacherCanManageDataAccess_(){
+  const role=String(wmSettingCenterActorRole || getCurrentRole() || '').trim().toUpperCase();
+  return role === 'SUPER_ADMIN' || role === 'SPECIAL_ADMIN';
+}
+
+function wmSettingTeacherVisibleHeaders_(){
+  const base=['교사명','교사ID','비밀번호','교사등급','담당리더','담당반목록','총담당반','총학생수','월학생수','월발송기록','상태','수정일','메모'];
+  if(wmSettingTeacherCanManageDataAccess_()) base.splice(4,0,'학부모정보권한','결제정보권한','권한저장');
+  return base;
+}
+
+function wmRenderSettingTeacherHeader_(){
+  const headers=wmSettingTeacherVisibleHeaders_();
+  const thead=document.getElementById('settingCenterThead');
+  if(thead) thead.innerHTML='<tr><th>일련번호</th>'+headers.map(h=>'<th>'+escapeHtml(h)+'</th>').join('')+'</tr>';
+  return headers;
+}
+
 async function loadSettingCenterDB(){
   wmLockStatusMessage('SettingCenter_Search_LOCK','설정센터 조회·검색');
   const tbody = document.getElementById('settingCenterTbody');
-  if(tbody) tbody.innerHTML = '<tr><td colspan="17">7-1.교사관리_DB 조회 중입니다.</td></tr>';
+  if(tbody) tbody.innerHTML = '<tr><td colspan="'+(wmSettingTeacherVisibleHeaders_().length+1)+'">7-1.교사관리_DB 조회 중입니다.</td></tr>';
   const classTableBody = document.querySelector('#wmSettingClassDbColumnTable tbody');
   if(classTableBody && !wmSettingClassRows.length) classTableBody.innerHTML = '<tr><td colspan="12">7-2.반관리_DB 조회 중입니다.</td></tr>';
   try{
@@ -7529,6 +7547,7 @@ async function loadSettingCenterDB(){
     wmSettingClassRows = (data && data.classRows) || [];
     WM_SETTING_CENTER_FIRST_LOAD_DONE = true;
     wmSettingCenterActorRole = String((data && data.actorRole) || '').trim().toUpperCase();
+    wmRenderSettingTeacherHeader_();
     if(window.WM_LMS_AUTH_TEACHER){
       window.WM_LMS_AUTH_TEACHER.학부모정보권한 = String((data && data.actorParentAccess) || window.WM_LMS_AUTH_TEACHER.학부모정보권한 || 'OFF').toUpperCase();
       window.WM_LMS_AUTH_TEACHER.결제정보권한 = String((data && data.actorPaymentAccess) || window.WM_LMS_AUTH_TEACHER.결제정보권한 || 'OFF').toUpperCase();
@@ -7542,7 +7561,7 @@ async function loadSettingCenterDB(){
       wmFillStudentRegisterClassOptions(document.getElementById('wmStudentRegisterClass').value);
     }
   }catch(err){
-    if(tbody) tbody.innerHTML = '<tr><td colspan="17">7-1.교사관리_DB 조회 실패: '+escapeHtml(err.message || err)+'</td></tr>';
+    if(tbody) tbody.innerHTML = '<tr><td colspan="'+(wmSettingTeacherVisibleHeaders_().length+1)+'">7-1.교사관리_DB 조회 실패: '+escapeHtml(err.message || err)+'</td></tr>';
     const failedBody = document.querySelector('#wmSettingClassDbColumnTable tbody');
     if(failedBody) failedBody.innerHTML = '<tr><td colspan="12">7-2.반관리_DB 조회 실패: '+escapeHtml(err.message || err)+'</td></tr>';
   }
@@ -7552,12 +7571,12 @@ function renderSettingCenterRows(rows){
   wmLockStatusMessage('SettingCenter_V1_LOCK','설정센터 목록 렌더링');
   const tbody = document.getElementById('settingCenterTbody');
   if(!tbody) return;
+  const headers = wmRenderSettingTeacherHeader_();
   if(!rows || !rows.length){
-    tbody.innerHTML = '<tr><td colspan="17">등록된 교사/반 데이터가 없습니다.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="'+(headers.length+1)+'">등록된 교사/반 데이터가 없습니다.</td></tr>';
     return;
   }
-  const canChangeStatus = wmSettingCenterActorRole === 'SUPER_ADMIN' || wmSettingCenterActorRole === 'SPECIAL_ADMIN';
-  const headers = ['교사명','교사ID','비밀번호','교사등급','학부모정보권한','결제정보권한','권한저장','담당리더','담당반목록','총담당반','총학생수','월학생수','월발송기록','상태','수정일','메모'];
+  const canChangeStatus = wmSettingTeacherCanManageDataAccess_();
   tbody.innerHTML = rows.map((row,index)=>'<tr><td>'+(index+1)+'</td>'+headers.map(h=>{
     const value = row[h] || '';
     const rowRole = String(row['교사등급'] || 'TEACHER').trim().toUpperCase();
@@ -8854,12 +8873,18 @@ function wmStudentTeacherSelectHtml_(studentId,value){
   return wmStudentSimpleSelectHtml_(studentId,'교사명',value,wmStudentTeacherOptionValues_(value),'');
 }
 
+function wmNormalizeSchoolGrade_(value){
+  const raw=wmNormalizeGradeDisplay(value).replace(/\s+/g,'');
+  if(/^(초[1-6]|중[1-3]|고[1-3])$/.test(raw)) return raw;
+  const legacy={'1':'초1','2':'초2','3':'초3','4':'초4','5':'초5','6':'초6','7':'중1','8':'중2','9':'중3','10':'고1','11':'고2','12':'고3'};
+  return legacy[raw] || '';
+}
+
 function wmStudentGradeSelectHtml_(studentId,value){
-  const current=wmNormalizeGradeDisplay(value);
-  const labels={'3':'3(초3)','4':'4(초4)','5':'5(초5)','6':'6(초6)','7':'7(중1)','8':'8(중2)','9':'9(중3)','10':'10(고1)','11':'11(고2)','12':'12(고3)','13':'13(수능)'};
+  const current=wmNormalizeSchoolGrade_(value);
+  const values=['초1','초2','초3','초4','초5','초6','중1','중2','중3','고1','고2','고3'];
   const safeId=String(studentId||'').replace(/[^A-Za-z0-9_-]/g,'');
-  const values=wmUniqueStudentOptionValues_(Object.keys(labels),current);
-  return '<select class="wm-mode-select" data-student-id="'+escapeHtml(studentId)+'" data-mode-key="학년" id="wmMode_학년_'+safeId+'"><option value="">선택</option>'+values.map(function(v){return '<option value="'+escapeHtml(v)+'"'+(v===current?' selected':'')+'>'+escapeHtml(labels[v]||v)+'</option>';}).join('')+'</select>';
+  return '<select class="wm-mode-select" data-student-id="'+escapeHtml(studentId)+'" data-mode-key="학년" id="wmMode_학년_'+safeId+'"><option value="">선택</option>'+values.map(function(v){return '<option value="'+escapeHtml(v)+'"'+(v===current?' selected':'')+'>'+escapeHtml(v)+'</option>';}).join('')+'</select>';
 }
 
 function wmSyncStudentTeacherByClass_(safeId){
@@ -9122,9 +9147,30 @@ async function saveStudentLearningModeFromRow(studentId, skipLockAndToast){
       alert((data && data.message) ? data.message : '학습모드 저장 실패');
       return;
     }
+    Object.assign(row, {
+      '학습시작일':saveValues.learningStartDate,
+      '학습종료일':saveValues.learningEndDate,
+      '출석약속':saveValues.attendancePromise,
+      '세트약속':saveValues.setPromise,
+      '최초배정':saveValues.learningAssign,
+      'S4실루엣단계':saveValues.s4,
+      'S6테스트모드':saveValues.s6,
+      '레벨완료조건':saveValues.levelCompleteCondition,
+      '다음레벨완료조건':saveValues.nextLevelCompleteCondition,
+      '수신자구분':saveValues.recipientType,
+      '반명':saveValues.className,
+      '교사명':saveValues.teacherName,
+      '학교':saveValues.school,
+      '학년':saveValues.grade,
+      '활성상태':saveValues.activeStatus
+    });
+    if(access.parent){
+      row['학부모명']=saveValues.parentName;
+      row['학부모연락처']=saveValues.parentPhone;
+    }
     if(!skipLockAndToast){
       showStudentModeToast('저장을 완료하였습니다.');
-      await loadStudents();
+      renderStudentManageRows();
     }
   }catch(err){
     if(!skipLockAndToast) alert('학습모드 저장 오류: ' + (err && err.message ? err.message : err));
@@ -9173,7 +9219,7 @@ function wmStudentEditableValues(row, safeId){
       '반명':String(row['반명']||row['반']||row['Class']||'').trim(),
       '교사명':String(row['교사명']||'').trim(),
       '학교':String(row['학교']||'').trim(),
-      '학년':wmNormalizeGradeDisplay(row['학년']||''),
+      '학년':wmNormalizeSchoolGrade_(row['학년']||''),
       '활성상태':String(row['활성상태'] || 'ACTIVE').trim().toUpperCase()
     };
   const current={
