@@ -3698,7 +3698,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       const context=WM_WRONG_WORD_CONTEXTS[key];
       if(!context) return;
       const modal=wmEnsureWrongWordsModal();
-      modal.innerHTML='<div class="wm-wrong-modal-card" role="dialog" aria-modal="true" aria-label="'+wmWrongEscapeHtml(context.title)+'"><div class="wm-wrong-modal-head"><div class="wm-wrong-modal-title">'+wmWrongEscapeHtml(context.title)+'</div><button type="button" class="wm-wrong-modal-close" onclick="wmCloseWrongWordsModal()">닫기</button></div><div style="margin:-2px 0 12px;color:#64748b;font-size:12px;font-weight:800;line-height:1.45;">틀린단어/오답누적은 영한주관식, 한영주관식을 기준으로 합니다.</div>'+wmWrongWordGroupsHtml(context)+'</div>';
+      modal.innerHTML='<div class="wm-wrong-modal-card" role="dialog" aria-modal="true" aria-label="'+wmWrongEscapeHtml(context.title)+'"><div class="wm-wrong-modal-head"><div class="wm-wrong-modal-title">'+wmWrongEscapeHtml(context.title)+'</div><button type="button" class="wm-wrong-modal-close" onclick="wmCloseWrongWordsModal()">닫기</button></div><div style="margin:-2px 0 12px;padding:7px 10px;border:1px solid #93b4e7;border-radius:8px;background:#eff6ff;color:#073b8f;font-size:12px;font-weight:900;line-height:1.45;">틀린단어/오답누적은 영한주관식, 한영주관식을 기준으로 합니다.</div>'+wmWrongWordGroupsHtml(context)+'</div>';
       modal.classList.add('active');
     }
 
