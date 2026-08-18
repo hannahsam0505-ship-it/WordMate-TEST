@@ -1340,7 +1340,7 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
         </div>
       </div>
       <div class="wm-action-inline-row"><div class="wm-action-row"><button class="wm-action-btn">추가</button><button class="wm-action-btn sub">수정</button><button class="wm-action-btn sub">조회</button></div><div class="wm-note wm-inline-help-note">학습기록은 현재 운영 기준 컬럼을 유지합니다. 총소요시간은 전체 학습 시간, Test_총시간은 시험 소요시간입니다. 미응시 시험은 X로 표시하고, 시험 항목은 90점·85점처럼 점수로 표시합니다.</div></div>
-      <div class="wm-record-scroll-top" id="recordTopScroll"><div class="wm-record-scroll-inner" id="recordTopScrollInner"></div></div><div class="wm-table-wrap" id="recordTableWrap"><table id="recordManageTable"><thead><tr><th>일련번호</th><th>학습날짜</th><th>학생ID</th><th>학생이름</th><th>학교</th><th>학년</th><th>Class</th><th>교사명</th><th>Set_ID</th><th>점수</th><th>총소요시간</th><th>Step 1</th><th>Step 2</th><th>Step 3</th><th>Step 4</th><th>시험전학습</th><th>Test_총시간</th><th>영한객관식</th><th>한영객관식</th><th>영한주관식</th><th>한영주관식</th><th>틀린단어</th><th>누적오답</th><th>완료상태</th><th>학습기록ID</th><th>기기정보</th><th>비고</th></tr></thead><tbody id="recordManageTbody"><tr><td colspan="27">학습기록_DB 연결 대기 중입니다.</td></tr></tbody></table></div>
+      <div class="wm-record-scroll-top" id="recordTopScroll"><div class="wm-record-scroll-inner" id="recordTopScrollInner"></div></div><div class="wm-table-wrap" id="recordTableWrap"><table id="recordManageTable"><thead><tr><th>일련번호</th><th>학습날짜</th><th>학생ID</th><th>학생이름</th><th>학교</th><th>학년</th><th>Class</th><th>교사명</th><th>Set_ID</th><th>점수</th><th>총소요시간</th><th>Step 1</th><th>Step 2</th><th>Step 3</th><th>Step 4</th><th>Step5</th><th>Test_총시간</th><th>영한객관식</th><th>한영객관식</th><th>영한주관식</th><th>한영주관식</th><th>틀린단어</th><th>누적오답</th><th>완료상태</th><th>학습기록ID</th><th>기기정보</th><th>비고</th></tr></thead><tbody id="recordManageTbody"><tr><td colspan="27">학습기록_DB 연결 대기 중입니다.</td></tr></tbody></table></div>
     </section>
 
     <section class="wm-panel" id="panel-profile">
@@ -1398,7 +1398,7 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
 
       <div class="wm-factory-box">
         <div class="wm-profile-section-title"><h3>2. 학습기록_DB</h3><span>2.학습기록_DB 실제 연결 · 학생ID·학생이름 포함검색 결과 전체와 기본 최근 1개월 학습기록을 표시합니다.</span><button id="wmProfileCumulativeWrongBtn" type="button" class="wm-wrong-link-btn wm-cumulative" style="display:none;">누적오답(영한 0·한영 0)</button></div>
-        <div class="wm-table-wrap"><table class="wm-profile-table"><thead><tr><th>일련번호</th><th>학습날짜</th><th>학생ID</th><th>학생이름</th><th>학교</th><th>학년</th><th>Class</th><th>교사명</th><th>Set_ID</th><th>점수</th><th>총소요시간</th><th>Step 1</th><th>Step 2</th><th>Step 3</th><th>Step 4</th><th>시험전학습</th><th>Test_총시간</th><th>영한객관식</th><th>한영객관식</th><th>영한주관식</th><th>한영주관식</th><th>틀린단어</th><th>완료상태</th><th>학습기록ID</th><th>기기정보</th><th>비고</th></tr></thead><tbody id="profileRecordRowHost"><tr id="profileRecordRow"><td colspan="26">학생을 선택하면 표시됩니다.</td></tr></tbody></table></div>
+        <div class="wm-table-wrap"><table class="wm-profile-table"><thead><tr><th>일련번호</th><th>학습날짜</th><th>학생ID</th><th>학생이름</th><th>학교</th><th>학년</th><th>Class</th><th>교사명</th><th>Set_ID</th><th>점수</th><th>총소요시간</th><th>Step 1</th><th>Step 2</th><th>Step 3</th><th>Step 4</th><th>Step5</th><th>Test_총시간</th><th>영한객관식</th><th>한영객관식</th><th>영한주관식</th><th>한영주관식</th><th>틀린단어</th><th>완료상태</th><th>학습기록ID</th><th>기기정보</th><th>비고</th></tr></thead><tbody id="profileRecordRowHost"><tr id="profileRecordRow"><td colspan="26">학생을 선택하면 표시됩니다.</td></tr></tbody></table></div>
         <div id="profileRecordPager" class="wm-profile-record-pager" style="display:none;">
           <button id="profileRecordPrevBtn" class="wm-profile-record-page-btn" type="button">이전</button>
           <span id="profileRecordPageInfo" class="wm-profile-record-page-info">1 / 1</span>
@@ -3139,7 +3139,8 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
         'Step 2':['Step 2','Step2_총시간','Step2'],
         'Step 3':['Step 3','Step3_총시간','Step3'],
         'Step 4':['Step 4','Step4_총시간','Step4'],
-        '시험전학습':['시험전학습','Before_Test_Study'],
+        'Step5':['Step5','Step5_총시간','시험전재학습','시험전학습','Before_Test_Study'],
+        '시험전학습':['시험전학습','시험전재학습','Step5_총시간','Before_Test_Study'],
         'Test_총시간':['Test_총시간','Test 시간','Test시간','Test_Time','TestTime','testTime','Test_Total_Time','Test_소요시간','시험시간','시험_총시간','테스트시간'],
         '영한객관식':['영한객관식','영한 객관식','영한객관식점수','영한_객관식','Eng_Kor_MC','EngKorMC','English_Korean_MC','EK_MC'],
         '한영객관식':['한영객관식','한영 객관식','한영객관식점수','한영_객관식','Kor_Eng_MC','KorEngMC','Korean_English_MC','KE_MC'],
@@ -3697,7 +3698,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       const context=WM_WRONG_WORD_CONTEXTS[key];
       if(!context) return;
       const modal=wmEnsureWrongWordsModal();
-      modal.innerHTML='<div class="wm-wrong-modal-card" role="dialog" aria-modal="true" aria-label="'+wmWrongEscapeHtml(context.title)+'"><div class="wm-wrong-modal-head"><div class="wm-wrong-modal-title">'+wmWrongEscapeHtml(context.title)+'</div><button type="button" class="wm-wrong-modal-close" onclick="wmCloseWrongWordsModal()">닫기</button></div>'+wmWrongWordGroupsHtml(context)+'</div>';
+      modal.innerHTML='<div class="wm-wrong-modal-card" role="dialog" aria-modal="true" aria-label="'+wmWrongEscapeHtml(context.title)+'"><div class="wm-wrong-modal-head"><div class="wm-wrong-modal-title">'+wmWrongEscapeHtml(context.title)+'</div><button type="button" class="wm-wrong-modal-close" onclick="wmCloseWrongWordsModal()">닫기</button></div><div style="margin:-2px 0 12px;color:#64748b;font-size:12px;font-weight:800;line-height:1.45;">틀린단어/오답누적은 영한주관식, 한영주관식을 기준으로 합니다.</div>'+wmWrongWordGroupsHtml(context)+'</div>';
       modal.classList.add('active');
     }
 
@@ -5665,7 +5666,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
     let WM_DASHBOARD_STATE = null;
 
 
-    const WM_RECORD_HEADERS = ['학습날짜','학생ID','학생이름','학교','학년','Class','교사명','Set_ID','점수','총소요시간','Step 1','Step 2','Step 3','Step 4','시험전학습','Test_총시간','영한객관식','한영객관식','영한주관식','한영주관식','틀린단어','완료상태','학습기록ID','기기정보','비고'];
+    const WM_RECORD_HEADERS = ['학습날짜','학생ID','학생이름','학교','학년','Class','교사명','Set_ID','점수','총소요시간','Step 1','Step 2','Step 3','Step 4','Step5','Test_총시간','영한객관식','한영객관식','영한주관식','한영주관식','틀린단어','완료상태','학습기록ID','기기정보','비고'];
 
     function getRecordManageFilteredRows(rows){
       const studentId = getFilterValue('records','studentId').toLowerCase();
@@ -5720,7 +5721,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       const hasSetId = String(cellValue(row, headerAliases('Set_ID')) || '').trim() !== '';
       const hasStudyDate = String(cellValue(row, headerAliases('학습날짜')) || '').trim() !== '';
       const hasStudyTime = String(cellValue(row, headerAliases('총소요시간')) || '').trim() !== '';
-      const hasStep = ['Step 1','Step 2','Step 3','Step 4','시험전학습'].some(header=>String(cellValue(row, headerAliases(header)) || '').trim() !== '');
+      const hasStep = ['Step 1','Step 2','Step 3','Step 4','Step5'].some(header=>String(cellValue(row, headerAliases(header)) || '').trim() !== '');
       const hasScore = rowHasReportScoreData(row);
       return !!(hasRecordId || hasScore || (hasSetId && (hasStudyDate || hasStudyTime || hasStep)));
     }
