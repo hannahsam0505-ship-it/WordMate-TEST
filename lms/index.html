@@ -821,18 +821,21 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
     .wm-wrong-modal-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; }
     .wm-wrong-modal-title { color:#073b8f; font-size:19px; font-weight:950; }
     .wm-wrong-modal-close { border:0; border-radius:10px; background:#0f172a; color:#fff; padding:9px 14px; font-weight:900; cursor:pointer; }
-    .wm-wrong-modal-section { margin-top:12px; }
-    .wm-wrong-modal-section h3 { display:flex; align-items:center; gap:7px; margin:0 0 6px; color:#173b75; font-size:15px; }
-    .wm-wrong-modal-set { display:inline-flex; align-items:center; min-height:22px; padding:2px 7px; border-radius:999px; background:#eff6ff; color:#1d4ed8; font-size:11px; font-weight:900; line-height:1; }
-    .wm-wrong-modal-list { width:100%; border-top:1px solid var(--wm-line); border-bottom:1px solid var(--wm-line); }
-    .wm-wrong-modal-list-head, .wm-wrong-modal-list-row { display:grid; grid-template-columns:78px minmax(120px,1.15fr) 72px minmax(160px,1.55fr); align-items:center; column-gap:10px; width:100%; box-sizing:border-box; }
-    .wm-wrong-modal-list.no-set .wm-wrong-modal-list-head, .wm-wrong-modal-list.no-set .wm-wrong-modal-list-row { grid-template-columns:minmax(120px,1.15fr) 72px minmax(160px,1.55fr); }
-    .wm-wrong-modal-list-head { min-height:27px; padding:4px 8px; background:#f8fafc; color:#64748b; font-size:11px; font-weight:900; }
-    .wm-wrong-modal-list-row { min-height:30px; padding:5px 8px; border-top:1px solid #eef2f7; color:#334155; font-size:13px; line-height:1.2; }
+    .wm-wrong-modal-groups { display:flex; flex-direction:column; gap:12px; }
+    .wm-wrong-modal-group { border-top:1px solid #dbe3ef; padding-top:9px; }
+    .wm-wrong-modal-group:first-child { border-top:0; padding-top:0; }
+    .wm-wrong-modal-set { display:inline-flex; align-items:center; min-height:22px; margin:0 0 7px; padding:2px 8px; border-radius:999px; background:#eff6ff; color:#1d4ed8; font-size:11px; font-weight:900; line-height:1; }
+    .wm-wrong-modal-split { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:12px; align-items:stretch; }
+    .wm-wrong-modal-section { min-width:0; display:flex; flex-direction:column; }
+    .wm-wrong-modal-section h3 { margin:0 0 5px; color:#173b75; font-size:14px; font-weight:950; }
+    .wm-wrong-modal-list { width:100%; flex:1 1 auto; border-top:1px solid var(--wm-line); border-bottom:1px solid var(--wm-line); }
+    .wm-wrong-modal-list-head, .wm-wrong-modal-list-row { display:grid; grid-template-columns:minmax(82px,1.1fr) 62px minmax(100px,1.35fr); align-items:center; column-gap:7px; width:100%; box-sizing:border-box; }
+    .wm-wrong-modal-list-head { min-height:25px; padding:3px 6px; background:#f8fafc; color:#64748b; font-size:10px; font-weight:900; }
+    .wm-wrong-modal-list-row { min-height:27px; padding:4px 6px; border-top:1px solid #eef2f7; color:#334155; font-size:12px; line-height:1.15; }
     .wm-wrong-modal-list-row > span, .wm-wrong-modal-list-head > span { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    .wm-wrong-modal-list-row .wm-wrong-modal-pos { color:#64748b; font-size:12px; }
-    .wm-wrong-modal-list-row .wm-wrong-modal-set-inline { color:#475569; font-size:11px; font-weight:800; }
-    .wm-wrong-modal-empty { padding:14px; border:1px dashed #cbd5e1; border-radius:12px; color:#64748b; text-align:center; font-weight:800; }
+    .wm-wrong-modal-list-row .wm-wrong-modal-pos { color:#64748b; font-size:11px; }
+    .wm-wrong-modal-empty { min-height:52px; padding:12px 8px; border:1px dashed #cbd5e1; border-radius:10px; color:#64748b; text-align:center; font-size:12px; font-weight:800; box-sizing:border-box; }
+    @media(max-width:720px){ .wm-wrong-modal-split { grid-template-columns:1fr; gap:9px; } }
     .wm-hidden { display:none !important; }
 
     .wm-mode-select { min-width:104px; border:1px solid var(--wm-line); border-radius:9px; padding:7px 8px; font-size:12px; background:#fff; font-weight:800; }
@@ -3610,25 +3613,33 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       };
     }
 
-    function wmWrongWordListHtml(items,direction,showSet){
+    function wmWrongWordListHtml(items,direction){
       if(!items.length) return '<div class="wm-wrong-modal-empty">틀린단어가 없습니다.</div>';
       const isKoEng=direction==='ko-eng';
-      const head=showSet
-        ? ['세트',isKoEng?'한글':'영어','품사',isKoEng?'영어':'한글']
-        : [isKoEng?'한글':'영어','품사',isKoEng?'영어':'한글'];
+      const head=[isKoEng?'한글':'영어','품사',isKoEng?'영어':'한글'];
       const rows=items.map(item=>{
         const primary=isKoEng ? item.meaning : item.word;
         const secondary=isKoEng ? item.word : item.meaning;
-        const setHtml=showSet ? '<span class="wm-wrong-modal-set-inline" title="'+wmWrongEscapeHtml(item.setId)+'">'+wmWrongEscapeHtml(item.setId)+'</span>' : '';
-        return '<div class="wm-wrong-modal-list-row">'+setHtml+'<span title="'+wmWrongEscapeHtml(primary)+'">'+wmWrongEscapeHtml(primary)+'</span><span class="wm-wrong-modal-pos" title="'+wmWrongEscapeHtml(item.pos)+'">'+wmWrongEscapeHtml(item.pos)+'</span><span title="'+wmWrongEscapeHtml(secondary)+'">'+wmWrongEscapeHtml(secondary)+'</span></div>';
+        return '<div class="wm-wrong-modal-list-row"><span title="'+wmWrongEscapeHtml(primary)+'">'+wmWrongEscapeHtml(primary)+'</span><span class="wm-wrong-modal-pos" title="'+wmWrongEscapeHtml(item.pos)+'">'+wmWrongEscapeHtml(item.pos)+'</span><span title="'+wmWrongEscapeHtml(secondary)+'">'+wmWrongEscapeHtml(secondary)+'</span></div>';
       }).join('');
-      return '<div class="wm-wrong-modal-list'+(showSet?'':' no-set')+'"><div class="wm-wrong-modal-list-head">'+head.map(label=>'<span>'+label+'</span>').join('')+'</div>'+rows+'</div>';
+      return '<div class="wm-wrong-modal-list"><div class="wm-wrong-modal-list-head">'+head.map(label=>'<span>'+label+'</span>').join('')+'</div>'+rows+'</div>';
     }
 
-    function wmWrongWordSectionTitle(label,items,showSet){
-      if(showSet || !items.length) return '<h3>'+label+'</h3>';
-      const setId=String((items[0] && items[0].setId) || '').trim();
-      return '<h3>'+label+(setId ? '<span class="wm-wrong-modal-set">'+wmWrongEscapeHtml(setId)+'</span>' : '')+'</h3>';
+    function wmWrongWordGroupsHtml(context){
+      const engItems=Array.isArray(context.engKoWrite) ? context.engKoWrite : [];
+      const koItems=Array.isArray(context.koEngWrite) ? context.koEngWrite : [];
+      const setIds=[];
+      engItems.concat(koItems).forEach(item=>{
+        const setId=String((item && item.setId) || '').trim();
+        if(setId && !setIds.includes(setId)) setIds.push(setId);
+      });
+      if(!setIds.length) setIds.push('');
+      return '<div class="wm-wrong-modal-groups">'+setIds.map(setId=>{
+        const engSet=engItems.filter(item=>String((item && item.setId) || '').trim()===setId);
+        const koSet=koItems.filter(item=>String((item && item.setId) || '').trim()===setId);
+        const setBadge=setId ? '<div class="wm-wrong-modal-set">'+wmWrongEscapeHtml(setId)+'</div>' : '';
+        return '<div class="wm-wrong-modal-group">'+setBadge+'<div class="wm-wrong-modal-split"><section class="wm-wrong-modal-section"><h3>영한</h3>'+wmWrongWordListHtml(engSet,'eng-ko')+'</section><section class="wm-wrong-modal-section"><h3>한영</h3>'+wmWrongWordListHtml(koSet,'ko-eng')+'</section></div></div>';
+      }).join('')+'</div>';
     }
 
     function wmEnsureWrongWordsModal(){
@@ -3648,8 +3659,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       const context=WM_WRONG_WORD_CONTEXTS[key];
       if(!context) return;
       const modal=wmEnsureWrongWordsModal();
-      const isCumulative=String(context.title || '').indexOf('누적오답')===0;
-      modal.innerHTML='<div class="wm-wrong-modal-card" role="dialog" aria-modal="true" aria-label="'+wmWrongEscapeHtml(context.title)+'"><div class="wm-wrong-modal-head"><div class="wm-wrong-modal-title">'+wmWrongEscapeHtml(context.title)+'</div><button type="button" class="wm-wrong-modal-close" onclick="wmCloseWrongWordsModal()">닫기</button></div><section class="wm-wrong-modal-section">'+wmWrongWordSectionTitle('영한',context.engKoWrite,isCumulative)+wmWrongWordListHtml(context.engKoWrite,'eng-ko',isCumulative)+'</section><section class="wm-wrong-modal-section">'+wmWrongWordSectionTitle('한영',context.koEngWrite,isCumulative)+wmWrongWordListHtml(context.koEngWrite,'ko-eng',isCumulative)+'</section></div>';
+      modal.innerHTML='<div class="wm-wrong-modal-card" role="dialog" aria-modal="true" aria-label="'+wmWrongEscapeHtml(context.title)+'"><div class="wm-wrong-modal-head"><div class="wm-wrong-modal-title">'+wmWrongEscapeHtml(context.title)+'</div><button type="button" class="wm-wrong-modal-close" onclick="wmCloseWrongWordsModal()">닫기</button></div>'+wmWrongWordGroupsHtml(context)+'</div>';
       modal.classList.add('active');
     }
 
