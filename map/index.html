@@ -786,9 +786,9 @@ const WM_LMS_URL = WM_CONFIG.LMS_URL;
           <strong id="summaryRecentScore">-</strong>
         </div>
 
-        <div class="wm-cumulative-summary">
+        <div>
           <span>누적오답</span>
-          <button id="summaryCumulativeWrongWords" class="wm-map-wrong-btn wm-map-cumulative-btn" type="button" disabled>누적오답(-)</button>
+          <button type="button" id="summaryCumulativeWrongWords" class="wm-map-wrong-btn wm-map-cumulative-btn" disabled>누적오답(-)</button>
         </div>
 
       </div>
@@ -1464,35 +1464,6 @@ body.wm-map-loading-active #wm-learning-record-widget{
   font-weight:900;
 }
 
-.wm-map-wrong-btn{
-  border:1px solid #93b4e7;
-  border-radius:999px;
-  padding:7px 10px;
-  background:#eff6ff;
-  color:#073b8f;
-  font-size:12px;
-  font-weight:900;
-  white-space:nowrap;
-  cursor:pointer;
-}
-.wm-map-wrong-btn:hover{background:#dbeafe;border-color:#0d55c8;}
-.wm-map-wrong-btn:disabled{cursor:default;opacity:.62;}
-.wm-map-cumulative-btn{background:#fff7ed;border-color:#fdba74;color:#c2410c;}
-.wm-map-wrong-legacy{color:#94a3b8;font-weight:800;}
-.wm-map-wrong-modal{position:fixed;inset:0;z-index:140000;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(15,23,42,.68);box-sizing:border-box;}
-.wm-map-wrong-modal.is-open{display:flex;}
-.wm-map-wrong-modal-card{width:min(920px,96vw);max-height:calc(100vh - 40px);overflow:auto;background:#fff;border-radius:20px;padding:22px;box-shadow:0 28px 80px rgba(0,0,0,.35);box-sizing:border-box;}
-.wm-map-wrong-modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;}
-.wm-map-wrong-modal-title{color:#073b8f;font-size:19px;font-weight:950;}
-.wm-map-wrong-modal-close{border:0;border-radius:10px;background:#0f172a;color:#fff;padding:9px 14px;font-weight:900;cursor:pointer;}
-.wm-map-wrong-modal-section{margin-top:16px;}
-.wm-map-wrong-modal-section h3{margin:0 0 8px;color:#173b75;font-size:16px;}
-.wm-map-wrong-modal-table-wrap{overflow-x:auto;}
-.wm-map-wrong-modal-table{width:100%;min-width:640px;border-collapse:collapse;}
-.wm-map-wrong-modal-table th,.wm-map-wrong-modal-table td{border:1px solid #dbe3ef;padding:10px 9px;text-align:center;font-size:13px;white-space:normal;vertical-align:top;}
-.wm-map-wrong-modal-table th{background:#eff6ff;color:#172554;font-weight:900;}
-.wm-map-wrong-modal-empty{padding:18px;border:1px dashed #cbd5e1;border-radius:12px;color:#64748b;text-align:center;font-weight:800;}
-
 .learning-block-area{
   display:grid;
   grid-template-columns:repeat(4,1fr);
@@ -1632,7 +1603,7 @@ body.wm-map-loading-active #wm-learning-record-widget{
 
 .homework-table{
   width:100%;
-  min-width:1360px;
+  min-width:1180px;
   border-collapse:collapse;
 }
 
@@ -1658,12 +1629,40 @@ body.wm-map-loading-active #wm-learning-record-widget{
 .homework-table td:nth-child(n+5):nth-child(-n+11){min-width:68px;white-space:nowrap;}
 .homework-table th:nth-child(n+12):nth-child(-n+15){min-width:48px;font-size:10px;line-height:1.1;letter-spacing:-0.04em;padding-left:4px;padding-right:4px;}
 .homework-table td:nth-child(n+12):nth-child(-n+15){min-width:48px;font-size:13px;line-height:1.2;padding-left:4px;padding-right:4px;white-space:nowrap;}
-.homework-table th:nth-child(16), .homework-table td:nth-child(16){min-width:190px;white-space:nowrap;}
-.homework-table th:nth-child(17), .homework-table td:nth-child(17){min-width:42px;max-width:48px;white-space:nowrap;}
-.homework-table th:nth-child(18), .homework-table td:nth-child(18){min-width:36px;}
-.homework-table th:nth-child(19), .homework-table td:nth-child(19){min-width:42px;}
-.homework-table th:nth-child(20), .homework-table td:nth-child(20){min-width:32px;}
+.homework-table th:nth-child(16), .homework-table td:nth-child(16){min-width:42px;max-width:48px;white-space:nowrap;}
+.homework-table th:nth-child(17), .homework-table td:nth-child(17){min-width:36px;}
+.homework-table th:nth-child(18), .homework-table td:nth-child(18){min-width:42px;}
+.homework-table th:nth-child(19), .homework-table td:nth-child(19){min-width:32px;}
 .homework-table .wm-score-head{font-size:10px;line-height:1.1;letter-spacing:-0.04em;}
+
+.wm-map-wrong-btn{
+  border:1px solid #93b4e7;
+  border-radius:999px;
+  padding:7px 10px;
+  background:#eff6ff;
+  color:#073b8f;
+  font-size:12px;
+  font-weight:900;
+  white-space:nowrap;
+  cursor:pointer;
+}
+.wm-map-wrong-btn:hover{background:#dbeafe;border-color:#0d55c8;}
+.wm-map-wrong-btn:disabled{cursor:default;opacity:.62;}
+.wm-map-cumulative-btn{background:#fff7ed;border-color:#fdba74;color:#c2410c;}
+.wm-map-wrong-legacy{color:#94a3b8;font-weight:800;}
+.wm-map-wrong-modal{position:fixed;inset:0;z-index:140000;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(15,23,42,.68);box-sizing:border-box;}
+.wm-map-wrong-modal.is-open{display:flex;}
+.wm-map-wrong-modal-card{width:min(920px,96vw);max-height:calc(100vh - 40px);overflow:auto;background:#fff;border-radius:20px;padding:22px;box-shadow:0 28px 80px rgba(0,0,0,.35);box-sizing:border-box;}
+.wm-map-wrong-modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;}
+.wm-map-wrong-modal-title{color:#073b8f;font-size:19px;font-weight:950;}
+.wm-map-wrong-modal-close{border:0;border-radius:10px;background:#0f172a;color:#fff;padding:9px 14px;font-weight:900;cursor:pointer;}
+.wm-map-wrong-modal-section{margin-top:16px;}
+.wm-map-wrong-modal-section h3{margin:0 0 8px;color:#173b75;font-size:16px;}
+.wm-map-wrong-modal-table-wrap{overflow-x:auto;}
+.wm-map-wrong-modal-table{width:100%;min-width:640px;border-collapse:collapse;}
+.wm-map-wrong-modal-table th,.wm-map-wrong-modal-table td{border:1px solid #dbe3ef;padding:10px 9px;text-align:center;font-size:13px;white-space:normal;vertical-align:top;}
+.wm-map-wrong-modal-table th{background:#eff6ff;color:#172554;font-weight:900;}
+.wm-map-wrong-modal-empty{padding:18px;border:1px dashed #cbd5e1;border-radius:12px;color:#64748b;text-align:center;font-weight:800;}
 
 .score{
   color:#d60000;
@@ -1706,7 +1705,6 @@ body.wm-map-loading-active #wm-learning-record-widget{
   .record-summary{
     grid-template-columns:repeat(2,1fr);
   }
-  .record-summary .wm-cumulative-summary{grid-column:span 2;}
 
   .learning-block-area{
     grid-template-columns:repeat(2,1fr);
@@ -2042,13 +2040,6 @@ function wmReadStudentFromRootData(){
   const student = {
     학생ID: String(root.dataset.studentId || '').trim().toUpperCase(),
     학생이름: String(root.dataset.studentName || '').trim(),
-    학교: String(root.dataset.school || '').trim(),
-    학년: String(root.dataset.grade || '').trim(),
-    Class: String(root.dataset.className || '').trim(),
-    교사명: String(root.dataset.teacherName || '').trim(),
-    S4실루엣단계: String(root.dataset.s4 || '').trim(),
-    S6테스트모드: String(root.dataset.s6 || '').trim(),
-    레벨완료조건: String(root.dataset.levelCompleteCondition || '').trim(),
     학습배정: String(root.dataset.learningAssign || '').trim(),
     현재세트: wmNormalizeCurrentSetIdForMap_(root.dataset.currentSet || '') || String(root.dataset.currentSet || '').trim(),
     현재세션: String(root.dataset.sessionToken || root.dataset.currentSession || '').trim(),
@@ -2073,10 +2064,7 @@ function wmReadStudentFromRootData(){
 function wmNormalizeStudentObject(data){
   if(!data || typeof data !== 'object') return null;
 
-  const learningMode = (data.학습모드 && typeof data.학습모드 === 'object')
-    ? data.학습모드
-    : ((data.learningMode && typeof data.learningMode === 'object') ? data.learningMode : {});
-
+  const learningMode = (data.학습모드 && typeof data.학습모드 === 'object') ? data.학습모드 : {};
   const student = {
     학생ID: String(data.학생ID || data.studentId || data.studentID || data.sid || data.id || '').trim().toUpperCase(),
     학생이름: String(data.학생이름 || data.studentName || data.name || data.wmStudentName || '').trim(),
@@ -2085,9 +2073,9 @@ function wmNormalizeStudentObject(data){
     Class: String(data.Class || data.className || data.class || data['반'] || '').trim(),
     교사명: String(data.교사명 || data.teacherName || '').trim(),
     학습배정: String(data.학습배정 || data.learningAssign || data.level || data.wmLearningAssign || '').trim(),
-    S4실루엣단계: String(data.S4실루엣단계 || data.s4 || data.silhouetteStep || learningMode.S4실루엣단계 || learningMode.s4 || '').trim(),
-    S6테스트모드: String(data.S6테스트모드 || data.s6 || data.testMode || learningMode.S6테스트모드 || learningMode.s6 || '').trim(),
-    레벨완료조건: String(data.레벨완료조건 || data.levelCompleteCondition || learningMode.레벨완료조건 || learningMode.levelCompleteCondition || '').trim(),
+    S4실루엣단계: String(data.S4실루엣단계 !== undefined ? data.S4실루엣단계 : (learningMode.S4실루엣단계 !== undefined ? learningMode.S4실루엣단계 : (data.s4 || data.silhouetteStep || ''))).trim(),
+    S6테스트모드: String(data.S6테스트모드 !== undefined ? data.S6테스트모드 : (learningMode.S6테스트모드 !== undefined ? learningMode.S6테스트모드 : (data.s6 || data.testMode || ''))).trim(),
+    레벨완료조건: String(data.레벨완료조건 !== undefined ? data.레벨완료조건 : (learningMode.레벨완료조건 !== undefined ? learningMode.레벨완료조건 : (data.levelCompleteCondition || ''))).trim(),
     레벨완료횟수: String(data.레벨완료횟수 !== undefined ? data.레벨완료횟수 : (data.levelCompleteCount !== undefined ? data.levelCompleteCount : '')).trim(),
     순차완주세트: String(data.순차완주세트 !== undefined ? data.순차완주세트 : (data.sequentialCompleteSet !== undefined ? data.sequentialCompleteSet : '')).trim(),
     순차완주회차: String(data.순차완주회차 !== undefined ? data.순차완주회차 : (data.sequentialCompleteRound !== undefined ? data.sequentialCompleteRound : '')).trim(),
@@ -2664,6 +2652,7 @@ function wmHasCurrentProgressHistoryValue_(candidate){
 
 function wmFindCurrentProgressCache_(data){
   if(!data || typeof data !== 'object') return null;
+  if(data.currentProgressMissing === true || data.hasCurrentProgress === false) return null;
 
   const candidates = [
     data.currentProgressCache,
@@ -2679,8 +2668,6 @@ function wmFindCurrentProgressCache_(data){
     data.studentProgress,
     data.officialLevelProgress,
     data.currentLearningProgress,
-    data.studentProfile,
-    data.profile,
     data
   ];
 
@@ -2878,8 +2865,8 @@ function wmNormalizeLearningRecordForBottomTable_(record, data){
   r.Class = r.Class || r['반'] || r['반명'] || profile.Class || profile.className || '';
   r.교사명 = r.교사명 || profile.교사명 || profile.teacherName || '';
   r.Set_ID = r.Set_ID || r.setId || r.set_id || '';
-  r.점수 = wmNormalizeScoreForMap_(r.점수 || r.score || r.한영주관식 || '') || '';
   r.틀린단어 = r.틀린단어 || r.wrongWords || r.Wrong_Words || '';
+  r.점수 = wmNormalizeScoreForMap_(r.점수 || r.score || r.한영주관식 || '') || '';
   r.완료상태 = r.완료상태 || r.status || r.latestStatus || '';
   r.완료 = r.완료 || r.completeRound || r.round || '';
   return r;
@@ -3004,16 +2991,15 @@ function wmHandleLearningMapResponse(data){
     window.wmMarkMapFrameRuntime('frameData');
   }
 
-  const currentProgressCache = wmNormalizeCurrentProgressCache_(data);
-  if(currentProgressCache && wmApplyLearningMapFromCurrentProgressCache_(currentProgressCache, data)){
-    return;
-  }
-
   wmStudentProfile = wmMergeStudentPreserveValues_(wmCurrentStudent || {}, data.studentProfile || data.profile || {});
-
   if(wmStudentProfile){
     wmCurrentStudent = wmMergeStudentPreserveValues_(wmCurrentStudent || {}, wmStudentProfile);
     wmApplyStudentLearningMap(wmCurrentStudent, { skipMapRender:true });
+  }
+
+  const currentProgressCache = wmNormalizeCurrentProgressCache_(data);
+  if(currentProgressCache && wmApplyLearningMapFromCurrentProgressCache_(currentProgressCache, data)){
+    return;
   }
 
   /* WM_MAP_CURRENT_PROGRESS_FALLBACK_RENDER_20260707_V1
@@ -4421,17 +4407,11 @@ function wmRenderCurrentProgressGuide_(){
   const box = document.getElementById('learningDetailBox');
   if(!box) return;
 
-  const progress = wmCurrentProgressDisplayOverride || {};
+  const progressSource = wmCurrentProgressDisplayOverride || {};
   const mapData = wmLastLearningMapData || {};
   const profile = wmStudentProfile || {};
   const student = wmCurrentStudent || {};
-  const mode = (
-    (progress.학습모드 && typeof progress.학습모드 === 'object' && progress.학습모드) ||
-    (mapData.학습모드 && typeof mapData.학습모드 === 'object' && mapData.학습모드) ||
-    (profile.학습모드 && typeof profile.학습모드 === 'object' && profile.학습모드) ||
-    (student.학습모드 && typeof student.학습모드 === 'object' && student.학습모드) ||
-    {}
-  );
+  const mode = profile.학습모드 || student.학습모드 || {};
   const pick = function(){
     for(let i = 0; i < arguments.length; i += 1){
       const value = arguments[i];
@@ -4442,17 +4422,17 @@ function wmRenderCurrentProgressGuide_(){
 
   box.classList.add('wm-mode-banner-box');
   box.innerHTML = '<div class="wm-learning-mode-banner">'
-    + '<span>S4실루엣단계 : <b class="wm-mode-value">' + escapeHtml(pick(progress.S4실루엣단계, mapData.S4실루엣단계, profile.S4실루엣단계, student.S4실루엣단계, mode.S4실루엣단계, mode.s4, '전체')) + '</b></span>'
+    + '<span>S4실루엣단계 : <b class="wm-mode-value">' + escapeHtml(pick(progressSource.S4실루엣단계, profile.S4실루엣단계, student.S4실루엣단계, mode.S4실루엣단계, '전체')) + '</b></span>'
     + '<span class="wm-banner-sep">|</span>'
-    + '<span>S6TEST모드 : <b class="wm-mode-value">' + escapeHtml(pick(progress.S6테스트모드, mapData.S6테스트모드, profile.S6테스트모드, student.S6테스트모드, mode.S6테스트모드, mode.s6, '기본전체')) + '</b></span>'
+    + '<span>S6TEST모드 : <b class="wm-mode-value">' + escapeHtml(pick(progressSource.S6테스트모드, profile.S6테스트모드, student.S6테스트모드, mode.S6테스트모드, '기본전체')) + '</b></span>'
     + '<span class="wm-banner-sep">|</span>'
-    + '<span>레벨완료조건 : <b class="wm-mode-value">' + escapeHtml(pick(progress.레벨완료조건, mapData.레벨완료조건, profile.레벨완료조건, student.레벨완료조건, mode.레벨완료조건, mode.levelCompleteCondition, '2회')) + '</b></span>'
+    + '<span>레벨완료조건 : <b class="wm-mode-value">' + escapeHtml(pick(progressSource.레벨완료조건, profile.레벨완료조건, student.레벨완료조건, mode.레벨완료조건, '2회')) + '</b></span>'
     + '<span class="wm-banner-sep">|</span>'
-    + '<span>레벨완료횟수 : <b class="wm-mode-value">' + escapeHtml(pick(progress.레벨완료횟수, mapData.레벨완료횟수, profile.레벨완료횟수, student.레벨완료횟수, 0)) + '</b></span>'
+    + '<span>레벨완료횟수 : <b class="wm-mode-value">' + escapeHtml(pick(progressSource.레벨완료횟수, profile.레벨완료횟수, student.레벨완료횟수, 0)) + '</b></span>'
     + '<span class="wm-banner-sep">|</span>'
-    + '<span>순차완주세트 : <b class="wm-mode-value">' + escapeHtml(pick(progress.순차완주세트, mapData.순차완주세트, profile.순차완주세트, student.순차완주세트, 0)) + '</b></span>'
+    + '<span>순차완주세트 : <b class="wm-mode-value">' + escapeHtml(pick(progressSource.순차완주세트, profile.순차완주세트, student.순차완주세트, 0)) + '</b></span>'
     + '<span class="wm-banner-sep">|</span>'
-    + '<span>순차완주회차 : <b class="wm-mode-value">' + escapeHtml(pick(progress.순차완주회차, mapData.순차완주회차, profile.순차완주회차, student.순차완주회차, 0)) + '</b></span>'
+    + '<span>순차완주회차 : <b class="wm-mode-value">' + escapeHtml(pick(progressSource.순차완주회차, profile.순차완주회차, student.순차완주회차, 0)) + '</b></span>'
     + '</div>';
 }
 
