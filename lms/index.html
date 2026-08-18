@@ -3446,6 +3446,10 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       return prefix+'(영한 '+data.engKoWrite.length+'·한영 '+data.koEngWrite.length+')';
     }
 
+    function wmWrongCountsLabel(data){
+      return '영한 '+data.engKoWrite.length+'·한영 '+data.koEngWrite.length;
+    }
+
     function wmRegisterWrongWordContext(context){
       const key='wmWrong'+(++WM_WRONG_WORD_CONTEXT_SERIAL);
       WM_WRONG_WORD_CONTEXTS[key]=context;
@@ -3458,6 +3462,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       const setId=String(cellValue(row,headerAliases('Set_ID')) || '').trim();
       return {
         title:wmWrongWordsLabel('틀린단어',data),
+        buttonLabel:wmWrongCountsLabel(data),
         engKoWrite:data.engKoWrite.map(item=>Object.assign({setId:setId},item)),
         koEngWrite:data.koEngWrite.map(item=>Object.assign({setId:setId},item))
       };
@@ -3467,7 +3472,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       const context=wmWrongWordContextForRecord(row);
       if(!context) return '<span class="wm-wrong-legacy">-</span>';
       const key=wmRegisterWrongWordContext(context);
-      return '<button type="button" class="wm-wrong-link-btn" onclick="wmOpenWrongWordsModal(\''+key+'\')">'+wmWrongEscapeHtml(context.title)+'</button>';
+      return '<button type="button" class="wm-wrong-link-btn" onclick="wmOpenWrongWordsModal(\''+key+'\')">'+wmWrongEscapeHtml(context.buttonLabel)+'</button>';
     }
 
     const WM_LMS_CUMULATIVE_WRONG_CACHE=new Map();
@@ -3484,43 +3489,53 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       const studentId=String(cellValue(row,headerAliases('학생ID')) || '').trim().toUpperCase();
       if(!studentId) return '<span class="wm-wrong-legacy">-</span>';
       const cached=WM_LMS_CUMULATIVE_WRONG_CACHE.get(studentId);
-      if(cached===null) return '<button type="button" class="wm-wrong-link-btn wm-cumulative wm-record-cumulative-wrong-btn" data-student-id="'+wmWrongEscapeHtml(studentId)+'" disabled>누적오답(-)</button>';
+      if(cached===null) return '<button type="button" class="wm-wrong-link-btn wm-cumulative wm-record-cumulative-wrong-btn" data-student-id="'+wmWrongEscapeHtml(studentId)+'" disabled>영한 0·한영 0</button>';
       if(cached){
-        return '<button type="button" class="wm-wrong-link-btn wm-cumulative wm-record-cumulative-wrong-btn" data-student-id="'+wmWrongEscapeHtml(studentId)+'" onclick="wmOpenLmsCumulativeWrong(\''+wmWrongEscapeHtml(studentId)+'\',this)">'+wmWrongEscapeHtml(cached.buttonLabel)+'</button>';
+        return '<button type="button" class="wm-wrong-link-btn wm-cumulative wm-record-cumulative-wrong-btn" data-student-id="'+wmWrongEscapeHtml(studentId)+'" onclick="wmOpenLmsCumulativeWrong(\''+wmWrongEscapeHtml(studentId)+'\',this)">'+wmWrongEscapeHtml(wmWrongCountsLabel(cached))+'</button>';
       }
-      return '<button type="button" class="wm-wrong-link-btn wm-cumulative wm-record-cumulative-wrong-btn" data-student-id="'+wmWrongEscapeHtml(studentId)+'" onclick="wmOpenLmsCumulativeWrong(\''+wmWrongEscapeHtml(studentId)+'\',this)">누적오답</button>';
+      return '<button type="button" class="wm-wrong-link-btn wm-cumulative wm-record-cumulative-wrong-btn" data-student-id="'+wmWrongEscapeHtml(studentId)+'" onclick="wmOpenLmsCumulativeWrong(\''+wmWrongEscapeHtml(studentId)+'\',this)">영한 -·한영 -</button>';
     }
 
     function wmApplyLmsCumulativeWrongButtonState(studentId,context,state){
       wmLmsCumulativeWrongButtons(studentId).forEach(btn=>{
         if(state==='loading'){
-          btn.textContent='누적오답 조회중';
+          btn.textContent='영한 -·한영 -';
           btn.disabled=true;
           return;
         }
         if(!context){
-          btn.textContent='누적오답(-)';
+          btn.textContent='영한 0·한영 0';
           btn.disabled=true;
           btn.onclick=null;
           return;
         }
-        btn.textContent=context.buttonLabel;
+        btn.textContent=wmWrongCountsLabel(context);
         btn.disabled=false;
         btn.onclick=()=>wmOpenLmsCumulativeWrong(studentId,btn);
       });
     }
 
-    async function wmOpenLmsCumulativeWrong(studentId,button){
+    async function wmOpenLmsCumulativeWrong(studentId,button,openModal){
       const sid=String(studentId || '').trim().toUpperCase();
-      if(!sid) return;
+      if(!sid) return null;
 
       const cached=WM_LMS_CUMULATIVE_WRONG_CACHE.get(sid);
       if(cached){
-        const key=wmRegisterWrongWordContext(cached);
-        wmOpenWrongWordsModal(key);
-        return;
+        if(openModal!==false){
+          const key=wmRegisterWrongWordContext(cached);
+          wmOpenWrongWordsModal(key);
+        }
+        return cached;
       }
-      if(cached===null || WM_LMS_CUMULATIVE_WRONG_PENDING.has(sid)) return;
+      if(cached===null) return null;
+      if(WM_LMS_CUMULATIVE_WRONG_PENDING.has(sid)){
+        const pendingContext=await WM_LMS_CUMULATIVE_WRONG_PENDING.get(sid);
+        if(pendingContext && openModal!==false){
+          const key=wmRegisterWrongWordContext(pendingContext);
+          wmOpenWrongWordsModal(key);
+        }
+        return pendingContext || null;
+      }
 
       wmApplyLmsCumulativeWrongButtonState(sid,null,'loading');
       const params=new URLSearchParams();
@@ -3547,14 +3562,16 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
           }
           const context={
             title:String(data.title || ('누적오답 · '+String(data.level || '')+'레벨')),
-            buttonLabel:String(data.buttonLabel || ('누적오답(영한 '+(data.engKoWrite || []).length+'·한영 '+(data.koEngWrite || []).length+')')),
+            buttonLabel:'영한 '+(Array.isArray(data.engKoWrite) ? data.engKoWrite.length : 0)+'·한영 '+(Array.isArray(data.koEngWrite) ? data.koEngWrite.length : 0),
             engKoWrite:Array.isArray(data.engKoWrite) ? data.engKoWrite : [],
             koEngWrite:Array.isArray(data.koEngWrite) ? data.koEngWrite : []
           };
           WM_LMS_CUMULATIVE_WRONG_CACHE.set(sid,context);
           wmApplyLmsCumulativeWrongButtonState(sid,context,'loaded');
-          const key=wmRegisterWrongWordContext(context);
-          wmOpenWrongWordsModal(key);
+          if(openModal!==false){
+            const key=wmRegisterWrongWordContext(context);
+            wmOpenWrongWordsModal(key);
+          }
           return context;
         })
         .catch(err=>{
@@ -3567,6 +3584,21 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
 
       WM_LMS_CUMULATIVE_WRONG_PENDING.set(sid,request);
       return request;
+    }
+
+    async function wmPreloadVisibleLmsCumulativeWrong(rows){
+      const studentIds=[];
+      const seen=new Set();
+      (Array.isArray(rows) ? rows : []).forEach(row=>{
+        const sid=String(cellValue(row,headerAliases('학생ID')) || '').trim().toUpperCase();
+        if(!sid || seen.has(sid)) return;
+        seen.add(sid);
+        studentIds.push(sid);
+      });
+      for(const sid of studentIds){
+        if(WM_LMS_CUMULATIVE_WRONG_CACHE.has(sid) || WM_LMS_CUMULATIVE_WRONG_PENDING.has(sid)) continue;
+        await wmOpenLmsCumulativeWrong(sid,null,false);
+      }
     }
 
     function wmWrongWordLevelFromSetId(setId){
@@ -5800,6 +5832,7 @@ function extractRecordRowsFromResponse(data){
       }).join('');
       wmUpdateManagePager('records', totalRows, totalPages, WM_RECORD_MANAGE_PAGE);
       syncRecordTableScroll();
+      setTimeout(function(){ wmPreloadVisibleLmsCumulativeWrong(pageRows); },0);
     }
 
     function syncRecordTableScroll(){

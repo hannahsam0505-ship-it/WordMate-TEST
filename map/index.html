@@ -788,7 +788,7 @@ const WM_LMS_URL = WM_CONFIG.LMS_URL;
 
         <div>
           <span>누적오답</span>
-          <button type="button" id="summaryCumulativeWrongWords" class="wm-map-wrong-btn wm-map-cumulative-btn" disabled>누적오답(-)</button>
+          <button type="button" id="summaryCumulativeWrongWords" class="wm-map-wrong-btn wm-map-cumulative-btn" disabled>영한 0·한영 0</button>
         </div>
 
       </div>
@@ -4254,6 +4254,10 @@ function wmMapWrongWordsLabel_(prefix, data){
   return prefix + '(영한 ' + data.engKoWrite.length + '·한영 ' + data.koEngWrite.length + ')';
 }
 
+function wmMapWrongCountLabel_(data){
+  return '영한 ' + data.engKoWrite.length + '·한영 ' + data.koEngWrite.length;
+}
+
 function wmRegisterMapWrongWordContext_(context){
   const key = 'wmMapWrong' + (++wmMapWrongWordContextSerial_);
   wmMapWrongWordContexts_[key] = context;
@@ -4266,6 +4270,7 @@ function wmBuildMapRecordWrongContext_(record){
   const setId = String(record && (record.Set_ID || record.setId || record.set_id) || '').trim();
   return {
     title:wmMapWrongWordsLabel_('틀린단어',data),
+    buttonLabel:wmMapWrongCountLabel_(data),
     engKoWrite:data.engKoWrite.map(function(item){ return Object.assign({setId:setId},item); }),
     koEngWrite:data.koEngWrite.map(function(item){ return Object.assign({setId:setId},item); })
   };
@@ -4275,7 +4280,7 @@ function wmRenderMapWrongWordsCell_(record){
   const context = wmBuildMapRecordWrongContext_(record);
   if(!context) return '<span class="wm-map-wrong-legacy">-</span>';
   const key = wmRegisterMapWrongWordContext_(context);
-  return '<button type="button" class="wm-map-wrong-btn" onclick="wmOpenMapWrongWordsModal_(\'' + key + '\')">' + escapeHtml(context.title) + '</button>';
+  return '<button type="button" class="wm-map-wrong-btn" onclick="wmOpenMapWrongWordsModal_(\'' + key + '\')">' + escapeHtml(context.buttonLabel) + '</button>';
 }
 
 function wmBuildMapCumulativeWrongContext_(records, levelNumber){
@@ -4308,7 +4313,7 @@ function wmBuildMapCumulativeWrongContext_(records, levelNumber){
   if(!result.available) return null;
   return {
     title:wmMapWrongWordsLabel_('누적오답',result) + ' · ' + level + '레벨',
-    buttonLabel:wmMapWrongWordsLabel_('누적오답',result),
+    buttonLabel:wmMapWrongCountLabel_(result),
     engKoWrite:result.engKoWrite,
     koEngWrite:result.koEngWrite
   };
@@ -4352,22 +4357,13 @@ function wmCloseMapWrongWordsModal_(){
   if(modal) modal.classList.remove('is-open');
 }
 
+let wmMapCumulativeWrongContext_ = null;
+let wmMapCumulativeWrongSource_ = null;
+
 function wmOpenMapCumulativeWrongFromSummary_(){
-  const cumulativeBtn = document.getElementById('summaryCumulativeWrongWords');
-  const sourceRecords = Array.isArray(wmLearningRecords) ? wmLearningRecords : [];
-  const context = wmBuildMapCumulativeWrongContext_(sourceRecords,currentLevelNumber);
-
-  if(!context){
-    if(cumulativeBtn){
-      cumulativeBtn.textContent = '누적오답(-)';
-      cumulativeBtn.disabled = true;
-      cumulativeBtn.onclick = null;
-    }
-    return;
-  }
-
+  const context = wmMapCumulativeWrongContext_;
+  if(!context) return;
   const key = wmRegisterMapWrongWordContext_(context);
-  if(cumulativeBtn) cumulativeBtn.textContent = context.buttonLabel;
   wmOpenMapWrongWordsModal_(key);
 }
 
@@ -4375,10 +4371,24 @@ function wmUpdateMapCumulativeWrongButton_(){
   const btn = document.getElementById('summaryCumulativeWrongWords');
   if(!btn) return;
 
-  const hasRecords = Array.isArray(wmLearningRecords) && wmLearningRecords.length > 0;
-  btn.textContent = '누적오답(-)';
-  btn.disabled = !hasRecords;
-  btn.onclick = hasRecords ? wmOpenMapCumulativeWrongFromSummary_ : null;
+  if(wmMapCumulativeWrongSource_ !== wmLearningRecords){
+    const sourceRecords = Array.isArray(wmLearningRecords) ? wmSortLearningRecordsDesc_(wmLearningRecords) : [];
+    const latestLevel = sourceRecords.length ? Number(wmRecordLevelNumber_(sourceRecords[0]) || 0) : 0;
+    wmMapCumulativeWrongContext_ = latestLevel ? wmBuildMapCumulativeWrongContext_(sourceRecords,latestLevel) : null;
+    wmMapCumulativeWrongSource_ = wmLearningRecords;
+  }
+  const context = wmMapCumulativeWrongContext_;
+
+  if(!context){
+    btn.textContent = '영한 0·한영 0';
+    btn.disabled = true;
+    btn.onclick = null;
+    return;
+  }
+
+  btn.textContent = context.buttonLabel;
+  btn.disabled = false;
+  btn.onclick = wmOpenMapCumulativeWrongFromSummary_;
 }
 
 function wmRenderCurrentProgressGuide_(){
