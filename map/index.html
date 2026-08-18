@@ -247,7 +247,7 @@ const WM_LMS_URL = WM_CONFIG.LMS_URL;
 (function(){
   const authStyle = document.createElement('style');
   authStyle.id = 'wmMapAuthGuardStyle';
-  authStyle.textContent = 'html.wm-map-auth-pending body{visibility:visible !important;min-height:100vh;background:#f4f8ff !important;}html.wm-map-auth-pending body>*{visibility:hidden !important;}html.wm-map-auth-pending body:before{content:"학습맵을 불러오는 중입니다.";visibility:visible !important;position:fixed;inset:0;z-index:2147483647;display:flex;align-items:center;justify-content:center;font:800 18px Pretendard,Arial,sans-serif;color:#0c4db4;background:#f4f8ff;}';
+  authStyle.textContent = 'html.wm-map-auth-pending body{visibility:visible !important;min-height:100vh;background:#f4f8ff !important;}html.wm-map-auth-pending body>*{visibility:hidden !important;}html.wm-map-auth-pending body:before{content:"학습맵을 불러오는 중입니다.";visibility:visible !important;position:fixed;inset:0;z-index:2147483647;display:flex;align-items:center;justify-content:center;font:800 18px Pretendard,Arial,sans-serif;color:#0c4db4;background:#f4f8ff;}html.wm-map-auth-pending body:after{content:"";visibility:visible !important;position:fixed;z-index:2147483647;left:50%;top:calc(50% + 58px);width:52px;height:52px;margin-left:-26px;border:6px solid rgba(12,77,180,.18);border-top-color:#0c4db4;border-radius:50%;box-sizing:border-box;animation:wmMapEntrySpin .8s linear infinite;}@keyframes wmMapEntrySpin{to{transform:rotate(360deg);}}';
   (document.head || document.documentElement).appendChild(authStyle);
   document.documentElement.classList.add('wm-map-auth-pending');
 })();
@@ -2208,6 +2208,7 @@ function wmResolveStudentInfo(){
    다른 기기에서 새로 로그인된 경우 현재 학습맵 접속을 종료합니다. */
 let wmSessionExpiredShown = false;
 let wmSessionCheckTimer = null;
+let wmLogoutInProgress = false;
 
 function wmGetCurrentSessionToken(){
   const candidates = [
@@ -2293,6 +2294,7 @@ function wmClearLoginStorage(){
 }
 
 function wmShowSessionExpiredModal(){
+  if(wmLogoutInProgress) return;
   if(wmSessionExpiredShown) return;
   wmSessionExpiredShown = true;
   if(wmSessionCheckTimer){
@@ -2319,6 +2321,7 @@ function wmGoLoginAfterSessionExpired(){
 
 async function wmCheckCurrentSession(options){
   options = options || {};
+  if(wmLogoutInProgress) return true;
   const studentId = wmCurrentStudent && wmCurrentStudent.학생ID ? String(wmCurrentStudent.학생ID).trim() : '';
   const sessionToken = wmGetCurrentSessionToken();
 
@@ -2339,6 +2342,9 @@ async function wmCheckCurrentSession(options){
 
     const res = await fetch(url);
     const data = await res.json();
+
+    /* 정상 로그아웃이 시작된 뒤 먼저 출발한 세션확인 응답이 돌아와도 중복로그인 경고를 띄우지 않습니다. */
+    if(wmLogoutInProgress) return true;
 
     if(data && data.success && (data.sessionValid === false || data.valid === false || data.sessionExpired === true)){
       if(options.redirectOnInvalid){
@@ -2363,6 +2369,7 @@ async function wmCheckCurrentSession(options){
 }
 
 function wmStartSessionWatcher(){
+  if(wmLogoutInProgress) return;
   if(wmSessionCheckTimer) clearInterval(wmSessionCheckTimer);
   /* 초기 Map 응답에서 세션을 이미 검증하므로 즉시 중복검사를 하지 않습니다. */
   wmSessionCheckTimer = setInterval(function(){
@@ -4720,6 +4727,7 @@ function escapeJs(value){
 }
 
 async function wmLogout(){
+  if(wmLogoutInProgress) return;
   const studentId = wmCurrentStudent && wmCurrentStudent.학생ID ? String(wmCurrentStudent.학생ID).trim() : '';
 
   /* WM_LOGOUT_CURRENT_TOKEN_PRIORITY_V1_20260813
@@ -4743,6 +4751,14 @@ async function wmLogout(){
     return;
   }
 
+  /* WM_LOGOUT_SESSION_WATCHER_GUARD_V1_20260818
+     정상 로그아웃 중에는 5초 세션감시를 중지해 LOGOUT 상태를 '다른 기기 로그인'으로 오판하지 않도록 합니다. */
+  wmLogoutInProgress = true;
+  if(wmSessionCheckTimer){
+    clearInterval(wmSessionCheckTimer);
+    wmSessionCheckTimer = null;
+  }
+
   const logoutUrl = wmGetApiBaseUrl()
     + '?action=studentLogout'
     + '&mode=studentLogout'
@@ -4755,6 +4771,8 @@ async function wmLogout(){
     const data = await response.json();
 
     if(!response.ok || !data || data.success !== true || data.cleared !== true){
+      wmLogoutInProgress = false;
+      wmStartSessionWatcher();
       alert((data && data.message) || '로그아웃 처리에 실패했습니다. 다시 시도해 주세요.');
       return;
     }
@@ -4762,6 +4780,8 @@ async function wmLogout(){
     wmClearLoginStorage();
     window.top.location.href = WM_TEST_LOGIN_PAGE_URL;
   }catch(err){
+    wmLogoutInProgress = false;
+    wmStartSessionWatcher();
     alert('로그아웃 서버 연결에 실패했습니다. 다시 시도해 주세요.');
   }
 }
