@@ -3367,10 +3367,10 @@ function queueStepSave(status){
     return Promise.resolve({ok:true, localOnly:true});
   }
 
-  /* WM_STEP_SAVE_BACKGROUND_QUEUE_V1_20260615
-     Step 완료 기록은 즉시 큐에 넣고 백그라운드에서 순서대로 저장합니다.
-     일반 Step 이동은 저장 완료를 기다리지 않아 화면이 멈춘 것처럼 보이지 않게 합니다.
-     단, 나가기/다음학습/최종이동 시점에는 wmWaitForStepSaves()로 저장 완료를 보장합니다. */
+  /* WM_STEP_CUMULATIVE_SAVE_DRAIN_V1_20260819
+     화면은 즉시 다음 Step으로 이동하고, 저장 중 추가 완료된 Step은 dirty로 모읍니다.
+     현재 저장이 끝나는 즉시 가장 최신 누적 snapshot 1건을 자동 이어 저장해
+     Step1~5 누적시간이 마지막 완료처리 전에 학습기록 행에 모두 남도록 합니다. */
   if(wmStepSaveInFlight){
     return wmStepSaveInFlight;
   }
@@ -3393,6 +3393,9 @@ function queueStepSave(status){
     })
     .finally(function(){
       wmStepSaveInFlight = null;
+      if(wmStepSaveDirty){
+        queueStepSave(status || "step_completed");
+      }
     });
 
   wmStepSaveChain = wmStepSaveInFlight;
@@ -3400,16 +3403,16 @@ function queueStepSave(status){
 }
 
 async function wmWaitForStepSaves(){
-  let result = await wmStepSaveChain.catch(function(error){
-    wmStepSaveLastError = {ok:false, error:String(error)};
-    return wmStepSaveLastError;
-  });
-
-  /* 진행 중 저장 사이에 완료된 Step은 오래된 저장 여러 건을 다시 기다리지 않고
-     가장 최신 전체 snapshot 한 건으로 통합 저장합니다. */
-  if(wmStepSaveDirty){
-    wmStepSaveDirty = false;
-    result = await WM_STUDY_SPEED_LOCKS.STEP_SAVE.saveLearningRecord("step_completed");
+  let result = {ok:true};
+  while(wmStepSaveInFlight || wmStepSaveDirty){
+    if(!wmStepSaveInFlight && wmStepSaveDirty){
+      queueStepSave("step_completed");
+    }
+    const activeSave = wmStepSaveInFlight || wmStepSaveChain;
+    result = await Promise.resolve(activeSave).catch(function(error){
+      wmStepSaveLastError = {ok:false, error:String(error)};
+      return wmStepSaveLastError;
+    });
   }
 
   if(wmIsSaveSuccess(result)){
@@ -4831,10 +4834,12 @@ function renderFinalResult(){
       </div>
       <div class="wm-small" style="margin-top:14px;">다음 학습: ${nextSetName}</div>
     </div>`;
-  /* WM_FINAL_COMPLETE_ONLY_FAST_V1_20260819
-     Step별 진행은 이미 백그라운드 저장되므로 마지막 화면에서 전체 Step 저장을 다시 기다리지 않습니다.
-     마지막에는 Test 결과 + 현재 세트 완료 확정만 요청합니다. */
-  finalSavePromise = WM_STUDY_SPEED_LOCKS.FINAL_SAVE.saveLearningRecord("completed").then(result=>{
+  /* WM_FINAL_COMPLETE_AFTER_CUMULATIVE_V1_20260819
+     Step1~5 누적저장은 백그라운드에서 계속 진행합니다.
+     마지막에는 누적 큐가 비었는지만 확인한 뒤 Test 결과 + 현재 세트 완료만 확정합니다. */
+  finalSavePromise = wmWaitForStepSaves().then(function(){
+    return WM_STUDY_SPEED_LOCKS.FINAL_SAVE.saveLearningRecord("completed");
+  }).then(result=>{
     const officialResponse=wmGetOfficialSaveResponse(result);
     WM_OFFICIAL_TRANSITION_RESULT=officialResponse;
     WM_OFFICIAL_NEXT_SET_ID=wmNormalizeOfficialNextSetId(officialResponse.nextOfficialSetId);
