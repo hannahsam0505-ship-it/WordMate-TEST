@@ -799,9 +799,9 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
       width:72px; min-width:72px; max-width:72px; text-align:center;
     }
     table { width:100%; border-collapse:collapse; min-width:1200px; background:#fff; }
-    /* WM_RECORD_DEVICE_MEMO_WIDTH_LOCK: 학습기록 기기정보/비고 폭 고정 */
-    #recordManageTable th:nth-child(25), #recordManageTable td:nth-child(25) { width:58px; min-width:58px; max-width:58px; text-align:center; overflow:hidden; text-overflow:ellipsis; }
-    #recordManageTable th:nth-child(26), #recordManageTable td:nth-child(26) { width:132px; min-width:132px; max-width:132px; overflow:hidden; text-overflow:ellipsis; }
+    /* WM_RECORD_DEVICE_MEMO_WIDTH_LOCK: 누적오답 추가 후 학습기록 기기정보/비고 폭 고정 */
+    #recordManageTable th:nth-child(26), #recordManageTable td:nth-child(26) { width:58px; min-width:58px; max-width:58px; text-align:center; overflow:hidden; text-overflow:ellipsis; }
+    #recordManageTable th:nth-child(27), #recordManageTable td:nth-child(27) { width:132px; min-width:132px; max-width:132px; overflow:hidden; text-overflow:ellipsis; }
     th,td { padding:11px 13px; border-bottom:1px solid var(--wm-line); text-align:left; font-size:13px; white-space:nowrap; }
     th { background:#f9fafb; font-weight:900; }
     tr:last-child td { border-bottom:0; }
@@ -1323,7 +1323,7 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
         </div>
       </div>
       <div class="wm-action-inline-row"><div class="wm-action-row"><button class="wm-action-btn">추가</button><button class="wm-action-btn sub">수정</button><button class="wm-action-btn sub">조회</button></div><div class="wm-note wm-inline-help-note">학습기록은 현재 운영 기준 컬럼을 유지합니다. 총소요시간은 전체 학습 시간, Test_총시간은 시험 소요시간입니다. 미응시 시험은 X로 표시하고, 시험 항목은 90점·85점처럼 점수로 표시합니다.</div></div>
-      <div class="wm-record-scroll-top" id="recordTopScroll"><div class="wm-record-scroll-inner" id="recordTopScrollInner"></div></div><div class="wm-table-wrap" id="recordTableWrap"><table id="recordManageTable"><thead><tr><th>일련번호</th><th>학습날짜</th><th>학생ID</th><th>학생이름</th><th>학교</th><th>학년</th><th>Class</th><th>교사명</th><th>Set_ID</th><th>점수</th><th>총소요시간</th><th>Step 1</th><th>Step 2</th><th>Step 3</th><th>Step 4</th><th>시험전학습</th><th>Test_총시간</th><th>영한객관식</th><th>한영객관식</th><th>영한주관식</th><th>한영주관식</th><th>틀린단어</th><th>완료상태</th><th>학습기록ID</th><th>기기정보</th><th>비고</th></tr></thead><tbody id="recordManageTbody"><tr><td colspan="26">학습기록_DB 연결 대기 중입니다.</td></tr></tbody></table></div>
+      <div class="wm-record-scroll-top" id="recordTopScroll"><div class="wm-record-scroll-inner" id="recordTopScrollInner"></div></div><div class="wm-table-wrap" id="recordTableWrap"><table id="recordManageTable"><thead><tr><th>일련번호</th><th>학습날짜</th><th>학생ID</th><th>학생이름</th><th>학교</th><th>학년</th><th>Class</th><th>교사명</th><th>Set_ID</th><th>점수</th><th>총소요시간</th><th>Step 1</th><th>Step 2</th><th>Step 3</th><th>Step 4</th><th>시험전학습</th><th>Test_총시간</th><th>영한객관식</th><th>한영객관식</th><th>영한주관식</th><th>한영주관식</th><th>틀린단어</th><th>누적오답</th><th>완료상태</th><th>학습기록ID</th><th>기기정보</th><th>비고</th></tr></thead><tbody id="recordManageTbody"><tr><td colspan="27">학습기록_DB 연결 대기 중입니다.</td></tr></tbody></table></div>
     </section>
 
     <section class="wm-panel" id="panel-profile">
@@ -3458,6 +3458,105 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       if(!context) return '<span class="wm-wrong-legacy">-</span>';
       const key=wmRegisterWrongWordContext(context);
       return '<button type="button" class="wm-wrong-link-btn" onclick="wmOpenWrongWordsModal(\''+key+'\')">'+wmWrongEscapeHtml(context.title)+'</button>';
+    }
+
+    const WM_LMS_CUMULATIVE_WRONG_CACHE=new Map();
+    const WM_LMS_CUMULATIVE_WRONG_PENDING=new Map();
+
+    function wmLmsCumulativeWrongButtons(studentId){
+      const sid=String(studentId || '').trim().toUpperCase();
+      return Array.from(document.querySelectorAll('.wm-record-cumulative-wrong-btn')).filter(btn=>
+        String(btn.dataset.studentId || '').trim().toUpperCase()===sid
+      );
+    }
+
+    function wmCumulativeWrongCellHtml(row){
+      const studentId=String(cellValue(row,headerAliases('학생ID')) || '').trim().toUpperCase();
+      if(!studentId) return '<span class="wm-wrong-legacy">-</span>';
+      const cached=WM_LMS_CUMULATIVE_WRONG_CACHE.get(studentId);
+      if(cached===null) return '<button type="button" class="wm-wrong-link-btn wm-cumulative wm-record-cumulative-wrong-btn" data-student-id="'+wmWrongEscapeHtml(studentId)+'" disabled>누적오답(-)</button>';
+      if(cached){
+        return '<button type="button" class="wm-wrong-link-btn wm-cumulative wm-record-cumulative-wrong-btn" data-student-id="'+wmWrongEscapeHtml(studentId)+'" onclick="wmOpenLmsCumulativeWrong(\''+wmWrongEscapeHtml(studentId)+'\',this)">'+wmWrongEscapeHtml(cached.buttonLabel)+'</button>';
+      }
+      return '<button type="button" class="wm-wrong-link-btn wm-cumulative wm-record-cumulative-wrong-btn" data-student-id="'+wmWrongEscapeHtml(studentId)+'" onclick="wmOpenLmsCumulativeWrong(\''+wmWrongEscapeHtml(studentId)+'\',this)">누적오답</button>';
+    }
+
+    function wmApplyLmsCumulativeWrongButtonState(studentId,context,state){
+      wmLmsCumulativeWrongButtons(studentId).forEach(btn=>{
+        if(state==='loading'){
+          btn.textContent='누적오답 조회중';
+          btn.disabled=true;
+          return;
+        }
+        if(!context){
+          btn.textContent='누적오답(-)';
+          btn.disabled=true;
+          btn.onclick=null;
+          return;
+        }
+        btn.textContent=context.buttonLabel;
+        btn.disabled=false;
+        btn.onclick=()=>wmOpenLmsCumulativeWrong(studentId,btn);
+      });
+    }
+
+    async function wmOpenLmsCumulativeWrong(studentId,button){
+      const sid=String(studentId || '').trim().toUpperCase();
+      if(!sid) return;
+
+      const cached=WM_LMS_CUMULATIVE_WRONG_CACHE.get(sid);
+      if(cached){
+        const key=wmRegisterWrongWordContext(cached);
+        wmOpenWrongWordsModal(key);
+        return;
+      }
+      if(cached===null || WM_LMS_CUMULATIVE_WRONG_PENDING.has(sid)) return;
+
+      wmApplyLmsCumulativeWrongButtonState(sid,null,'loading');
+      const params=new URLSearchParams();
+      params.set('mode','cumulativeWrong');
+      params.set('action','cumulativeWrong');
+      params.set('studentId',sid);
+      params.set('ts',String(Date.now()));
+      const actorQuery=String(wmLmsActorQuery() || '').replace(/^&/,'');
+      if(actorQuery){
+        const actorParams=new URLSearchParams(actorQuery);
+        actorParams.forEach((value,key)=>params.set(key,value));
+      }
+
+      const request=fetch(WM_APPS_SCRIPT_URL+'?'+params.toString(),{method:'GET',cache:'no-store'})
+        .then(async response=>{
+          const data=await response.json();
+          if(!response.ok || !data || data.success===false){
+            throw new Error((data && (data.message || data.error)) || '누적오답 조회 실패');
+          }
+          if(data.available!==true){
+            WM_LMS_CUMULATIVE_WRONG_CACHE.set(sid,null);
+            wmApplyLmsCumulativeWrongButtonState(sid,null,'empty');
+            return null;
+          }
+          const context={
+            title:String(data.title || ('누적오답 · '+String(data.level || '')+'레벨')),
+            buttonLabel:String(data.buttonLabel || ('누적오답(영한 '+(data.engKoWrite || []).length+'·한영 '+(data.koEngWrite || []).length+')')),
+            engKoWrite:Array.isArray(data.engKoWrite) ? data.engKoWrite : [],
+            koEngWrite:Array.isArray(data.koEngWrite) ? data.koEngWrite : []
+          };
+          WM_LMS_CUMULATIVE_WRONG_CACHE.set(sid,context);
+          wmApplyLmsCumulativeWrongButtonState(sid,context,'loaded');
+          const key=wmRegisterWrongWordContext(context);
+          wmOpenWrongWordsModal(key);
+          return context;
+        })
+        .catch(err=>{
+          console.warn('LMS 누적오답 조회 실패',err);
+          WM_LMS_CUMULATIVE_WRONG_CACHE.set(sid,null);
+          wmApplyLmsCumulativeWrongButtonState(sid,null,'failed');
+          return null;
+        })
+        .finally(()=>WM_LMS_CUMULATIVE_WRONG_PENDING.delete(sid));
+
+      WM_LMS_CUMULATIVE_WRONG_PENDING.set(sid,request);
+      return request;
     }
 
     function wmWrongWordLevelFromSetId(setId){
@@ -5607,7 +5706,7 @@ function extractRecordRowsFromResponse(data){
     async function loadRecords(){
       const tbody = document.getElementById('recordManageTbody');
       setManageLoading('records', true);
-      if(tbody) tbody.innerHTML = '<tr><td colspan="26">학습기록_DB 조회 중입니다.</td></tr>';
+      if(tbody) tbody.innerHTML = '<tr><td colspan="27">학습기록_DB 조회 중입니다.</td></tr>';
 
       try{
         let rows = [];
@@ -5633,7 +5732,7 @@ function extractRecordRowsFromResponse(data){
         return WM_RECORD_MANAGE_ROWS;
       }catch(err){
         console.error('학습기록_DB 로드 실패', err);
-        if(tbody) tbody.innerHTML = '<tr><td colspan="26">학습기록_DB 조회 실패: '+escapeHtml(err && err.message ? err.message : err)+'</td></tr>';
+        if(tbody) tbody.innerHTML = '<tr><td colspan="27">학습기록_DB 조회 실패: '+escapeHtml(err && err.message ? err.message : err)+'</td></tr>';
         setManageLoading('records', false);
         return [];
       }
@@ -5650,7 +5749,7 @@ function extractRecordRowsFromResponse(data){
       if(WM_RECORD_MANAGE_PAGE > totalPages) WM_RECORD_MANAGE_PAGE = totalPages;
       if(WM_RECORD_MANAGE_PAGE < 1) WM_RECORD_MANAGE_PAGE = 1;
       if(!rows.length){
-        tbody.innerHTML = '<tr><td colspan="26">표시할 학습기록_DB 데이터가 없습니다.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="27">표시할 학습기록_DB 데이터가 없습니다.</td></tr>';
         wmUpdateManagePager('records', 0, 1, 1);
         setManageLoading('records', false);
         return;
@@ -5663,7 +5762,7 @@ function extractRecordRowsFromResponse(data){
     const row = wmRepairShiftedStudentModeRow(rawRow);
         return '<tr><td class="wm-record-seq-col">'+(start+index+1)+'</td>'+WM_RECORD_HEADERS.map(header=>{
           const value = cellValue(row, headerAliases(header));
-          if(header==='틀린단어') return '<td>'+wmWrongWordsCellHtml(row)+'</td>';
+          if(header==='틀린단어') return '<td>'+wmWrongWordsCellHtml(row)+'</td><td>'+wmCumulativeWrongCellHtml(row)+'</td>';
           return '<td>'+escapeHtml(displayCellValue(value, header))+'</td>';
         }).join('')+'</tr>';
       }).join('');
