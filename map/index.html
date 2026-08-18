@@ -1629,7 +1629,8 @@ body.wm-map-loading-active #wm-learning-record-widget{
 .homework-table td:nth-child(n+5):nth-child(-n+11){min-width:68px;white-space:nowrap;}
 .homework-table th:nth-child(n+12):nth-child(-n+15){min-width:48px;font-size:10px;line-height:1.1;letter-spacing:-0.04em;padding-left:4px;padding-right:4px;}
 .homework-table td:nth-child(n+12):nth-child(-n+15){min-width:48px;font-size:13px;line-height:1.2;padding-left:4px;padding-right:4px;white-space:nowrap;}
-.homework-table th:nth-child(16), .homework-table td:nth-child(16){min-width:42px;max-width:48px;white-space:nowrap;}
+.homework-table th:nth-child(16), .homework-table td:nth-child(16){min-width:88px;width:88px;max-width:88px;padding-left:4px;padding-right:4px;white-space:nowrap;box-sizing:border-box;}
+.homework-table td:nth-child(16) .wm-map-wrong-btn{padding:4px 6px;max-width:100%;box-sizing:border-box;font-size:11px;letter-spacing:-0.04em;line-height:1.15;}
 .homework-table th:nth-child(17), .homework-table td:nth-child(17){min-width:36px;}
 .homework-table th:nth-child(18), .homework-table td:nth-child(18){min-width:42px;}
 .homework-table th:nth-child(19), .homework-table td:nth-child(19){min-width:32px;}
@@ -1652,17 +1653,25 @@ body.wm-map-loading-active #wm-learning-record-widget{
 .wm-map-wrong-legacy{color:#94a3b8;font-weight:800;}
 .wm-map-wrong-modal{position:fixed;inset:0;z-index:140000;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(15,23,42,.68);box-sizing:border-box;}
 .wm-map-wrong-modal.is-open{display:flex;}
-.wm-map-wrong-modal-card{width:min(920px,96vw);max-height:calc(100vh - 40px);overflow:auto;background:#fff;border-radius:20px;padding:22px;box-shadow:0 28px 80px rgba(0,0,0,.35);box-sizing:border-box;}
-.wm-map-wrong-modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;}
+.wm-map-wrong-modal-card{width:min(780px,96vw);max-height:calc(100vh - 40px);overflow:auto;background:#fff;border-radius:20px;padding:20px;box-shadow:0 28px 80px rgba(0,0,0,.35);box-sizing:border-box;}
+.wm-map-wrong-modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;}
 .wm-map-wrong-modal-title{color:#073b8f;font-size:19px;font-weight:950;}
 .wm-map-wrong-modal-close{border:0;border-radius:10px;background:#0f172a;color:#fff;padding:9px 14px;font-weight:900;cursor:pointer;}
-.wm-map-wrong-modal-section{margin-top:16px;}
-.wm-map-wrong-modal-section h3{margin:0 0 8px;color:#173b75;font-size:16px;}
-.wm-map-wrong-modal-table-wrap{overflow-x:auto;}
-.wm-map-wrong-modal-table{width:100%;min-width:640px;border-collapse:collapse;}
-.wm-map-wrong-modal-table th,.wm-map-wrong-modal-table td{border:1px solid #dbe3ef;padding:10px 9px;text-align:center;font-size:13px;white-space:normal;vertical-align:top;}
-.wm-map-wrong-modal-table th{background:#eff6ff;color:#172554;font-weight:900;}
-.wm-map-wrong-modal-empty{padding:18px;border:1px dashed #cbd5e1;border-radius:12px;color:#64748b;text-align:center;font-weight:800;}
+.wm-map-wrong-modal-groups{display:flex;flex-direction:column;gap:12px;}
+.wm-map-wrong-modal-group{border-top:1px solid #dbe3ef;padding-top:9px;}
+.wm-map-wrong-modal-group:first-child{border-top:0;padding-top:0;}
+.wm-map-wrong-modal-set{display:inline-flex;align-items:center;min-height:22px;margin:0 0 7px;padding:2px 8px;border-radius:999px;background:#eff6ff;color:#1d4ed8;font-size:11px;font-weight:900;line-height:1;}
+.wm-map-wrong-modal-split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;align-items:stretch;}
+.wm-map-wrong-modal-section{min-width:0;display:flex;flex-direction:column;}
+.wm-map-wrong-modal-section h3{margin:0 0 5px;color:#173b75;font-size:14px;font-weight:950;}
+.wm-map-wrong-modal-list{width:100%;flex:1 1 auto;border-top:1px solid #dbe3ef;border-bottom:1px solid #dbe3ef;}
+.wm-map-wrong-modal-list-head,.wm-map-wrong-modal-list-row{display:grid;grid-template-columns:minmax(82px,1.1fr) 62px minmax(100px,1.35fr);align-items:center;column-gap:7px;width:100%;box-sizing:border-box;}
+.wm-map-wrong-modal-list-head{min-height:25px;padding:3px 6px;background:#f8fafc;color:#64748b;font-size:10px;font-weight:900;}
+.wm-map-wrong-modal-list-row{min-height:27px;padding:4px 6px;border-top:1px solid #eef2f7;color:#334155;font-size:12px;line-height:1.15;}
+.wm-map-wrong-modal-list-row>span,.wm-map-wrong-modal-list-head>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.wm-map-wrong-modal-list-row .wm-map-wrong-modal-pos{color:#64748b;font-size:11px;}
+.wm-map-wrong-modal-empty{min-height:52px;padding:12px 8px;border:1px dashed #cbd5e1;border-radius:10px;color:#64748b;text-align:center;font-size:12px;font-weight:800;box-sizing:border-box;}
+@media(max-width:720px){.wm-map-wrong-modal-split{grid-template-columns:1fr;gap:9px;}}
 
 .score{
   color:#d60000;
@@ -4319,13 +4328,33 @@ function wmBuildMapCumulativeWrongContext_(records, levelNumber){
   };
 }
 
-function wmMapWrongWordTableHtml_(items){
+function wmMapWrongWordListHtml_(items,direction){
   if(!items.length) return '<div class="wm-map-wrong-modal-empty">틀린단어가 없습니다.</div>';
-  return '<div class="wm-map-wrong-modal-table-wrap"><table class="wm-map-wrong-modal-table"><thead><tr><th>세트</th><th>영어</th><th>품사</th><th>한글</th></tr></thead><tbody>'
-    + items.map(function(item){
-      return '<tr><td>' + escapeHtml(item.setId) + '</td><td>' + escapeHtml(item.word) + '</td><td>' + escapeHtml(item.pos) + '</td><td>' + escapeHtml(item.meaning) + '</td></tr>';
-    }).join('')
-    + '</tbody></table></div>';
+  const isKoEng = direction === 'ko-eng';
+  const head = [isKoEng ? '한글' : '영어','품사',isKoEng ? '영어' : '한글'];
+  const rows = items.map(function(item){
+    const primary = isKoEng ? item.meaning : item.word;
+    const secondary = isKoEng ? item.word : item.meaning;
+    return '<div class="wm-map-wrong-modal-list-row"><span title="' + escapeHtml(primary) + '">' + escapeHtml(primary) + '</span><span class="wm-map-wrong-modal-pos" title="' + escapeHtml(item.pos) + '">' + escapeHtml(item.pos) + '</span><span title="' + escapeHtml(secondary) + '">' + escapeHtml(secondary) + '</span></div>';
+  }).join('');
+  return '<div class="wm-map-wrong-modal-list"><div class="wm-map-wrong-modal-list-head">' + head.map(function(label){ return '<span>' + label + '</span>'; }).join('') + '</div>' + rows + '</div>';
+}
+
+function wmMapWrongWordGroupsHtml_(context){
+  const engItems = Array.isArray(context.engKoWrite) ? context.engKoWrite : [];
+  const koItems = Array.isArray(context.koEngWrite) ? context.koEngWrite : [];
+  const setIds = [];
+  engItems.concat(koItems).forEach(function(item){
+    const setId = String((item && item.setId) || '').trim();
+    if(setId && setIds.indexOf(setId) === -1) setIds.push(setId);
+  });
+  if(!setIds.length) setIds.push('');
+  return '<div class="wm-map-wrong-modal-groups">' + setIds.map(function(setId){
+    const engSet = engItems.filter(function(item){ return String((item && item.setId) || '').trim() === setId; });
+    const koSet = koItems.filter(function(item){ return String((item && item.setId) || '').trim() === setId; });
+    const setBadge = setId ? '<div class="wm-map-wrong-modal-set">' + escapeHtml(setId) + '</div>' : '';
+    return '<div class="wm-map-wrong-modal-group">' + setBadge + '<div class="wm-map-wrong-modal-split"><section class="wm-map-wrong-modal-section"><h3>영한</h3>' + wmMapWrongWordListHtml_(engSet,'eng-ko') + '</section><section class="wm-map-wrong-modal-section"><h3>한영</h3>' + wmMapWrongWordListHtml_(koSet,'ko-eng') + '</section></div></div>';
+  }).join('') + '</div>';
 }
 
 function wmEnsureMapWrongWordsModal_(){
@@ -4347,8 +4376,7 @@ function wmOpenMapWrongWordsModal_(key){
   const modal = wmEnsureMapWrongWordsModal_();
   modal.innerHTML = '<div class="wm-map-wrong-modal-card" role="dialog" aria-modal="true" aria-label="' + escapeHtml(context.title) + '">'
     + '<div class="wm-map-wrong-modal-head"><div class="wm-map-wrong-modal-title">' + escapeHtml(context.title) + '</div><button type="button" class="wm-map-wrong-modal-close" onclick="wmCloseMapWrongWordsModal_()">닫기</button></div>'
-    + '<section class="wm-map-wrong-modal-section"><h3>영한</h3>' + wmMapWrongWordTableHtml_(context.engKoWrite) + '</section>'
-    + '<section class="wm-map-wrong-modal-section"><h3>한영</h3>' + wmMapWrongWordTableHtml_(context.koEngWrite) + '</section></div>';
+    + wmMapWrongWordGroupsHtml_(context) + '</div>';
   modal.classList.add('is-open');
 }
 
