@@ -3011,11 +3011,22 @@ function makePermutations(arr){
 }
 
 function isMeaningCorrect(input, meaning){
-  const correctParts = splitMeaningParts(meaning);
-  const answerSet = new Set(correctParts);
-  const userParts = splitUserMeaningParts(input);
+  const rawMeaning = String(meaning == null ? "" : meaning).trim();
   const normalizedInput = normalizeText(input);
   if(!normalizedInput) return false;
+
+  /* WM_STEP6_ENG_KO_OPTIONAL_PARENTHESIS_V1
+     영한주관식에서 괄호 안 설명은 선택사항입니다.
+     괄호 포함 전체답도 정답, 괄호 설명을 뺀 핵심뜻만 써도 정답으로 처리합니다. */
+  if(normalizeText(rawMeaning) === normalizedInput) return true;
+
+  const gradingMeaning = rawMeaning
+    .replace(/\([^)]*\)|（[^）]*）/g, " " )
+    .replace(/\s+/g, " " )
+    .trim() || rawMeaning;
+  const correctParts = splitMeaningParts(gradingMeaning);
+  const answerSet = new Set(correctParts);
+  const userParts = splitUserMeaningParts(input);
   if(answerSet.has(normalizedInput)) return true;
   if(userParts.length > 0 && userParts.every(part => answerSet.has(part))) return true;
   const subsets = makeSubsets(correctParts);
