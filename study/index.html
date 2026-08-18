@@ -574,6 +574,52 @@ const WM_DEV_LIVE_REVIEW_MODE = window.WM_DEV_ADMIN_REVIEW_MODE === true;
   .final-title{font-size:24px;font-weight:bold;line-height:1.35;margin-bottom:28px;text-align:center;}
   .final-score-box{font-size:24px;font-weight:bold;color:#dc2626;margin:30px 0 12px;line-height:1.7;text-align:center;}
 
+  .wm-wrong-words-btn{
+    width:auto;
+    min-width:260px;
+    margin:0 auto 18px;
+    padding:10px 18px;
+    border:1px solid #2563eb;
+    border-radius:999px;
+    background:#fff;
+    color:#1d4ed8;
+    font-size:15px;
+    font-weight:900;
+    cursor:pointer;
+  }
+  .wm-wrong-words-modal{
+    position:fixed;
+    inset:0;
+    z-index:10020;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:18px;
+    background:rgba(15,23,42,.52);
+    box-sizing:border-box;
+  }
+  .wm-wrong-words-modal.is-open{display:flex;}
+  .wm-wrong-words-box{
+    width:100%;
+    max-width:760px;
+    max-height:86vh;
+    overflow:auto;
+    padding:24px;
+    border-radius:20px;
+    background:#fff;
+    box-shadow:0 18px 50px rgba(15,23,42,.28);
+    box-sizing:border-box;
+  }
+  .wm-wrong-words-title{margin:0 0 18px;font-size:22px;font-weight:900;color:#111827;text-align:center;}
+  .wm-wrong-words-section{margin-top:18px;}
+  .wm-wrong-words-section-title{margin:0 0 8px;font-size:17px;font-weight:900;color:#1d4ed8;text-align:left;}
+  .wm-wrong-words-table-wrap{overflow-x:auto;}
+  .wm-wrong-words-table{width:100%;border-collapse:collapse;min-width:560px;font-size:14px;}
+  .wm-wrong-words-table th,.wm-wrong-words-table td{padding:10px 9px;border:1px solid #dbe3ef;text-align:center;vertical-align:middle;}
+  .wm-wrong-words-table th{background:#eff6ff;color:#172554;font-weight:900;}
+  .wm-wrong-words-empty{padding:14px;border:1px solid #dbe3ef;border-radius:10px;color:#64748b;text-align:center;}
+  .wm-wrong-words-close{display:block;width:150px;margin:22px auto 0;padding:12px;border:0;border-radius:12px;background:#2563eb;color:#fff;font-size:15px;font-weight:900;cursor:pointer;}
+
   .wm-level-transition-card{
     width:100%;
     max-width:720px;
@@ -613,6 +659,9 @@ const WM_DEV_LIVE_REVIEW_MODE = window.WM_DEV_ADMIN_REVIEW_MODE === true;
   @media(max-width:480px){
     .final-title{font-size:20px;}
     .final-score-box{font-size:20px;}
+    .wm-wrong-words-btn{min-width:0;width:100%;font-size:14px;}
+    .wm-wrong-words-box{padding:18px 14px;}
+    .wm-wrong-words-title{font-size:19px;}
     .wm-level-transition-card{padding:28px 18px 24px;}
     .wm-level-transition-title{font-size:20px;margin-bottom:20px;}
     .wm-level-transition-message{font-size:15px;line-height:1.75;}
@@ -1468,7 +1517,7 @@ let step2Wrong = [], step3Wrong = [], memoryWrong = [];
 let isStep2Review = false, isStep3Review = false, isMemoryReview = false;
 let memoryPhase = 0, memoryCount = 0, memoryLocked = false, afterMemoryAction = null;
 let testIndex = 0, testWords = [], testTimer = null, timeLeft = BASE_TEST_TIME, isRetest = false;
-let firstTestScores = [], firstWrongWords = [], currentTestResults = [], currentTestWrongs = [];
+let firstTestScores = [], firstEngKoWriteWrongWords = [], firstKoEngWriteWrongWords = [], currentTestResults = [], currentTestWrongs = [];
 let wmFirstTestTotalSeconds = 0;
 let wmActiveFirstTestStartTime = 0;
 let activeTestQuestionIndex = null;
@@ -3539,7 +3588,7 @@ function buildLearningPayload(status){
     finalScore:getFinalOfficialScoreText(),
     finalTestScore:getFinalOfficialTestScore(),
     scorePolicy:'LAST_TEST_SCORE',
-    wrongWords:firstWrongWords.map(w=>({word:w.word, meaning:w.meaning, pos:w.pos})),
+    wrongWords:wmBuildFirstSubjectiveWrongWordsPayload(),
     elapsedSeconds:getElapsedSeconds(),
     completedAt:new Date().toISOString()
   };
@@ -4069,7 +4118,8 @@ async function startLearning(){
   testWords=[];
   isRetest=false;
   firstTestScores=[];
-  firstWrongWords=[];
+  firstEngKoWriteWrongWords=[];
+  firstKoEngWriteWrongWords=[];
   currentTestResults=[];
   currentTestWrongs=[];
   activeTestQuestionIndex=null;
@@ -4462,7 +4512,7 @@ function submitTest(){
     if(isCorrect) correctCount++;
     else{
       wrongs.push(item);
-      if(!firstWrongWords.some(w=>w.word===item.word)) firstWrongWords.push(item);
+      if(!isRetest && test.type==="write") wmAddFirstSubjectiveWrongWord(test,item);
     }
   });
   currentTestWrongs=wrongs;
@@ -4521,6 +4571,66 @@ function goNextTest(){
   render();
 }
 
+function wmWrongWordItem(item){
+  return {
+    word:String(item && item.word || "").trim(),
+    meaning:String(item && item.meaning || "").trim(),
+    pos:String(item && item.pos || "").trim()
+  };
+}
+
+function wmAddFirstSubjectiveWrongWord(test,item){
+  if(!test || test.type!=="write" || !item) return;
+  const target=test.direction==="eng-ko" ? firstEngKoWriteWrongWords : firstKoEngWriteWrongWords;
+  const word=String(item.word || "").trim().toLowerCase();
+  if(!word || target.some(saved=>String(saved.word || "").trim().toLowerCase()===word)) return;
+  target.push(wmWrongWordItem(item));
+}
+
+function wmBuildFirstSubjectiveWrongWordsPayload(){
+  return {
+    version:"WM_WRONG_WORDS_V1",
+    engKoWrite:firstEngKoWriteWrongWords.map(wmWrongWordItem),
+    koEngWrite:firstKoEngWriteWrongWords.map(wmWrongWordItem)
+  };
+}
+
+function wmWrongWordsLabel(prefix){
+  return `${prefix}(영한 ${firstEngKoWriteWrongWords.length}·한영 ${firstKoEngWriteWrongWords.length})`;
+}
+
+function wmWrongWordEscapeHtml(value){
+  return String(value===undefined || value===null ? "" : value)
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#39;");
+}
+
+function wmStudyWrongWordRowsHtml(words){
+  if(!Array.isArray(words) || !words.length) return '<div class="wm-wrong-words-empty">틀린단어가 없습니다.</div>';
+  return `<div class="wm-wrong-words-table-wrap"><table class="wm-wrong-words-table"><thead><tr><th>세트</th><th>영어</th><th>품사</th><th>한글</th></tr></thead><tbody>${words.map(item=>`<tr><td>${wmWrongWordEscapeHtml(currentSetName)}</td><td>${wmWrongWordEscapeHtml(item.word)}</td><td>${wmWrongWordEscapeHtml(item.pos)}</td><td>${wmWrongWordEscapeHtml(item.meaning)}</td></tr>`).join("")}</tbody></table></div>`;
+}
+
+function openStudyWrongWordsModal(){
+  let modal=document.getElementById("wmStudyWrongWordsModal");
+  if(!modal){
+    modal=document.createElement("div");
+    modal.id="wmStudyWrongWordsModal";
+    modal.className="wm-wrong-words-modal";
+    modal.onclick=function(event){if(event.target===modal) closeStudyWrongWordsModal();};
+    document.body.appendChild(modal);
+  }
+  modal.innerHTML=`<div class="wm-wrong-words-box" role="dialog" aria-modal="true" aria-label="틀린단어"><div class="wm-wrong-words-title">${wmWrongWordEscapeHtml(wmWrongWordsLabel("틀린단어"))}</div><section class="wm-wrong-words-section"><h3 class="wm-wrong-words-section-title">영한</h3>${wmStudyWrongWordRowsHtml(firstEngKoWriteWrongWords)}</section><section class="wm-wrong-words-section"><h3 class="wm-wrong-words-section-title">한영</h3>${wmStudyWrongWordRowsHtml(firstKoEngWriteWrongWords)}</section><button type="button" class="wm-wrong-words-close" onclick="closeStudyWrongWordsModal()">닫기</button></div>`;
+  modal.classList.add("is-open");
+}
+
+function closeStudyWrongWordsModal(){
+  const modal=document.getElementById("wmStudyWrongWordsModal");
+  if(modal) modal.classList.remove("is-open");
+}
+
 function renderFinalResult(){
   stopWordAudio();
   const scoreText=firstTestScores.length ? firstTestScores.map(t=>`${t.percent}점`).join(" / ") : "점수 기록이 없습니다.";
@@ -4531,6 +4641,7 @@ function renderFinalResult(){
   app.innerHTML=`<div class="wm-card">
       <div class="final-title">영어잡는 Word Mate<br>${currentSetName}<br>학습을 모두 마쳤습니다</div>
       <div class="final-score-box">${scoreText}</div>
+      <button type="button" class="wm-wrong-words-btn" onclick="openStudyWrongWordsModal()">${wmWrongWordsLabel("틀린단어")}</button>
 
       <div class="final-save-row">
         <div class="final-save-text">
@@ -4542,7 +4653,6 @@ function renderFinalResult(){
       </div>
 
       <div class="button-row">
-        <button class="wm-btn" onclick="restart()">재학습하기</button>
         <button class="wm-btn" onclick="goNextLearning()">다음학습하기</button>
         <button class="wm-btn" onclick="goFinalExit()">나가기</button>
       </div>
