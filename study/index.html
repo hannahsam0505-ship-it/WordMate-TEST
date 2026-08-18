@@ -52,15 +52,23 @@ if(!WM_CONFIG || !WM_CONFIG.APPS_SCRIPT_URL || !WM_CONFIG.LOGIN_URL || !WM_CONFI
 }
 
 const API_URL = WM_CONFIG.APPS_SCRIPT_URL;
+window.WORDMATE_APPS_SCRIPT_URL = API_URL;
 const WM_LOGIN_URL = WM_CONFIG.LOGIN_URL;
 const WM_MAP_URL = WM_CONFIG.MAP_URL;
 const WM_STUDY_URL = WM_CONFIG.STUDY_URL;
 const WM_LMS_URL = WM_CONFIG.LMS_URL;
 
+/* WM_STUDY_DEV_LIVE_REVIEW_MODE_V1
+   일반 학생 진입에는 적용되지 않습니다.
+   DEV가 현재 Study 원본을 직접 실행할 때만 세션·저장·전체화면·학습맵 이동을 차단합니다. */
+const WM_DEV_LIVE_REVIEW_MODE = window.WM_DEV_ADMIN_REVIEW_MODE === true;
+
 /* WM_STUDY_DIRECT_ENTRY_GUARD_V1
    로그인 → 학습맵 → Study 경로로 들어온 경우만 허용합니다.
    주소창 직접 /study 진입은 Study 화면·세션검사·서버 호출 전에 로그인으로 이동합니다. */
 (function wmAuthorizeStudyEntryBeforeBoot_(){
+  if(WM_DEV_LIVE_REVIEW_MODE) return;
+
   let entry = '';
   try{
     entry = String(new URLSearchParams(window.location.search || '').get('wmEntry') || '').trim().toLowerCase();
@@ -124,9 +132,7 @@ const WM_LMS_URL = WM_CONFIG.LMS_URL;
     z-index:2147483000;
   }
   body.wm-test-booth-active{
-    margin-top:0 !important;
-    padding-top:var(--wm-test-booth-height) !important;
-    box-sizing:border-box;
+    margin-top:var(--wm-test-booth-height) !important;
   }
   body.wm-test-booth-active .wm-exit-btn{
     top:calc(var(--wm-test-booth-height) + 14px) !important;
@@ -797,7 +803,7 @@ const WM_LMS_URL = WM_CONFIG.LMS_URL;
      추가 API·DB조회·타이머·이미지 로딩 없이 현재 Set_ID만 사용합니다.
   ========================================================= */
   .wm-study-shell{
-    --wm-level-accent:#FF9F1C;
+    --wm-level-accent:#f59e0b;
     --wm-level-accent-text:#08285f;
     width:calc(100% - 32px);
     max-width:980px;
@@ -810,10 +816,10 @@ const WM_LMS_URL = WM_CONFIG.LMS_URL;
     box-sizing:border-box;
     font-family:Arial,sans-serif;
   }
-  .wm-study-shell.wm-level-elementary{--wm-level-accent:#FF9F1C;--wm-level-accent-text:#08285f;}
-  .wm-study-shell.wm-level-middle{--wm-level-accent:#38BDF8;--wm-level-accent-text:#08285f;}
-  .wm-study-shell.wm-level-high{--wm-level-accent:#22D67A;--wm-level-accent-text:#062b1b;}
-  .wm-study-shell.wm-level-csat{--wm-level-accent:#B56CFF;--wm-level-accent-text:#ffffff;}
+  .wm-study-shell.wm-level-elementary{--wm-level-accent:#f59e0b;--wm-level-accent-text:#08285f;}
+  .wm-study-shell.wm-level-middle{--wm-level-accent:#38bdf8;--wm-level-accent-text:#08285f;}
+  .wm-study-shell.wm-level-high{--wm-level-accent:#22c55e;--wm-level-accent-text:#062b1b;}
+  .wm-study-shell.wm-level-csat{--wm-level-accent:#a78bfa;--wm-level-accent-text:#ffffff;}
 
   .wm-study-banner{
     padding:22px 24px 21px;
@@ -1370,6 +1376,8 @@ function wmStudyShowSessionExpiredModal(){
 
 async function wmStudyCheckCurrentSession(options){
   options = options || {};
+  if(WM_DEV_LIVE_REVIEW_MODE) return true;
+
   /* WM_STUDY_SESSION_GUARD_STRICT_FIX_V2_20260611
      학생ID 또는 sessionToken이 없으면 세션검사를 통과시키지 않습니다.
      이전 코드의 return true 때문에 토큰 누락 상태에서 자동로그아웃이 무력화될 수 있었습니다. */
@@ -1417,6 +1425,7 @@ async function wmStudyCheckCurrentSession(options){
 }
 
 function wmStudyStartSessionWatcher(){
+  if(WM_DEV_LIVE_REVIEW_MODE) return;
   if(wmStudySessionCheckTimer) clearInterval(wmStudySessionCheckTimer);
   wmStudyCheckCurrentSession();
   wmStudySessionCheckTimer = setInterval(function(){
@@ -1690,6 +1699,7 @@ function wmStudyModeCacheKey(setId){
 }
 
 function wmReadCachedStudyMode(setId){
+  if(WM_DEV_LIVE_REVIEW_MODE) return null;
   try{
     const raw = localStorage.getItem(wmStudyModeCacheKey(setId)) || '';
     if(!raw) return null;
@@ -1701,12 +1711,14 @@ function wmReadCachedStudyMode(setId){
 }
 
 function wmCacheStudyMode(setId, mode){
+  if(WM_DEV_LIVE_REVIEW_MODE) return;
   try{
     localStorage.setItem(wmStudyModeCacheKey(setId), JSON.stringify(wmNormalizeStudyMode(mode)));
   }catch(err){}
 }
 
 function wmClearCachedStudyMode(setId){
+  if(WM_DEV_LIVE_REVIEW_MODE) return;
   try{
     localStorage.removeItem(wmStudyModeCacheKey(setId));
   }catch(err){}
@@ -3284,6 +3296,8 @@ function wmNormalizeCompletedStepsFromProgress(progress){
 }
 
 async function wmLoadLearningProgress(){
+  if(WM_DEV_LIVE_REVIEW_MODE) return null;
+
   /* WM_STUDY_RESUME_FORCE_RELOAD_V1
      복귀 적용 공식: 학습 시작 버튼을 누를 때마다 getLearningProgress를 다시 호출합니다.
      이유: Step 저장은 정상인데, 같은 Study 화면에서 나갔다가 다시 시작할 때
@@ -3534,6 +3548,7 @@ function buildLearningPayload(status){
 function saveProgressSnapshot(status){
   const payload=buildLearningPayload(status);
   latestSavedPayload=payload;
+  if(WM_DEV_LIVE_REVIEW_MODE) return payload;
   try{
     localStorage.setItem(`wordmate_${currentSetName}_latest_record`, JSON.stringify(payload));
     localStorage.setItem(`wordmate_${STUDENT_NAME}_last_progress`, JSON.stringify({
@@ -3569,6 +3584,12 @@ function wmNormalizeOfficialNextSetId(setId){
 }
 
 async function saveLearningRecord(status="completed"){
+  if(WM_DEV_LIVE_REVIEW_MODE){
+    const payload = buildLearningPayload(status);
+    latestSavedPayload = payload;
+    return {ok:true, reviewMode:true, saveBlocked:true, payload};
+  }
+
   const sessionOk = await wmStudyCheckCurrentSession();
   if(!sessionOk) return {ok:false, sessionExpired:true};
 
@@ -3652,12 +3673,14 @@ async function wmEnsureFinalSave_(){
 }
 
 function returnToLmsIfReady(){
+  if(WM_DEV_LIVE_REVIEW_MODE) return;
   if(WM_LMS_RETURN_URL){
     window.location.href=WM_LMS_RETURN_URL;
   }
 }
 
 function requestLearningFullscreen(){
+  if(WM_DEV_LIVE_REVIEW_MODE) return;
   const el=document.documentElement;
   if(document.fullscreenElement) return;
   if(el.requestFullscreen){
@@ -3898,6 +3921,7 @@ function wmStudyRestoreMapLoginStorage(){
 }
 
 function wmStudyReturnToMap(){
+  if(WM_DEV_LIVE_REVIEW_MODE) return;
   const mapUrl = wmBuildReturnToMapUrl();
   wmStudyRestoreMapLoginStorage();
 
