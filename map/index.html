@@ -706,11 +706,6 @@ const WM_LMS_URL = WM_CONFIG.LMS_URL;
       </div>
     </div>
 
-    <div class="wm-map-wrong-summary" aria-label="오답 기록">
-      <button type="button" id="summaryLatestWrongWords" class="wm-map-wrong-btn" disabled>틀린단어(-)</button>
-      <button type="button" id="summaryCumulativeWrongWords" class="wm-map-wrong-btn wm-map-cumulative-btn" disabled>누적오답(-)</button>
-    </div>
-
     <div id="setMap" class="set-map"></div>
 
   </div>
@@ -789,6 +784,11 @@ const WM_LMS_URL = WM_CONFIG.LMS_URL;
         <div>
           <span>최근 점수</span>
           <strong id="summaryRecentScore">-</strong>
+        </div>
+
+        <div>
+          <span>누적오답</span>
+          <button type="button" id="summaryCumulativeWrongWords" class="wm-map-wrong-btn wm-map-cumulative-btn" disabled>누적오답(-)</button>
         </div>
 
       </div>
@@ -1283,14 +1283,6 @@ body.wm-map-loading-active #wm-learning-record-widget{
   gap:8px;
 }
 
-.wm-map-wrong-summary{
-  display:flex;
-  align-items:center;
-  justify-content:flex-end;
-  gap:8px;
-  margin:10px 0 12px;
-}
-
 .wm-report-view-button{
   margin-left:0;
   width:180px;
@@ -1447,7 +1439,7 @@ body.wm-map-loading-active #wm-learning-record-widget{
 
 .record-summary{
   display:grid;
-  grid-template-columns:repeat(4,1fr);
+  grid-template-columns:repeat(5,1fr);
   gap:10px;
   margin-bottom:14px;
 }
@@ -1709,8 +1701,6 @@ body.wm-map-loading-active #wm-learning-record-widget{
     margin-left:0;
   }
   .wm-report-view-button{flex:1 1 0;width:auto;}
-  .wm-map-wrong-summary{justify-content:stretch;}
-  .wm-map-wrong-summary .wm-map-wrong-btn{flex:1 1 0;min-width:0;}
 
   .record-summary{
     grid-template-columns:repeat(2,1fr);
@@ -4288,16 +4278,6 @@ function wmRenderMapWrongWordsCell_(record){
   return '<button type="button" class="wm-map-wrong-btn" onclick="wmOpenMapWrongWordsModal_(\'' + key + '\')">' + escapeHtml(context.title) + '</button>';
 }
 
-function wmBuildMapLatestWrongContext_(records, levelNumber){
-  const level = Number(levelNumber || 0);
-  const sorted = wmSortLearningRecordsDesc_(Array.isArray(records) ? records : []);
-  for(const record of sorted){
-    if(level && Number(wmRecordLevelNumber_(record)) !== level) continue;
-    return wmBuildMapRecordWrongContext_(record);
-  }
-  return null;
-}
-
 function wmBuildMapCumulativeWrongContext_(records, levelNumber){
   const level = Number(levelNumber || 0);
   if(!level) return null;
@@ -4372,42 +4352,33 @@ function wmCloseMapWrongWordsModal_(){
   if(modal) modal.classList.remove('is-open');
 }
 
-function wmUpdateMapWrongWordButtons_(){
-  const latestBtn = document.getElementById('summaryLatestWrongWords');
+function wmOpenMapCumulativeWrongFromSummary_(){
   const cumulativeBtn = document.getElementById('summaryCumulativeWrongWords');
   const sourceRecords = Array.isArray(wmLearningRecords) ? wmLearningRecords : [];
+  const context = wmBuildMapCumulativeWrongContext_(sourceRecords,currentLevelNumber);
 
-  if(latestBtn){
-    const latestContext = wmBuildMapLatestWrongContext_(sourceRecords,currentLevelNumber);
-    if(!latestContext){
-      latestBtn.textContent = '틀린단어(-)';
-      latestBtn.disabled = true;
-      latestBtn.onclick = null;
-    }else{
-      const latestKey = wmRegisterMapWrongWordContext_(latestContext);
-      latestBtn.textContent = latestContext.title;
-      latestBtn.disabled = false;
-      latestBtn.onclick = function(){ wmOpenMapWrongWordsModal_(latestKey); };
-    }
-  }
-
-  if(cumulativeBtn){
-    const cumulativeContext = wmBuildMapCumulativeWrongContext_(sourceRecords,currentLevelNumber);
-    if(!cumulativeContext){
+  if(!context){
+    if(cumulativeBtn){
       cumulativeBtn.textContent = '누적오답(-)';
       cumulativeBtn.disabled = true;
       cumulativeBtn.onclick = null;
-    }else{
-      const cumulativeKey = wmRegisterMapWrongWordContext_(cumulativeContext);
-      cumulativeBtn.textContent = cumulativeContext.buttonLabel;
-      cumulativeBtn.disabled = false;
-      cumulativeBtn.onclick = function(){ wmOpenMapWrongWordsModal_(cumulativeKey); };
     }
+    return;
   }
+
+  const key = wmRegisterMapWrongWordContext_(context);
+  if(cumulativeBtn) cumulativeBtn.textContent = context.buttonLabel;
+  wmOpenMapWrongWordsModal_(key);
 }
 
 function wmUpdateMapCumulativeWrongButton_(){
-  wmUpdateMapWrongWordButtons_();
+  const btn = document.getElementById('summaryCumulativeWrongWords');
+  if(!btn) return;
+
+  const hasRecords = Array.isArray(wmLearningRecords) && wmLearningRecords.length > 0;
+  btn.textContent = '누적오답(-)';
+  btn.disabled = !hasRecords;
+  btn.onclick = hasRecords ? wmOpenMapCumulativeWrongFromSummary_ : null;
 }
 
 function wmRenderCurrentProgressGuide_(){
