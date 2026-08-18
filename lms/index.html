@@ -1279,6 +1279,12 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
           <label>학교<input type="text" id="wmStudentRegisterSchool" placeholder="학교명" /></label>
           <label>학년<select id="wmStudentRegisterGrade"><option value="">학년을 선택하세요.</option><option value="초1">초1</option><option value="초2">초2</option><option value="초3">초3</option><option value="초4">초4</option><option value="초5">초5</option><option value="초6">초6</option><option value="중1">중1</option><option value="중2">중2</option><option value="중3">중3</option><option value="고1">고1</option><option value="고2">고2</option><option value="고3">고3</option></select></label>
           <label>주소<input type="text" id="wmStudentRegisterAddress" placeholder="주소" /></label>
+          <label data-wm-student-sensitive="parent">수신자구분
+            <div class="wm-recipient-type-wrap">
+              <select id="wmStudentRegisterRecipientType" class="wm-recipient-type-select" onchange="wmToggleStudentRegisterRecipientType()"><option value="">선택</option><option value="부">부</option><option value="모">모</option><option value="기타">기타</option></select>
+              <input type="text" id="wmStudentRegisterRecipientTypeCustom" class="wm-recipient-type-custom" placeholder="기타 관계 직접입력" maxlength="20" disabled />
+            </div>
+          </label>
           <label data-wm-student-sensitive="parent">학부모명<input type="text" id="wmStudentRegisterParent" placeholder="학부모명" /></label>
           <label data-wm-student-sensitive="parent">학부모연락처<input type="text" id="wmStudentRegisterParentPhone" placeholder="010-0000-0000" /></label>
           <label data-wm-student-sensitive="payment">최종결제<input type="date" id="wmStudentRegisterLastPayment" /></label>
@@ -9017,6 +9023,22 @@ function wmResetStudentRegisterPassword(){
   if(el) el.value = '1111';
 }
 
+function wmToggleStudentRegisterRecipientType(){
+  const select=document.getElementById('wmStudentRegisterRecipientType');
+  const custom=document.getElementById('wmStudentRegisterRecipientTypeCustom');
+  if(!select||!custom) return;
+  const isCustom=select.value==='기타';
+  custom.disabled=!isCustom;
+  if(!isCustom) custom.value='';
+}
+
+function wmStudentRegisterRecipientTypeValue(){
+  const select=document.getElementById('wmStudentRegisterRecipientType');
+  const custom=document.getElementById('wmStudentRegisterRecipientTypeCustom');
+  if(!select) return '';
+  return select.value==='기타' ? String(custom&&custom.value||'').trim() : String(select.value||'').trim();
+}
+
 function wmCollectStudentRegisterPayload(){
   wmHandleStudentRegisterClassChange(wmStudentRegisterValue('wmStudentRegisterClass'));
   const id = wmStudentRegisterIdRawValue(wmStudentRegisterValue('wmStudentRegisterId'));
@@ -9039,6 +9061,7 @@ function wmCollectStudentRegisterPayload(){
     school:wmStudentRegisterValue('wmStudentRegisterSchool').trim(),
     grade:wmStudentRegisterValue('wmStudentRegisterGrade').trim(),
     address:wmStudentRegisterValue('wmStudentRegisterAddress').trim(),
+    recipientType:wmStudentRegisterRecipientTypeValue(),
     parentName:wmStudentRegisterValue('wmStudentRegisterParent').trim(),
     parentPhone:wmStudentRegisterValue('wmStudentRegisterParentPhone').trim(),
     lastPayment:wmStudentRegisterValue('wmStudentRegisterLastPayment'),
@@ -9059,7 +9082,7 @@ function wmCollectStudentRegisterPayload(){
     memo:wmStudentRegisterValue('wmStudentRegisterMemo').trim()
   };
   const access=wmStudentDataAccessForCurrentActor_();
-  if(!access.parent){ payload.parentName=''; payload.parentPhone=''; }
+  if(!access.parent){ payload.recipientType=''; payload.parentName=''; payload.parentPhone=''; }
   if(!access.payment){
     payload.lastPayment='';payload.registerDate='';payload.firstRegisterDate='';payload.recentPaymentDate='';
     payload.paymentGapDays='';payload.reregisterCount='';payload.totalRegisterPeriod='';
@@ -9083,6 +9106,7 @@ function wmCollectStudentRegisterPayload(){
     '학교':payload.school,
     '학년':payload.grade,
     '주소':payload.address,
+    '수신자구분':payload.recipientType,
     '학부모명':payload.parentName,
     '학부모연락처':payload.parentPhone,
     '최종결제':payload.lastPayment,
@@ -9106,13 +9130,14 @@ function wmCollectStudentRegisterPayload(){
 }
 
 function wmClearStudentRegisterForm(){
-  ['wmStudentRegisterId','wmStudentRegisterSerial','wmStudentRegisterName','wmStudentRegisterPassword','wmStudentRegisterLearningStartDate','wmStudentRegisterLearningEndDate','wmStudentRegisterSchool','wmStudentRegisterGrade','wmStudentRegisterClass','wmStudentRegisterTeacher','wmStudentRegisterCurrentSet','wmStudentRegisterAddress','wmStudentRegisterParent','wmStudentRegisterParentPhone','wmStudentRegisterLastPayment','wmStudentRegisterDate','wmStudentRegisterFirstDate','wmStudentRegisterRecentPayment','wmStudentRegisterPaymentGap','wmStudentRegisterReregisterCount','wmStudentRegisterTotalPeriod','wmStudentRegisterClassId','wmStudentRegisterTeacherId','wmStudentRegisterSession','wmStudentRegisterSessionStatus','wmStudentRegisterLastLogin','wmStudentRegisterDevice','wmStudentRegisterMemo'].forEach(id=>{
+  ['wmStudentRegisterId','wmStudentRegisterSerial','wmStudentRegisterName','wmStudentRegisterPassword','wmStudentRegisterLearningStartDate','wmStudentRegisterLearningEndDate','wmStudentRegisterSchool','wmStudentRegisterGrade','wmStudentRegisterClass','wmStudentRegisterTeacher','wmStudentRegisterCurrentSet','wmStudentRegisterAddress','wmStudentRegisterRecipientType','wmStudentRegisterRecipientTypeCustom','wmStudentRegisterParent','wmStudentRegisterParentPhone','wmStudentRegisterLastPayment','wmStudentRegisterDate','wmStudentRegisterFirstDate','wmStudentRegisterRecentPayment','wmStudentRegisterPaymentGap','wmStudentRegisterReregisterCount','wmStudentRegisterTotalPeriod','wmStudentRegisterClassId','wmStudentRegisterTeacherId','wmStudentRegisterSession','wmStudentRegisterSessionStatus','wmStudentRegisterLastLogin','wmStudentRegisterDevice','wmStudentRegisterMemo'].forEach(id=>{
     const el = document.getElementById(id);
     if(el) el.value = '';
   });
   const s4El = document.getElementById('wmStudentRegisterS4');
   if(s4El) s4El.value = '4단계';
   wmFillStudentRegisterClassOptions('');
+  wmToggleStudentRegisterRecipientType();
   const teacherEl = document.getElementById('wmStudentRegisterTeacher');
   if(teacherEl){
     teacherEl.value = '';
@@ -9153,6 +9178,12 @@ async function wmApplyStudentRegister(){
     alert('학습종료일은 학습시작일보다 빠를 수 없습니다.');
     return;
   }
+  const recipientSelect=document.getElementById('wmStudentRegisterRecipientType');
+  if(recipientSelect&&recipientSelect.value==='기타'&&!payload.recipientType){
+    wmSetStudentRegisterStatus('err', '기타 수신자 관계를 입력해주세요.');
+    alert('기타 수신자 관계를 입력해주세요.');
+    return;
+  }
   const params = new URLSearchParams(Object.assign({mode:'saveStudentToDB', actorTeacherId:wmGetSettingActorTeacherId(), ts:String(Date.now())}, payload));
   const submitButton = document.getElementById('wmStudentRegisterSubmitBtn');
   if(submitButton) submitButton.disabled = true;
@@ -9166,12 +9197,17 @@ async function wmApplyStudentRegister(){
       return;
     }
     wmSetStudentRegisterStatus('ok', '학생관리_DB·반관리_DB 저장완료');
-    wmClearStudentRegisterForm();
+    const savedStudent=Object.assign({}, payload, (data&&data.student)||{}, {
+      '학생일련번호':String((data&&data.studentSerial)||payload.studentSerial||''),
+      '학생ID':String((data&&data.studentId)||payload.studentId||'')
+    });
+    const savedIdKey=wmStudentRegisterIdCompareKey(savedStudent['학생ID']);
+    WM_STUDENT_MANAGE_ROWS=[savedStudent].concat((WM_STUDENT_MANAGE_ROWS||[]).filter(row=>
+      wmStudentRegisterIdCompareKey(row&&row['학생ID'])!==savedIdKey
+    ));
     WM_STUDENT_MANAGE_PAGE = 1;
-    await Promise.all([
-      loadStudents(),
-      loadSettingCenterDB()
-    ]);
+    renderStudentManageRows();
+    wmClearStudentRegisterForm();
   }catch(err){
     wmSetStudentRegisterStatus('err', '학생관리_DB 저장 오류: ' + (err && err.message ? err.message : err));
   }finally{
