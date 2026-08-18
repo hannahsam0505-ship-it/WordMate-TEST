@@ -1831,34 +1831,6 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
   .wmr-sheet[data-wm-template="fixed"] .wmr-monthly-condition-number{
     color:#dc2626 !important;
   }
-  .wmr-sheet[data-wm-template="fixed"] .wmr-weekly-issue-note{
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-    height:20px !important;
-    min-height:20px !important;
-    max-height:20px !important;
-    margin:-5px 10px 0 !important;
-    padding:2px 8px !important;
-    box-sizing:border-box !important;
-    border:1px solid #dbeafe !important;
-    border-radius:6px !important;
-    background:#f4f9ff !important;
-    color:#1e3a5f !important;
-    font-size:10px !important;
-    font-weight:800 !important;
-    line-height:1 !important;
-    white-space:nowrap !important;
-    overflow:hidden !important;
-  }
-  .wmr-sheet[data-wm-template="fixed"] .wmr-weekly-issue-note small{
-    margin-left:4px !important;
-    color:#64748b !important;
-    font-size:9px !important;
-    font-weight:750 !important;
-    line-height:1 !important;
-  }
-
   /* 3. KPI 내부 글자와 간격 */
   .wmr-sheet[data-wm-template="fixed"] .wmr-kpi-label{
     height:14px !important;
@@ -2070,7 +2042,6 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
     <div class="wmr-info-item"><span class="wmr-info-icon" aria-hidden="true"><svg viewBox="0 0 32 32"><circle cx="16" cy="8" r="4.5"/><path d="M7 27c1-7 4-11 9-11s8 4 9 11M9 27h14M12 20h8"/></svg></span><span class="wmr-info-copy"><span>Class</span><strong data-wmr-class data-wm-bind="className">해나반</strong></span></div>
     <div class="wmr-info-item"><span class="wmr-info-icon" aria-hidden="true"><svg viewBox="0 0 32 32"><rect x="7" y="3" width="18" height="26" rx="1.5"/><path d="M11 8h10M11 12h10M11 18h3M17 18h4M11 22h3M17 22h4"/></svg></span><span class="wmr-info-copy"><span>학습레벨</span><strong data-wmr-level data-wm-bind="learningLevel">Level 3</strong></span></div>
   </section>
-  <div class="wmr-weekly-issue-note">최근 성적표는 Weekly(주간) 누적 발행 기준으로 지난주까지 반영됩니다.<small>(금주 학습은 차주 반영)</small></div>
   <div class="wmr-section-title">✦ 월 누적 학습 결과 ✦ <small class="wmr-monthly-condition" data-wmr-monthly-condition data-wm-bind="monthlyCondition">(레벨완료조건 <span class="wmr-monthly-condition-number">2</span>회 중 <span class="wmr-monthly-condition-number">2</span>회차 진행중)</small></div>
   <section class="wmr-kpis" data-wmr-section="3" data-wmr-design-fixed="true" data-wm-lock="design" data-wmr-data-scope="monthly-summary">
     <div class="wmr-kpi"><div class="wmr-kpi-label">완료 세트 수</div><div class="wmr-kpi-main"><span class="wmr-kpi-icon book" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M5 7.5c4-1.3 7.2-.7 11 1.7v17c-3.8-2.4-7-3-11-1.7z" fill="currentColor" opacity=".22"/><path d="M27 7.5c-4-1.3-7.2-.7-11 1.7v17c3.8-2.4 7-3 11-1.7z" fill="currentColor" opacity=".12"/><path d="M5 7.5c4-1.3 7.2-.7 11 1.7v17c-3.8-2.4-7-3-11-1.7zM27 7.5c-4-1.3-7.2-.7-11 1.7v17c3.8-2.4 7-3 11-1.7zM16 9.2v17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></span><span class="wmr-kpi-value" data-wmr-completed data-wm-bind="completedSets">8</span><span class="wmr-kpi-unit">세트</span></div><div class="wmr-kpi-sub" data-wmr-kpi-completed-sub data-wm-bind="completedSetsSub">2회차 기준</div></div>
@@ -5190,22 +5161,19 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       return true;
     }
 
-    function wmBuildSharedActualReportHtml(templateHtml,reportData){
-      const parser=document.createElement('div');
-      parser.innerHTML=bindMonthlyReportSingleValues(templateHtml,reportData);
-      bindReportGradeComment(parser.querySelector('.wmr-sheet'),reportData&&reportData.grade||{});
-      return parser.innerHTML;
+    async function wmBuildSharedActualReportHtml(reportData){
+      const renderer=await wmLoadSharedReportRenderer_();
+      return renderer.render(reportData);
     }
 
     async function openReportDetail(reportId){
       wmLockStatusMessage('ReportDB_V2_LOCK','성적표조회 상세 성적표 열기');
       closeReportStudentRecords();
       closeReportDetail();
-      const template=document.getElementById('wmReportTemplate');
       const modal=document.getElementById('wmReportDesignPreviewModal');
       const modalBody=document.getElementById('wmReportDesignPreviewModalBody');
       const modalTitle=document.querySelector('.wm-report-preview-modal-title');
-      if(!template || !modal || !modalBody){ alert(reportId+' 성적표 모달을 찾을 수 없습니다.'); return; }
+      if(!modal || !modalBody){ alert(reportId+' 성적표 모달을 찾을 수 없습니다.'); return; }
 
       if(modalTitle) modalTitle.textContent='실제 성적표 조회 중';
       modalBody.innerHTML='<div class="wm-report-detail-loading"><span class="wm-loading-spinner"></span><span>성적표를 불러오는 중입니다.</span></div>';
@@ -5225,7 +5193,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
         if(!reportResult || !reportResult.success || !reportResult.data){
           throw new Error(reportResult&&reportResult.message?reportResult.message:'성적 내용이 없습니다.');
         }
-        const reportHtml=wmBuildSharedActualReportHtml(template.innerHTML,reportResult.data);
+        const reportHtml=await wmBuildSharedActualReportHtml(reportResult.data);
         setReportActualPreview(reportHtml,reportId,clickedReportRow);
         openReportDesignPreview();
       }catch(err){
@@ -7178,11 +7146,10 @@ function extractRecordRowsFromResponse(data){
         '학습날짜':year+'-'+month+'-01',
         '리포트주차':year+'-'+month+'-'+week+'주차'
       };
-      const template=document.getElementById('wmReportTemplate');
       const modal=document.getElementById('wmReportDesignPreviewModal');
       const modalBody=document.getElementById('wmReportDesignPreviewModalBody');
       const modalTitle=document.querySelector('.wm-report-preview-modal-title');
-      if(!row['학생ID']||!year||!month||!template||!modal||!modalBody) return;
+      if(!row['학생ID']||!year||!month||!modal||!modalBody) return;
       modal.classList.add('active');
       document.body.classList.add('wm-report-preview-open');
       if(modalTitle) modalTitle.textContent='성적표보기 · 조회 중';
@@ -7190,7 +7157,7 @@ function extractRecordRowsFromResponse(data){
       try{
         const result=await fetchMonthlyReportSingleData(row);
         if(!result||!result.success||!result.data) throw new Error(result&&result.message||'성적 내용이 없습니다.');
-        const reportHtml=wmBuildSharedActualReportHtml(template.innerHTML,result.data);
+        const reportHtml=await wmBuildSharedActualReportHtml(result.data);
         setReportActualPreview(reportHtml,'GRADE-'+row['학생ID']+'-'+year+month+'-'+week,row);
         openReportDesignPreview();
       }catch(err){
