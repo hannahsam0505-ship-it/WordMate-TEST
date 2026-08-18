@@ -242,12 +242,12 @@ const WM_LMS_URL = WM_CONFIG.LMS_URL;
   }
 })();
 
-/* WM_MAP_LOGIN_ENTRY_GUARD_V2_20260818
-   서버 세션 확인 전 학생정보/학습맵 본문은 숨기되, 백지 대신 안전한 로딩 화면을 즉시 표시합니다. */
+/* WM_MAP_LOGIN_ENTRY_GUARD_V3_20260818
+   서버 세션 확인 전에도 실제 학습맵 기본틀을 즉시 표시하고, 인증 완료 전 학습 데이터만 비활성 상태로 둡니다. */
 (function(){
   const authStyle = document.createElement('style');
   authStyle.id = 'wmMapAuthGuardStyle';
-  authStyle.textContent = 'html.wm-map-auth-pending body{visibility:visible !important;min-height:100vh;background:#f4f8ff !important;}html.wm-map-auth-pending body>*{visibility:hidden !important;}html.wm-map-auth-pending body:before{content:"학습맵을 불러오는 중입니다.";visibility:visible !important;position:fixed;inset:0;z-index:2147483647;display:flex;align-items:center;justify-content:center;font:800 18px Pretendard,Arial,sans-serif;color:#0c4db4;background:#f4f8ff;}html.wm-map-auth-pending body:after{content:"";visibility:visible !important;position:fixed;z-index:2147483647;left:50%;top:calc(50% + 58px);width:52px;height:52px;margin-left:-26px;border:6px solid rgba(12,77,180,.18);border-top-color:#0c4db4;border-radius:50%;box-sizing:border-box;animation:wmMapEntrySpin .8s linear infinite;}@keyframes wmMapEntrySpin{to{transform:rotate(360deg);}}';
+  authStyle.textContent = 'html.wm-map-auth-pending body{visibility:visible !important;min-height:100vh;background:#f4f8ff !important;}html.wm-map-auth-pending #wm-map-root{visibility:visible !important;}';
   (document.head || document.documentElement).appendChild(authStyle);
   document.documentElement.classList.add('wm-map-auth-pending');
 })();
@@ -942,42 +942,23 @@ body.wm-homework-fixed-scroll-ready{
   background:#fff;
 }
 
-.wm-map-loading-block{
-  min-height:260px;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  text-align:center;
-  border-radius:14px;
+.wm-map-skeleton-block{
+  position:relative;
+  overflow:hidden;
   background:#EFF6FD;
-  color:#111;
-  font-size:20px;
-  font-weight:900;
-  line-height:1.6;
+  color:#64748b;
   cursor:wait;
+  pointer-events:none;
   user-select:none;
 }
 
-.wm-map-loading-spinner{
-  width:42px;
-  height:42px;
-  border:5px solid #bfdbfe;
-  border-top-color:#2563eb;
+.wm-map-skeleton-dot{
+  display:inline-block;
+  width:22px;
+  height:22px;
+  margin-bottom:4px;
   border-radius:50%;
-  margin-bottom:16px;
-  animation:wmMapSpin 1s linear infinite;
-}
-
-.wm-map-loading-sub{
-  margin-top:8px;
-  font-size:16px;
-  font-weight:800;
-  color:#555;
-}
-
-@keyframes wmMapSpin{
-  to{transform:rotate(360deg);}
+  background:#cbd5e1;
 }
 
 body.wm-map-loading-active .set-map,
@@ -2465,31 +2446,43 @@ function wmInitLearningMap(){
   wmFetchLearningMap(wmCurrentStudent.학생ID);
 }
 
-function wmShowMapLoadingState_(){
+function wmRenderMapFrameSkeleton_(){
   const map = document.getElementById('setMap');
+  if(!map || wmMapDataReady) return;
+
+  const partConfig = WM_LEVEL_CONFIG[currentLevelNumber] || WM_LEVEL_CONFIG[4];
+  const rows = [];
+  for(let part=partConfig.length; part>=1; part--){
+    const maxSet = partConfig[part - 1];
+    const rowItems = [];
+    for(let set=1; set<=maxSet; set++){
+      rowItems.push(currentLevelNumber + '-' + part + '-' + set);
+    }
+    rows.push(rowItems);
+  }
+
+  map.innerHTML = rows.map(function(rowItems){
+    const shortClass = rowItems.length < 10 ? ' set-row-short' : '';
+    const shortStyle = rowItems.length < 10 ? ' style="grid-template-columns:repeat(' + rowItems.length + ',1fr);"' : '';
+    return '<div class="set-row' + shortClass + '"' + shortStyle + '>'
+      + rowItems.map(function(setId){
+          return '<button class="set-block wm-map-skeleton-block" type="button" disabled tabindex="-1" aria-hidden="true">'
+            + '<span class="wm-map-skeleton-dot"></span><br><small>' + setId + '</small></button>';
+        }).join('')
+      + '</div>';
+  }).join('');
+}
+
+function wmShowMapLoadingState_(){
   document.body.classList.add('wm-map-loading-active');
   if(!wmMapLoadingStartAt){
     wmMapLoadingStartAt = Date.now();
   }
-  if(map){
-    const seconds = Math.max(0, Math.floor((Date.now() - wmMapLoadingStartAt) / 1000));
-    map.innerHTML = '<div class="wm-map-loading-block" aria-live="polite">'
-      + '<div class="wm-map-loading-spinner" aria-hidden="true"></div>'
-      + '<div>학습맵을 불러오는 중입니다.</div>'
-      + '<div class="wm-map-loading-sub">DB 확인 중입니다. 세트 버튼은 로딩 완료 후 활성화됩니다. (' + seconds + '초)</div>'
-      + '</div>';
-  }
+  wmRenderMapFrameSkeleton_();
   setText('summaryTotalSet', '-');
   setText('summaryCompleteSet', '-');
   setText('summaryProgress', '-');
   setText('summaryRecentScore', '-');
-  if(!wmMapLoadingTimer){
-    wmMapLoadingTimer = setInterval(function(){
-      if(!wmMapDataReady){
-        wmShowMapLoadingState_();
-      }
-    }, 1000);
-  }
 }
 
 function wmStopMapLoadingState_(){
