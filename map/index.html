@@ -4679,6 +4679,10 @@ async function startStudy(setId){
   const studentId = wmCurrentStudent && wmCurrentStudent.학생ID ? String(wmCurrentStudent.학생ID).trim().toUpperCase() : '';
   const studentName = wmCurrentStudent && wmCurrentStudent.학생이름 ? String(wmCurrentStudent.학생이름).trim() : '';
   const learningAssign = wmCurrentStudent && wmCurrentStudent.학습배정 ? String(wmCurrentStudent.학습배정).trim() : '';
+  const school = wmCurrentStudent && wmCurrentStudent.학교 ? String(wmCurrentStudent.학교).trim() : '';
+  const grade = wmCurrentStudent && wmCurrentStudent.학년 ? String(wmCurrentStudent.학년).trim() : '';
+  const className = wmCurrentStudent && wmCurrentStudent.Class ? String(wmCurrentStudent.Class).trim() : '';
+  const teacherName = wmCurrentStudent && wmCurrentStudent.교사명 ? String(wmCurrentStudent.교사명).trim() : '';
   const sessionToken = wmGetCurrentSessionToken();
 
   const studyUrl =
@@ -4694,6 +4698,11 @@ async function startStudy(setId){
     + '&studentName=' + encodeURIComponent(studentName)
     + '&name=' + encodeURIComponent(studentName)
     + '&wmStudentName=' + encodeURIComponent(studentName)
+    + '&school=' + encodeURIComponent(school)
+    + '&grade=' + encodeURIComponent(grade)
+    + '&className=' + encodeURIComponent(className)
+    + '&Class=' + encodeURIComponent(className)
+    + '&teacherName=' + encodeURIComponent(teacherName)
     + '&learningAssign=' + encodeURIComponent(learningAssign)
     + '&wmLearningAssign=' + encodeURIComponent(learningAssign)
     + '&sessionToken=' + encodeURIComponent(sessionToken)
