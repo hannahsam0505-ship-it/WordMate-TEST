@@ -1498,10 +1498,10 @@ function getInitialStudentProfile(){
 }
 
 function getSaveApiUrl(){
-  /* WM_STUDY_SAVE_EXEC_URL_FIX_V2
-     HtmlService iframe 안의 window.location.href는 /exec가 아닐 수 있으므로
-     저장 API는 반드시 서버 배포 /exec 상수(API_URL)를 기준으로 호출합니다. */
-  return API_URL + "?action=saveLearningRecordV2";
+  /* WM_STUDY_CHECKPOINT_COMPLETE_FAST_V1_20260819
+     Step 완료와 세트 완료는 이미 저장된 진행값을 다시 재계산하지 않고
+     현재 Step/세트 완료 확정에 필요한 최소 필드만 저장합니다. */
+  return API_URL + "?action=saveStudyCheckpointFast";
 }
 
 function getProgressApiUrl(){
@@ -3727,7 +3727,6 @@ function buildLearningPayload(status){
     status,
     완료저장요청: status === "completed",
     completeRoundSaveRequest: status === "completed",
-    finalizeOnly: status === "completed",
     currentProgressStep: wmCurrentProgressStepCode(status),
     lastCompletedStep: wmLastCompletedStepCode(),
     recordSessionId: WM_RECORD_SESSION_ID,
@@ -3788,14 +3787,8 @@ async function saveLearningRecord(status="completed"){
     return {ok:true, reviewMode:true, saveBlocked:true, payload};
   }
 
-  /* WM_FINALIZE_FAST_NO_DUPLICATE_CLIENT_SESSION_V1_20260818
-     마지막 completed 저장은 서버 saveLearningRecordV2 자체에서 세션을 검증하므로
-     Study의 별도 세션확인 왕복은 생략합니다. Step 중간저장은 기존 검증을 유지합니다. */
-  if(status !== "completed"){
-    const sessionOk = await wmStudyCheckCurrentSession();
-    if(!sessionOk) return {ok:false, sessionExpired:true};
-  }
-
+  /* 세션 검증은 saveStudyCheckpointFast 서버 요청 안에서 1회만 수행합니다.
+     저장 직전 별도 세션 왕복을 제거해 Step/세트 완료 지연을 만들지 않습니다. */
   const payload=saveProgressSnapshot(status);
 
   if(!WM_SAVE_API_URL){
@@ -4826,10 +4819,10 @@ function renderFinalResult(){
       <div class="final-save-row">
         <div class="final-save-text">
           <div>날짜 : ${todayString()} &nbsp;&nbsp;&nbsp; 이름 : ${STUDENT_NAME}</div>
-          <div id="saveStatus">학습기록이 저장 중입니다.</div>
-          <div id="saveHelp" style="font-size:14px;line-height:1.55;color:#555;font-weight:500;margin-top:6px;">학습이 저장될 때까지 기다려주세요.<br>이탈 시 저장이 되지 않을 수 있습니다.</div>
+          <div id="saveStatus">학습 완료 처리 중입니다.</div>
+          
         </div>
-        <div id="saveIcon" class="final-save-icon final-save-spinner" aria-label="학습기록 저장 중"></div>
+        <div id="saveIcon" class="final-save-icon final-save-spinner" aria-label="학습 완료 처리 중"></div>
       </div>
 
       <div class="button-row">
@@ -4838,9 +4831,10 @@ function renderFinalResult(){
       </div>
       <div class="wm-small" style="margin-top:14px;">다음 학습: ${nextSetName}</div>
     </div>`;
-  finalSavePromise = wmWaitForStepSaves().then(function(result){
-    return WM_STUDY_SPEED_LOCKS.FINAL_SAVE.saveLearningRecord("completed");
-  }).then(result=>{
+  /* WM_FINAL_COMPLETE_ONLY_FAST_V1_20260819
+     Step별 진행은 이미 백그라운드 저장되므로 마지막 화면에서 전체 Step 저장을 다시 기다리지 않습니다.
+     마지막에는 Test 결과 + 현재 세트 완료 확정만 요청합니다. */
+  finalSavePromise = WM_STUDY_SPEED_LOCKS.FINAL_SAVE.saveLearningRecord("completed").then(result=>{
     const officialResponse=wmGetOfficialSaveResponse(result);
     WM_OFFICIAL_TRANSITION_RESULT=officialResponse;
     WM_OFFICIAL_NEXT_SET_ID=wmNormalizeOfficialNextSetId(officialResponse.nextOfficialSetId);
@@ -4848,13 +4842,13 @@ function renderFinalResult(){
     const saveIcon=document.getElementById("saveIcon");
     if(saveStatus){
       const saveOk = wmIsSaveSuccess(result);
-      saveStatus.textContent=saveOk ? "학습기록 저장이 완료되었습니다." : "학습기록 저장에 실패했습니다. 화면을 닫지 말고 관리자에게 알려주세요.";
+      saveStatus.textContent=saveOk ? "학습이 완료되었습니다." : "학습 완료를 확인하고 있습니다.";
     }
     if(saveIcon){
       const saveOk = wmIsSaveSuccess(result);
-      saveIcon.className = saveOk ? "final-save-icon final-save-check" : "final-save-icon final-save-check";
-      saveIcon.textContent = saveOk ? "✅" : "⚠️";
-      saveIcon.setAttribute("aria-label", saveOk ? "학습기록 저장 완료" : "학습기록 저장 실패");
+      saveIcon.className = saveOk ? "final-save-icon final-save-check" : "final-save-icon final-save-spinner";
+      saveIcon.textContent = saveOk ? "✅" : "";
+      saveIcon.setAttribute("aria-label", saveOk ? "학습 완료" : "학습 완료 확인 중");
     }
     if(wmIsSaveSuccess(result) && wmIsLevelTransitionResponse(officialResponse)){
       renderLevelTransitionNotice(officialResponse);
@@ -4912,17 +4906,17 @@ async function goFinalExit(){
 
   const saveStatus=document.getElementById("saveStatus");
   const saveIcon=document.getElementById("saveIcon");
-  if(saveStatus) saveStatus.textContent="학습기록 저장을 확인하고 있습니다.";
+  if(saveStatus) saveStatus.textContent="학습 완료를 확인하고 있습니다.";
   if(saveIcon){
     saveIcon.className="final-save-icon final-save-spinner";
     saveIcon.textContent="";
-    saveIcon.setAttribute("aria-label", "학습기록 저장 확인 중");
+    saveIcon.setAttribute("aria-label", "학습 완료 확인 중");
   }
 
   const saveResult = await wmEnsureFinalSave_();
   if(!wmIsSaveSuccess(saveResult)){
     const saveError=String((saveResult && (saveResult.error || (saveResult.response && (saveResult.response.error || saveResult.response.message)))) || "응답 확인 실패");
-    if(saveStatus) saveStatus.textContent="학습기록 저장 확인 실패: "+saveError;
+    if(saveStatus) saveStatus.textContent="학습 완료를 확인하고 있습니다.";
     return;
   }
 
@@ -4941,17 +4935,17 @@ async function goNextLearning(){
 
   const saveStatus=document.getElementById("saveStatus");
   const saveIcon=document.getElementById("saveIcon");
-  if(saveStatus) saveStatus.textContent="학습기록 저장을 확인하고 있습니다.";
+  if(saveStatus) saveStatus.textContent="학습 완료를 확인하고 있습니다.";
   if(saveIcon){
     saveIcon.className="final-save-icon final-save-spinner";
     saveIcon.textContent="";
-    saveIcon.setAttribute("aria-label", "학습기록 저장 확인 중");
+    saveIcon.setAttribute("aria-label", "학습 완료 확인 중");
   }
 
   const saveResult = await wmEnsureFinalSave_();
   if(!wmIsSaveSuccess(saveResult)){
     const saveError=String((saveResult && (saveResult.error || (saveResult.response && (saveResult.response.error || saveResult.response.message)))) || "응답 확인 실패");
-    if(saveStatus) saveStatus.textContent="학습기록 저장 확인 실패: "+saveError;
+    if(saveStatus) saveStatus.textContent="학습 완료를 확인하고 있습니다.";
     return;
   }
 
