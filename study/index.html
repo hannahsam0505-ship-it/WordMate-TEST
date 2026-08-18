@@ -3727,6 +3727,7 @@ function buildLearningPayload(status){
     status,
     완료저장요청: status === "completed",
     completeRoundSaveRequest: status === "completed",
+    finalizeOnly: status === "completed",
     currentProgressStep: wmCurrentProgressStepCode(status),
     lastCompletedStep: wmLastCompletedStepCode(),
     recordSessionId: WM_RECORD_SESSION_ID,
@@ -3787,8 +3788,13 @@ async function saveLearningRecord(status="completed"){
     return {ok:true, reviewMode:true, saveBlocked:true, payload};
   }
 
-  const sessionOk = await wmStudyCheckCurrentSession();
-  if(!sessionOk) return {ok:false, sessionExpired:true};
+  /* WM_FINALIZE_FAST_NO_DUPLICATE_CLIENT_SESSION_V1_20260818
+     마지막 completed 저장은 서버 saveLearningRecordV2 자체에서 세션을 검증하므로
+     Study의 별도 세션확인 왕복은 생략합니다. Step 중간저장은 기존 검증을 유지합니다. */
+  if(status !== "completed"){
+    const sessionOk = await wmStudyCheckCurrentSession();
+    if(!sessionOk) return {ok:false, sessionExpired:true};
+  }
 
   const payload=saveProgressSnapshot(status);
 

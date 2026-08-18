@@ -966,6 +966,27 @@ body.wm-map-loading-active #wm-learning-record-widget{
   pointer-events:none;
 }
 
+/* WM_MAP_INLINE_LOADING_SPINNER_V1_20260818
+   최초 진입/Study 복귀 모두 실제 Map 틀을 먼저 보여주고, 세트맵 중앙에서만 대기상태를 표시합니다. */
+.set-map{ position:relative; }
+.wm-map-inline-loading{
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%);
+  z-index:8;
+  width:78px;
+  height:78px;
+  border:9px solid rgba(0,102,204,.18);
+  border-top-color:#0066cc;
+  border-radius:50%;
+  animation:wmMapInlineSpin .82s linear infinite;
+  pointer-events:none;
+  box-sizing:border-box;
+  filter:drop-shadow(0 3px 8px rgba(0,74,153,.16));
+}
+@keyframes wmMapInlineSpin{ to{ transform:translate(-50%,-50%) rotate(360deg); } }
+
 .set-block.wm-map-disabled{
   pointer-events:none;
   opacity:.72;
@@ -2461,7 +2482,7 @@ function wmRenderMapFrameSkeleton_(){
     rows.push(rowItems);
   }
 
-  map.innerHTML = rows.map(function(rowItems){
+  map.innerHTML = '<div class="wm-map-inline-loading" role="status" aria-label="학습맵을 불러오는 중"></div>' + rows.map(function(rowItems){
     const shortClass = rowItems.length < 10 ? ' set-row-short' : '';
     const shortStyle = rowItems.length < 10 ? ' style="grid-template-columns:repeat(' + rowItems.length + ',1fr);"' : '';
     return '<div class="set-row' + shortClass + '"' + shortStyle + '>'
