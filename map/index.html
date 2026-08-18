@@ -2042,6 +2042,13 @@ function wmReadStudentFromRootData(){
   const student = {
     학생ID: String(root.dataset.studentId || '').trim().toUpperCase(),
     학생이름: String(root.dataset.studentName || '').trim(),
+    학교: String(root.dataset.school || '').trim(),
+    학년: String(root.dataset.grade || '').trim(),
+    Class: String(root.dataset.className || '').trim(),
+    교사명: String(root.dataset.teacherName || '').trim(),
+    S4실루엣단계: String(root.dataset.s4 || '').trim(),
+    S6테스트모드: String(root.dataset.s6 || '').trim(),
+    레벨완료조건: String(root.dataset.levelCompleteCondition || '').trim(),
     학습배정: String(root.dataset.learningAssign || '').trim(),
     현재세트: wmNormalizeCurrentSetIdForMap_(root.dataset.currentSet || '') || String(root.dataset.currentSet || '').trim(),
     현재세션: String(root.dataset.sessionToken || root.dataset.currentSession || '').trim(),
@@ -2066,6 +2073,10 @@ function wmReadStudentFromRootData(){
 function wmNormalizeStudentObject(data){
   if(!data || typeof data !== 'object') return null;
 
+  const learningMode = (data.학습모드 && typeof data.학습모드 === 'object')
+    ? data.학습모드
+    : ((data.learningMode && typeof data.learningMode === 'object') ? data.learningMode : {});
+
   const student = {
     학생ID: String(data.학생ID || data.studentId || data.studentID || data.sid || data.id || '').trim().toUpperCase(),
     학생이름: String(data.학생이름 || data.studentName || data.name || data.wmStudentName || '').trim(),
@@ -2074,10 +2085,13 @@ function wmNormalizeStudentObject(data){
     Class: String(data.Class || data.className || data.class || data['반'] || '').trim(),
     교사명: String(data.교사명 || data.teacherName || '').trim(),
     학습배정: String(data.학습배정 || data.learningAssign || data.level || data.wmLearningAssign || '').trim(),
-    S4실루엣단계: String(data.S4실루엣단계 || data.s4 || data.silhouetteStep || '').trim(),
-    S6테스트모드: String(data.S6테스트모드 || data.s6 || data.testMode || '').trim(),
-    레벨완료조건: String(data.레벨완료조건 || data.levelCompleteCondition || '').trim(),
-    학습모드: (data.학습모드 && typeof data.학습모드 === 'object') ? data.학습모드 : null,
+    S4실루엣단계: String(data.S4실루엣단계 || data.s4 || data.silhouetteStep || learningMode.S4실루엣단계 || learningMode.s4 || '').trim(),
+    S6테스트모드: String(data.S6테스트모드 || data.s6 || data.testMode || learningMode.S6테스트모드 || learningMode.s6 || '').trim(),
+    레벨완료조건: String(data.레벨완료조건 || data.levelCompleteCondition || learningMode.레벨완료조건 || learningMode.levelCompleteCondition || '').trim(),
+    레벨완료횟수: String(data.레벨완료횟수 !== undefined ? data.레벨완료횟수 : (data.levelCompleteCount !== undefined ? data.levelCompleteCount : '')).trim(),
+    순차완주세트: String(data.순차완주세트 !== undefined ? data.순차완주세트 : (data.sequentialCompleteSet !== undefined ? data.sequentialCompleteSet : '')).trim(),
+    순차완주회차: String(data.순차완주회차 !== undefined ? data.순차완주회차 : (data.sequentialCompleteRound !== undefined ? data.sequentialCompleteRound : '')).trim(),
+    학습모드: Object.keys(learningMode).length ? learningMode : null,
     현재세트: wmNormalizeCurrentSetIdForMap_(data.현재세트 || data.currentSet || data.setId || data.set_id || '') || String(data.현재세트 || data.currentSet || data.setId || data.set_id || '').trim(),
     현재세션: String(data.현재세션 || data.sessionToken || data.wmSessionToken || '').trim(),
     sessionToken: String(data.sessionToken || data.현재세션 || data.wmSessionToken || '').trim()
@@ -2169,6 +2183,13 @@ function wmResolveStudentInfo(){
     Class: urlClass || rootStudent.Class || serverStudent.Class || storedStudent.Class || '',
     교사명: urlTeacher || rootStudent.교사명 || serverStudent.교사명 || storedStudent.교사명 || '',
     학습배정: urlLevel || rootStudent.학습배정 || serverStudent.학습배정 || storedStudent.학습배정 || '4레벨',
+    S4실루엣단계: rootStudent.S4실루엣단계 || serverStudent.S4실루엣단계 || storedStudent.S4실루엣단계 || '',
+    S6테스트모드: rootStudent.S6테스트모드 || serverStudent.S6테스트모드 || storedStudent.S6테스트모드 || '',
+    레벨완료조건: rootStudent.레벨완료조건 || serverStudent.레벨완료조건 || storedStudent.레벨완료조건 || '',
+    레벨완료횟수: serverStudent.레벨완료횟수 || rootStudent.레벨완료횟수 || storedStudent.레벨완료횟수 || '',
+    순차완주세트: serverStudent.순차완주세트 || rootStudent.순차완주세트 || storedStudent.순차완주세트 || '',
+    순차완주회차: serverStudent.순차완주회차 || rootStudent.순차완주회차 || storedStudent.순차완주회차 || '',
+    학습모드: serverStudent.학습모드 || rootStudent.학습모드 || storedStudent.학습모드 || null,
     현재세트: urlSet || rootStudent.현재세트 || serverStudent.현재세트 || storedStudent.현재세트 || '',
     현재세션: urlSessionToken || rootStudent.현재세션 || serverStudent.현재세션 || storedStudent.현재세션 || storedStudent.sessionToken || '',
     sessionToken: urlSessionToken || rootStudent.sessionToken || serverStudent.sessionToken || storedStudent.sessionToken || storedStudent.현재세션 || ''
@@ -2416,7 +2437,13 @@ function wmInitLearningMap(){
   wmShowMapLoadingState_();
   /* WM_MAP_FAKE_INSTANT_RENDER_DISABLED_V1: 현재진행_DB 응답 전 임시맵 생성 금지 */
 
-  if(wmCurrentStudent.학생ID && !wmCurrentStudent.학생이름 && window.google && google.script && google.script.run){
+  const wmNeedsFullStudentProfile = wmCurrentStudent.학생ID && (
+    !wmCurrentStudent.학생이름 || !wmCurrentStudent.학교 || !wmCurrentStudent.학년 ||
+    !wmCurrentStudent.Class || !wmCurrentStudent.S4실루엣단계 ||
+    !wmCurrentStudent.S6테스트모드 || !wmCurrentStudent.레벨완료조건
+  );
+
+  if(wmNeedsFullStudentProfile && window.google && google.script && google.script.run){
     google.script.run
       .withSuccessHandler(function(profile){
         const normalized = wmNormalizeStudentObject(profile);
@@ -4394,7 +4421,17 @@ function wmRenderCurrentProgressGuide_(){
   const box = document.getElementById('learningDetailBox');
   if(!box) return;
 
-  const source = wmCurrentProgressDisplayOverride || wmLastLearningMapData || wmStudentProfile || wmCurrentStudent || {};
+  const progress = wmCurrentProgressDisplayOverride || {};
+  const mapData = wmLastLearningMapData || {};
+  const profile = wmStudentProfile || {};
+  const student = wmCurrentStudent || {};
+  const mode = (
+    (progress.학습모드 && typeof progress.학습모드 === 'object' && progress.학습모드) ||
+    (mapData.학습모드 && typeof mapData.학습모드 === 'object' && mapData.학습모드) ||
+    (profile.학습모드 && typeof profile.학습모드 === 'object' && profile.학습모드) ||
+    (student.학습모드 && typeof student.학습모드 === 'object' && student.학습모드) ||
+    {}
+  );
   const pick = function(){
     for(let i = 0; i < arguments.length; i += 1){
       const value = arguments[i];
@@ -4405,17 +4442,17 @@ function wmRenderCurrentProgressGuide_(){
 
   box.classList.add('wm-mode-banner-box');
   box.innerHTML = '<div class="wm-learning-mode-banner">'
-    + '<span>S4실루엣단계 : <b class="wm-mode-value">' + escapeHtml(pick(source.S4실루엣단계, source.s4, source.silhouetteStep)) + '</b></span>'
+    + '<span>S4실루엣단계 : <b class="wm-mode-value">' + escapeHtml(pick(progress.S4실루엣단계, mapData.S4실루엣단계, profile.S4실루엣단계, student.S4실루엣단계, mode.S4실루엣단계, mode.s4, '전체')) + '</b></span>'
     + '<span class="wm-banner-sep">|</span>'
-    + '<span>S6TEST모드 : <b class="wm-mode-value">' + escapeHtml(pick(source.S6테스트모드, source.s6, source.testMode)) + '</b></span>'
+    + '<span>S6TEST모드 : <b class="wm-mode-value">' + escapeHtml(pick(progress.S6테스트모드, mapData.S6테스트모드, profile.S6테스트모드, student.S6테스트모드, mode.S6테스트모드, mode.s6, '기본전체')) + '</b></span>'
     + '<span class="wm-banner-sep">|</span>'
-    + '<span>레벨완료조건 : <b class="wm-mode-value">' + escapeHtml(pick(source.레벨완료조건, source.levelCompleteCondition)) + '</b></span>'
+    + '<span>레벨완료조건 : <b class="wm-mode-value">' + escapeHtml(pick(progress.레벨완료조건, mapData.레벨완료조건, profile.레벨완료조건, student.레벨완료조건, mode.레벨완료조건, mode.levelCompleteCondition, '2회')) + '</b></span>'
     + '<span class="wm-banner-sep">|</span>'
-    + '<span>레벨완료횟수 : <b class="wm-mode-value">' + escapeHtml(pick(source.레벨완료횟수, source.levelCompleteCount)) + '</b></span>'
+    + '<span>레벨완료횟수 : <b class="wm-mode-value">' + escapeHtml(pick(progress.레벨완료횟수, mapData.레벨완료횟수, profile.레벨완료횟수, student.레벨완료횟수, 0)) + '</b></span>'
     + '<span class="wm-banner-sep">|</span>'
-    + '<span>순차완주세트 : <b class="wm-mode-value">' + escapeHtml(pick(source.순차완주세트, source.sequentialCompleteSet)) + '</b></span>'
+    + '<span>순차완주세트 : <b class="wm-mode-value">' + escapeHtml(pick(progress.순차완주세트, mapData.순차완주세트, profile.순차완주세트, student.순차완주세트, 0)) + '</b></span>'
     + '<span class="wm-banner-sep">|</span>'
-    + '<span>순차완주회차 : <b class="wm-mode-value">' + escapeHtml(pick(source.순차완주회차, source.sequentialCompleteRound)) + '</b></span>'
+    + '<span>순차완주회차 : <b class="wm-mode-value">' + escapeHtml(pick(progress.순차완주회차, mapData.순차완주회차, profile.순차완주회차, student.순차완주회차, 0)) + '</b></span>'
     + '</div>';
 }
 
