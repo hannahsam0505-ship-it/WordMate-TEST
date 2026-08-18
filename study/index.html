@@ -1150,6 +1150,82 @@ const WM_DEV_LIVE_REVIEW_MODE = window.WM_DEV_ADMIN_REVIEW_MODE === true;
   }
 
 
+  /* =========================================================
+     WM_STUDY_STEP1_5_SIZE_UNIFY_V1
+     Step 3 현재 화면(PC 카드 581px)을 기준으로 Step 1~5 크기만 통일합니다.
+     TEST 화면은 적용 대상에서 제외합니다.
+     20단어 레벨은 같은 카드 폭 안에서 진행 동그라미를 재배치합니다.
+  ========================================================= */
+  .wm-study-shell .wm-study-step-card{
+    min-height:581px;
+    box-sizing:border-box;
+  }
+  .wm-study-shell .wm-step1-card,
+  .wm-study-shell .wm-step5-card{
+    display:flex;
+    flex-direction:column;
+  }
+  .wm-study-shell .wm-step1-card > .wm-btn:last-child,
+  .wm-study-shell .wm-step5-card > .wm-btn:last-child{
+    margin-top:auto;
+  }
+
+  .wm-study-shell .wm-step2-card .wm-title{margin-bottom:8px;}
+  .wm-study-shell .wm-step2-card .wm-learning-guide{margin-bottom:5px;font-size:19px;line-height:1.35;}
+  .wm-study-shell .wm-step2-card .wm-small{margin-top:4px;}
+  .wm-study-shell .wm-step2-card .word-progress{margin-top:4px;margin-bottom:6px;}
+  .wm-study-shell .wm-step2-card .audio-btn{padding:7px 16px;margin:3px auto;}
+  .wm-study-shell .wm-step2-card .wm-word{font-size:36px;margin:4px 0 2px;}
+  .wm-study-shell .wm-step2-card .wm-pos{margin-bottom:4px;}
+  .wm-study-shell .wm-step2-card .wm-option{padding:10px 14px;margin-top:5px;}
+
+  .wm-study-shell .wm-step4-card .wm-title{margin-bottom:7px;}
+  .wm-study-shell .wm-step4-card .wm-learning-guide{margin-bottom:4px;font-size:18px;line-height:1.3;}
+  .wm-study-shell .wm-step4-card .wm-learning-guide + div{margin:2px 28px 5px !important;}
+  .wm-study-shell .wm-step4-card .wm-learning-guide + div > div:first-child{margin-bottom:3px !important;font-size:15px !important;}
+  .wm-study-shell .wm-step4-card .wm-learning-guide + div > div:nth-child(2){height:10px !important;}
+  .wm-study-shell .wm-step4-card .wm-memory-count{font-size:17px;margin:4px 0;}
+  .wm-study-shell .wm-step4-card .memory-progress{margin:3px auto 5px;}
+  .wm-study-shell .wm-step4-card .memory-stage-guide{margin:0 auto 5px;gap:5px;}
+  .wm-study-shell .wm-step4-card .stage-chip{padding:3px 7px;}
+  .wm-study-shell .wm-step4-card .audio-btn{padding:7px 16px;margin:3px auto;}
+  .wm-study-shell .wm-step4-card .wm-word{font-size:36px;margin:4px 0 2px;}
+  .wm-study-shell .wm-step4-card .wm-pos{margin-bottom:4px;}
+  .wm-study-shell .wm-step4-card .wm-meaning{font-size:25px;margin:5px 0;}
+  .wm-study-shell .wm-step4-card .memory-input{padding:10px;font-size:20px;margin-top:6px;}
+  .wm-study-shell .wm-step4-card .wm-alert{font-size:14px;margin-top:4px;}
+  .wm-study-shell .wm-step4-card > .wm-btn:last-child{padding:11px;margin-top:6px;}
+
+  .wm-study-shell.wm-wordcount-20 .word-progress{
+    width:100%;
+    max-width:610px;
+    grid-template-columns:repeat(20,minmax(0,1fr));
+    gap:4px;
+  }
+  .wm-study-shell.wm-wordcount-20 .word-progress .word-dot{
+    width:100%;
+    height:auto;
+    aspect-ratio:1/1;
+    font-size:11px;
+  }
+
+  @media(max-width:640px){
+    .wm-study-shell .wm-study-step-card{min-height:612px;}
+    .wm-study-shell.wm-wordcount-20 .wm-study-step-card{min-height:640px;}
+    .wm-study-shell.wm-wordcount-20 .word-progress{
+      max-width:100%;
+      grid-template-columns:repeat(10,24px);
+      gap:4px;
+    }
+    .wm-study-shell.wm-wordcount-20 .word-progress .word-dot{
+      width:24px;
+      height:24px;
+      aspect-ratio:auto;
+      font-size:10px;
+    }
+  }
+
+
 @keyframes wmSpin{
   to{transform:rotate(360deg);}
 }
@@ -1608,6 +1684,7 @@ function wmSyncStudyShell(){
   const info = wmGetStudyLevelBannerInfo(currentSetId);
   shell.classList.remove("wm-level-elementary","wm-level-middle","wm-level-high","wm-level-csat");
   shell.classList.add(info.groupClass);
+  shell.classList.toggle("wm-wordcount-20", info.wordCount > 10);
 
   const setChip = document.getElementById("wm-study-set-chip");
   const gradeChip = document.getElementById("wm-study-grade-chip");
@@ -4035,8 +4112,17 @@ function protectDirectTypingInputs(){
   });
 }
 
+function wmApplyStudyStepSizeClass(){
+  const card = app && app.querySelector ? app.querySelector(".wm-card") : null;
+  if(!card) return;
+  const stepClass = {1:"wm-step1-card",2:"wm-step2-card",3:"wm-step3-card",4:"wm-step4-card",6:"wm-step5-card"}[stage];
+  if(!stepClass) return;
+  card.classList.add("wm-study-step-card", stepClass);
+}
+
 function afterScreenRender(){
   wmSyncStudyShell();
+  wmApplyStudyStepSizeClass();
   ensureExitControls();
   protectDirectTypingInputs();
 }
