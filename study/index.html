@@ -1278,12 +1278,12 @@ function getInitialLearningMode(){
 function getInitialStudentId(){
   const injected = "__WM_STUDENT_ID__";
   if(injected && injected.indexOf("__WM_") !== 0){
-    return String(injected || "").trim().toUpperCase();
+    return String(injected || "").trim();
   }
 
   try{
     const params = new URLSearchParams(window.location.search || "");
-    const value = String(params.get("studentId") || params.get("studentID") || params.get("sid") || "").trim().toUpperCase();
+    const value = String(params.get("studentId") || params.get("studentID") || params.get("sid") || "").trim();
     if(value) return value;
   }catch(err){}
 
@@ -1298,7 +1298,7 @@ function getInitialStudentId(){
     if(raw){
       const parsed = JSON.parse(raw);
       const data = parsed && parsed.student ? parsed.student : parsed;
-      const value = String(data.학생ID || data.studentId || data.studentID || data.id || "").trim().toUpperCase();
+      const value = String(data.학생ID || data.studentId || data.studentID || data.id || "").trim();
       if(value) return value;
     }
   }catch(err){}

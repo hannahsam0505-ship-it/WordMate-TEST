@@ -1970,7 +1970,7 @@ function wmRenderLmsMapPreview_(){
   wmApplyLmsPreviewReadOnly_();
   wmWatchLmsPreviewReadOnly_();
 
-  const studentId = String(wmCurrentStudent && wmCurrentStudent.학생ID || '').trim().toUpperCase();
+  const studentId = String(wmCurrentStudent && wmCurrentStudent.학생ID || '').trim();
   if(!studentId){
     wmStopMapLoadingState_();
     wmShowMapUnavailable_('선택한 학생ID가 전달되지 않아 학습맵을 불러올 수 없습니다.');
@@ -2020,7 +2020,7 @@ function wmReadStudentFromStorage(){
       const data = parsed && parsed.student ? parsed.student : parsed;
 
       if(data && typeof data === 'object'){
-        const studentId = String(data.학생ID || data.studentId || data.id || '').trim().toUpperCase();
+        const studentId = String(data.학생ID || data.studentId || data.id || '').trim();
         if(studentId){
           return {
             학생ID: studentId,
@@ -2047,7 +2047,7 @@ function wmReadStudentFromRootData(){
   if(!root || !root.dataset) return null;
 
   const student = {
-    학생ID: String(root.dataset.studentId || '').trim().toUpperCase(),
+    학생ID: String(root.dataset.studentId || '').trim(),
     학생이름: String(root.dataset.studentName || '').trim(),
     학습배정: String(root.dataset.learningAssign || '').trim(),
     현재세트: wmNormalizeCurrentSetIdForMap_(root.dataset.currentSet || '') || String(root.dataset.currentSet || '').trim(),
@@ -2077,7 +2077,7 @@ function wmNormalizeStudentObject(data){
     ? data.학습모드
     : ((data.learningMode && typeof data.learningMode === 'object') ? data.learningMode : {});
   const student = {
-    학생ID: String(data.학생ID || data.studentId || data.studentID || data.sid || data.id || '').trim().toUpperCase(),
+    학생ID: String(data.학생ID || data.studentId || data.studentID || data.sid || data.id || '').trim(),
     학생이름: String(data.학생이름 || data.studentName || data.name || data.wmStudentName || '').trim(),
     학교: String(data.학교 || data.school || '').trim(),
     학년: String(data.학년 || data.grade || '').trim(),
@@ -2318,7 +2318,7 @@ function wmGoLoginAfterSessionExpired(){
 
 async function wmCheckCurrentSession(options){
   options = options || {};
-  const studentId = wmCurrentStudent && wmCurrentStudent.학생ID ? String(wmCurrentStudent.학생ID).trim().toUpperCase() : '';
+  const studentId = wmCurrentStudent && wmCurrentStudent.학생ID ? String(wmCurrentStudent.학생ID).trim() : '';
   const sessionToken = wmGetCurrentSessionToken();
 
   if(!studentId || !sessionToken){
@@ -2838,7 +2838,7 @@ function wmLoadLearningRecordsDirectForMap_(reason){
   if(wmBottomRecordsDirectLoading) return;
 
   const student = wmCurrentStudent || wmStudentProfile || {};
-  const studentId = String(student.학생ID || student.studentId || '').trim().toUpperCase();
+  const studentId = String(student.학생ID || student.studentId || '').trim();
   if(!studentId) return;
 
   wmBottomRecordsDirectLoading = true;
@@ -4676,7 +4676,7 @@ async function startStudy(setId){
      학습 시작도 아임웹 숨김 프레임페이지(/study)를 경유합니다. */
   const framePageUrl = WM_STUDY_URL;
 
-  const studentId = wmCurrentStudent && wmCurrentStudent.학생ID ? String(wmCurrentStudent.학생ID).trim().toUpperCase() : '';
+  const studentId = wmCurrentStudent && wmCurrentStudent.학생ID ? String(wmCurrentStudent.학생ID).trim() : '';
   const studentName = wmCurrentStudent && wmCurrentStudent.학생이름 ? String(wmCurrentStudent.학생이름).trim() : '';
   const learningAssign = wmCurrentStudent && wmCurrentStudent.학습배정 ? String(wmCurrentStudent.학습배정).trim() : '';
   const sessionToken = wmGetCurrentSessionToken();
@@ -4727,7 +4727,7 @@ function escapeJs(value){
 }
 
 async function wmLogout(){
-  const studentId = wmCurrentStudent && wmCurrentStudent.학생ID ? String(wmCurrentStudent.학생ID).trim().toUpperCase() : '';
+  const studentId = wmCurrentStudent && wmCurrentStudent.학생ID ? String(wmCurrentStudent.학생ID).trim() : '';
 
   /* WM_LOGOUT_CURRENT_TOKEN_PRIORITY_V1_20260813
      로그아웃은 현재 로그인으로 Map에 전달된 최신 토큰을 우선 사용합니다.
@@ -5286,7 +5286,7 @@ async function wmMapRecentRender_(){
 }
 
 async function wmOpenLmsRecentReportModal_(){
-  const studentId=String(wmCurrentStudent&&wmCurrentStudent.학생ID||'').trim().toUpperCase();
+  const studentId=String(wmCurrentStudent&&wmCurrentStudent.학생ID||'').trim();
   const sessionToken=wmGetCurrentSessionToken();
   if(!studentId||!sessionToken) return;
   if(!wmMapRecentReportState_.loaded&&wmMapRecentReportState_.loading) return;
