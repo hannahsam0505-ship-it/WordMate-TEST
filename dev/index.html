@@ -60,7 +60,7 @@ WMDC_CURRENT_SET_RUN_AND_AUX_TESTS_V2 적용: 현재세트실행 상단 고정�
 -->
 
 <style>
-#wmdc-root *{
+#wmdc-root *:not(#wm-study-shell):not(#wm-study-shell *){
   box-sizing:border-box;
 }
 
@@ -584,13 +584,13 @@ WMDC_CURRENT_SET_RUN_AND_AUX_TESTS_V2 적용: 현재세트실행 상단 고정�
   color:#111827;
 }
 
-#wmdc-root .wm-options{
+#wmdc-root .wmdc-preview-options{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
   gap:12px;
 }
 
-#wmdc-root .wm-option{
+#wmdc-root .wmdc-preview-option{
   border:2px solid #cbd5e1;
   border-radius:16px;
   background:#fff;
@@ -602,7 +602,7 @@ WMDC_CURRENT_SET_RUN_AND_AUX_TESTS_V2 적용: 현재세트실행 상단 고정�
   cursor:pointer;
 }
 
-#wmdc-root .wm-option:hover{
+#wmdc-root .wmdc-preview-option:hover{
   border-color:#2563eb;
   background:#eff6ff;
 }
@@ -1870,7 +1870,7 @@ window.addEventListener('load',function wmApplyDevActualFunctionLock_(){
     </div>
 
 
-    <div class="dev-card">
+    <div class="dev-card wmdc-study-execution-card">
       <div class="dev-section-title" id="wmdc-quick-title">DEV STEP 실행영역 · 선택 대기</div>
       <div id="wmdc-test-selector" class="wmdc-test-selector" hidden aria-label="TEST 종류 선택"></div>
       <div id="wmdc-dev-step-player" class="dev-player-empty">
@@ -3283,7 +3283,7 @@ window.addEventListener('load',function wmApplyDevActualFunctionLock_(){
     var optionHtml = '';
 
     for(var i=0; i<options.length; i++){
-      optionHtml += '<button type="button" class="wm-option">' + (i+1) + '. ' + escapeHtml(options[i]) + '</button>';
+      optionHtml += '<button type="button" class="wmdc-preview-option">' + (i+1) + '. ' + escapeHtml(options[i]) + '</button>';
     }
 
     return ''
@@ -3296,7 +3296,7 @@ window.addEventListener('load',function wmApplyDevActualFunctionLock_(){
       +     '<div class="wm-student-progress">' + escapeHtml(getStepName(step)) + '<br>1 / ' + words.length + '</div>'
       +   '</div>'
       +   '<div class="wm-quiz-question"><div class="wm-quiz-main">' + escapeHtml(questionText) + '</div></div>'
-      +   '<div class="wm-options">' + optionHtml + '</div>'
+      +   '<div class="wmdc-preview-options">' + optionHtml + '</div>'
       +   '<div class="wm-student-controls">'
       +     '<button type="button" class="wm-student-btn" data-student-audio-index="0">▶ 단어 듣기</button>'
       +     '<button type="button" class="wm-student-btn secondary">정답 확인</button>'
@@ -8919,6 +8919,25 @@ renderStart();
 
 <style>
 /* WMDC_STUDY_SYNC_TEST_SELECTOR_V1: 실제 Study의 배정 TEST 수를 실행영역에서 선택 */
+#wmdc-root .wmdc-study-execution-card{
+  overflow:visible;
+  background:transparent;
+  box-shadow:none;
+}
+#wmdc-root #wmdc-dev-step-player.wmdc-study-host{
+  all:initial;
+  display:block;
+  position:relative;
+  left:50%;
+  width:100vw;
+  margin:0;
+  padding:0;
+  transform:translateX(-50%);
+  border:0;
+  border-radius:0;
+  color:initial;
+  background:linear-gradient(180deg,#eef6ff 0%,#dbeafe 100%);
+}
 #wmdc-root .wmdc-test-selector{
   display:grid;
   grid-template-columns:repeat(4,minmax(0,1fr));
@@ -10079,6 +10098,7 @@ renderStart();
 
     try{ if(typeof stopWordAudio === 'function'){ stopWordAudio(); } }catch(e){}
     try{ if(typeof testTimer !== 'undefined'){ clearInterval(testTimer); } }catch(e){}
+    window.WMDC_STUDY_SCREEN_ACTIVE = false;
 
     if(shellEl){
       shellEl.style.display = 'none';
@@ -10101,7 +10121,7 @@ renderStart();
 
     if(!player || !appEl){ return false; }
 
-    player.className = 'dev-player';
+    player.className = 'wmdc-study-host';
     player.innerHTML = '';
     player.appendChild(shellEl || appEl);
     if(audioEl){ player.appendChild(audioEl); }
@@ -10109,6 +10129,20 @@ renderStart();
     if(shellEl){ shellEl.style.display = 'block'; }
     appEl.style.display = 'block';
     if(audioEl){ audioEl.style.display = 'none'; }
+    window.WMDC_STUDY_SCREEN_ACTIVE = true;
+
+    var topNav = document.querySelector('#wmdc-root .wmdc-set-nav[data-wmdc-nav="top"]');
+    if(topNav){ topNav.classList.remove('wmdc-nav-docked'); }
+    var navSpacer = document.querySelector('#wmdc-root .wmdc-set-nav-spacer');
+    if(navSpacer){ navSpacer.classList.remove('is-active'); }
+
+    if(shellEl && typeof window.requestAnimationFrame === 'function'){
+      window.requestAnimationFrame(function(){
+        var boothHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--wm-test-booth-height')) || 64;
+        var shellTop = shellEl.getBoundingClientRect().top + window.pageYOffset - boothHeight - 8;
+        window.scrollTo({top:Math.max(0, shellTop), left:0, behavior:'auto'});
+      });
+    }
 
     return true;
   }
@@ -10480,6 +10514,11 @@ renderStart();
     }
 
     function applyDocking(){
+      if(window.WMDC_STUDY_SCREEN_ACTIVE === true){
+        topNav.classList.remove('wmdc-nav-docked');
+        spacer.classList.remove('is-active');
+        return;
+      }
       var shouldDock = window.pageYOffset > Math.max(dockAt, 0);
       if(shouldDock){
         spacer.classList.add('is-active');
