@@ -1476,7 +1476,7 @@ async function wmStudyCheckCurrentSession(options){
 function wmStudyStartSessionWatcher(){
   if(WM_DEV_LIVE_REVIEW_MODE) return;
   if(wmStudySessionCheckTimer) clearInterval(wmStudySessionCheckTimer);
-  wmStudyCheckCurrentSession();
+  /* 학습 시작 직전 progress 응답에서 세션을 이미 검증하므로 즉시 중복검사를 생략합니다. */
   wmStudySessionCheckTimer = setInterval(function(){
     wmStudyCheckCurrentSession({force:true});
   }, 5000);
@@ -3414,11 +3414,15 @@ async function wmLoadLearningProgress(){
     });
 
     if(result && (result.sessionExpired === true || result.sessionValid === false || result.valid === false)){
+      wmStudyLastValidSessionAt = 0;
       wmStudyShowSessionExpiredModal();
-      return null;
+      return result;
     }
 
     if(result && result.success){
+      if(result.sessionValid === true || result.valid === true){
+        wmStudyLastValidSessionAt = Date.now();
+      }
       wmResumeProgress = result;
       return result;
     }
@@ -4088,18 +4092,37 @@ function renderStart(){
 
 async function startLearning(){
   renderDbLoading();
-  const sessionPromise = wmStudyCheckCurrentSession();
 
-  /* WM_STUDY_PARALLEL_START_V1_20260711
-     세트·학습모드·현재진행 핵심 4개를 동시에 불러옵니다. */
+  /* WM_STUDY_CORE_TWO_REQUEST_START_V1_20260818
+     세트 데이터와 현재진행을 병렬 조회합니다.
+     현재진행 응답이 세션검증과 현재 세트 학습모드를 함께 반환하므로
+     별도 세션조회·학습모드조회는 정상 경로에서 중복 실행하지 않습니다. */
   const needsDbLoad = !isDbReady || !originalWords.length;
   const parallelLoad = await Promise.all([
-    sessionPromise,
     needsDbLoad ? WM_STUDY_SPEED_LOCKS.SET_LOAD.loadSetFromDB() : Promise.resolve(true),
-    wmPrepareStudyModeForCurrentSet(),
     wmLoadLearningProgress()
   ]);
-  if(!parallelLoad[0] || !parallelLoad[1]) return;
+  if(!parallelLoad[0]) return;
+
+  const progress = parallelLoad[1];
+  if(progress && (progress.sessionExpired === true || progress.sessionValid === false || progress.valid === false)){
+    return;
+  }
+
+  if(progress && progress.success && progress.learningMode){
+    WM_ACTIVE_STUDY_MODE = wmNormalizeStudyMode(progress.learningMode);
+    WM_ACTIVE_STUDY_MODE_SET_ID = currentSetId;
+    try{
+      const modeParams = new URLSearchParams(window.location.search || '');
+      WM_ACTIVE_LEARNING_ASSIGN = String(modeParams.get('learningAssign') || modeParams.get('wmLearningAssign') || modeParams.get('level') || '').trim();
+    }catch(err){}
+    wmCacheStudyMode(currentSetId, WM_ACTIVE_STUDY_MODE);
+  }else{
+    const sessionValid = await wmStudyCheckCurrentSession();
+    if(!sessionValid) return;
+    await wmPrepareStudyModeForCurrentSet();
+  }
+
   wmStudyStartSessionWatcher();
 
   clearInterval(testTimer);
@@ -4109,7 +4132,6 @@ async function startLearning(){
   wmCurrentStepStartTime=learningStartTime;
   latestSavedPayload=null;
 
-  const progress = parallelLoad[3];
   const resumeStage = wmApplyResumeProgress(progress);
 
   stage=resumeStage;
@@ -5300,11 +5322,16 @@ document.addEventListener("keydown",function(e){
 });
 
 wmLogStudyLockStatus();
-wmLogStudyRuntimeExecutionLockStatus();
-wmLogStudySpeedLockStatus();
-wmLogCodeGsAllLockStatusOnStudy_();
-window.wmLogLevelTransitionNoticeLockStatus();
-wmLogRoundRecordRecoveryLockStatus_();
+/* WM_STUDY_SERVER_LOCK_VERIFY_DEFER_V1_20260818
+   서버 LOCK 검증 5건은 그대로 유지하되 초기 세트 prefetch/학습진입 요청과 경쟁하지 않도록 8초 뒤 1회 실행합니다. */
+function wmRunDeferredStudyServerLockChecks_(){
+  wmLogStudyRuntimeExecutionLockStatus();
+  wmLogStudySpeedLockStatus();
+  wmLogCodeGsAllLockStatusOnStudy_();
+  window.wmLogLevelTransitionNoticeLockStatus();
+  wmLogRoundRecordRecoveryLockStatus_();
+}
+window.setTimeout(wmRunDeferredStudyServerLockChecks_, 8000);
 renderStart();
 </script>
 

@@ -242,12 +242,12 @@ const WM_LMS_URL = WM_CONFIG.LMS_URL;
   }
 })();
 
-/* WM_MAP_LOGIN_ENTRY_GUARD_V1
-   로그인 세션 확인 전에는 학습맵 화면을 노출하지 않습니다. */
+/* WM_MAP_LOGIN_ENTRY_GUARD_V2_20260818
+   서버 세션 확인 전 학생정보/학습맵 본문은 숨기되, 백지 대신 안전한 로딩 화면을 즉시 표시합니다. */
 (function(){
   const authStyle = document.createElement('style');
   authStyle.id = 'wmMapAuthGuardStyle';
-  authStyle.textContent = 'html.wm-map-auth-pending body{visibility:hidden !important;}';
+  authStyle.textContent = 'html.wm-map-auth-pending body{visibility:visible !important;min-height:100vh;background:#f4f8ff !important;}html.wm-map-auth-pending body>*{visibility:hidden !important;}html.wm-map-auth-pending body:before{content:"학습맵을 불러오는 중입니다.";visibility:visible !important;position:fixed;inset:0;z-index:2147483647;display:flex;align-items:center;justify-content:center;font:800 18px Pretendard,Arial,sans-serif;color:#0c4db4;background:#f4f8ff;}';
   (document.head || document.documentElement).appendChild(authStyle);
   document.documentElement.classList.add('wm-map-auth-pending');
 })();
@@ -1829,11 +1829,8 @@ async function wmVerifyLoginServerSpeedLockOnMap_(){
   }catch(err){}
 }
 
-if(document.readyState === 'loading'){
-  document.addEventListener('DOMContentLoaded', wmVerifyLoginServerSpeedLockOnMap_, {once:true});
-}else{
-  wmVerifyLoginServerSpeedLockOnMap_();
-}
+/* WM_MAP_SERVER_LOCK_VERIFY_DEFER_V1_20260818
+   서버 LOCK 검증은 유지하되 초기 Map 데이터 요청과 경쟁하지 않도록 Map 핵심 응답 뒤 실행합니다. */
 
 /* WM_CODEGS_ALL_LOCK_VERIFY_ON_MAP_20260713_V1
  * 기존 wmVerifyLoginServerSpeedLockOnMap_ 성공 패턴을 그대로 사용합니다.
@@ -1884,10 +1881,14 @@ async function wmVerifyCodeGsAllLockOnMap_(){
   }catch(err){}
 }
 
-if(document.readyState === 'loading'){
-  document.addEventListener('DOMContentLoaded', wmVerifyCodeGsAllLockOnMap_, {once:true});
-}else{
-  wmVerifyCodeGsAllLockOnMap_();
+let wmMapServerLockVerifyScheduled_ = false;
+function wmScheduleServerLockVerifyAfterMap_(){
+  if(wmMapServerLockVerifyScheduled_) return;
+  wmMapServerLockVerifyScheduled_ = true;
+  window.setTimeout(function(){
+    wmVerifyLoginServerSpeedLockOnMap_();
+    wmVerifyCodeGsAllLockOnMap_();
+  }, 8000);
 }
 
 function wmGetUrlParam(name){
@@ -2363,7 +2364,7 @@ async function wmCheckCurrentSession(options){
 
 function wmStartSessionWatcher(){
   if(wmSessionCheckTimer) clearInterval(wmSessionCheckTimer);
-  wmCheckCurrentSession();
+  /* 초기 Map 응답에서 세션을 이미 검증하므로 즉시 중복검사를 하지 않습니다. */
   wmSessionCheckTimer = setInterval(function(){
     wmCheckCurrentSession();
   }, 5000);
@@ -2436,52 +2437,25 @@ function wmInitLearningMap(){
   wmShowMapLoadingState_();
   /* WM_MAP_FAKE_INSTANT_RENDER_DISABLED_V1: 현재진행_DB 응답 전 임시맵 생성 금지 */
 
-  const wmNeedsFullStudentProfile = wmCurrentStudent.학생ID && (
-    !wmCurrentStudent.학생이름 || !wmCurrentStudent.학교 || !wmCurrentStudent.학년 ||
-    !wmCurrentStudent.Class || !wmCurrentStudent.S4실루엣단계 ||
-    !wmCurrentStudent.S6테스트모드 || !wmCurrentStudent.레벨완료조건
-  );
-
-  if(wmNeedsFullStudentProfile){
-    const applyStudentDbProfile = function(profile){
-      const source = profile && profile.raw ? profile.raw : profile;
-      const normalized = wmNormalizeStudentObject(source);
-      if(normalized && (normalized.학생이름 || normalized.학생ID)){
-        wmCurrentStudent = wmMergeStudentPreserveValues_(wmCurrentStudent, normalized);
-        wmStudentProfile = wmMergeStudentPreserveValues_(wmStudentProfile || {}, normalized);
-        wmApplyStudentLearningMap(wmCurrentStudent, { skipMapRender:true });
-        wmShowLearningModeBanner();
-      }
-    };
-
-    if(window.google && google.script && google.script.run){
-      google.script.run
-        .withSuccessHandler(applyStudentDbProfile)
-        .getStudentMapProfile(wmCurrentStudent.학생ID);
-    }else{
-      const profileUrl = wmGetApiBaseUrl()
-        + '?mode=getStudentBasicInfoForMap'
-        + '&action=getStudentBasicInfoForMap'
-        + '&studentId=' + encodeURIComponent(wmCurrentStudent.학생ID)
-        + '&t=' + Date.now();
-      fetch(profileUrl)
-        .then(function(res){ return res.json(); })
-        .then(applyStudentDbProfile)
-        .catch(function(err){ console.warn('학생관리_DB 기본정보 조회 실패', err); });
-    }
-  }
-
   if(!wmCurrentStudent.학생ID || !wmGetCurrentSessionToken()){
     wmRedirectToLogin_();
     return;
   }
 
-  wmCheckCurrentSession({ redirectOnInvalid:true }).then(function(valid){
-    if(!valid) return;
-    wmRevealAuthenticatedMap_();
-    wmFetchLearningMap(wmCurrentStudent.학생ID);
-    wmStartSessionWatcher();
-  });
+  /* WM_MAP_AUTH_DATA_SINGLE_ROUNDTRIP_V1_20260818
+     Vercel Map은 getLearningMapCacheData 요청에 세션토큰을 함께 보내 서버에서 인증+Map 데이터를 한 번에 확인합니다.
+     동일 응답에 1.학생관리_DB studentProfile이 포함되므로 별도 기본정보 선조회도 하지 않습니다.
+     Apps Script 내부 실행환경은 기존 세션확인 순서를 그대로 유지합니다. */
+  if(window.google && google.script && google.script.run){
+    wmCheckCurrentSession({ redirectOnInvalid:true }).then(function(valid){
+      if(!valid) return;
+      wmRevealAuthenticatedMap_();
+      wmFetchLearningMap(wmCurrentStudent.학생ID);
+    });
+    return;
+  }
+
+  wmFetchLearningMap(wmCurrentStudent.학생ID);
 }
 
 function wmShowMapLoadingState_(){
@@ -3007,12 +2981,26 @@ function wmApplyLearningMapFromCurrentProgressCache_(cacheData, data){
 }
 
 function wmHandleLearningMapResponse(data){
+  if(data && (data.sessionExpired === true || data.sessionValid === false || data.valid === false)){
+    wmRedirectToLogin_();
+    return;
+  }
+
   if(!data || data.success !== true){
+    wmRevealAuthenticatedMap_();
     wmStopMapLoadingState_();
     wmShowMapMessage(data && data.message ? data.message : '학습맵 조회에 실패했습니다.');
     renderHomeworkTable([], wmStudentProfile || wmCurrentStudent);
     return;
   }
+
+  /* 인증+Map 통합응답이 정상일 때만 실제 화면을 공개합니다. */
+  wmRevealAuthenticatedMap_();
+  if(data.sessionValid === true && typeof window.wmMarkMapFrameRuntime === 'function'){
+    window.wmMarkMapFrameRuntime('accessGuard');
+  }
+  wmStartSessionWatcher();
+  wmScheduleServerLockVerifyAfterMap_();
 
   /* 실제 현재진행_DB/학습맵 데이터 수신 성공 시에만 FRAME DATA 완료 */
   if(typeof window.wmMarkMapFrameRuntime === 'function'){
@@ -3027,6 +3015,9 @@ function wmHandleLearningMapResponse(data){
 
   const currentProgressCache = wmNormalizeCurrentProgressCache_(data);
   if(currentProgressCache && wmApplyLearningMapFromCurrentProgressCache_(currentProgressCache, data)){
+    if(data.recordsDeferred === true && !wmBottomRecordsDetailedLoaded){
+      window.setTimeout(function(){ wmLoadLearningRecordsDirectForMap_('post-core-map'); }, 0);
+    }
     return;
   }
 
@@ -3052,10 +3043,8 @@ function wmHandleLearningMapResponse(data){
 function wmFetchLearningMap(studentId){
   wmShowMapMessage('현재진행_DB 캐시를 조회 중입니다.');
 
-  /* WM_SPEED_MAP_RECORDS_PARALLEL_V1_20260710
-     학습맵 현재진행_DB 조회와 하단 학습기록_DB 조회를 동시에 시작합니다.
-     기존처럼 맵 응답 완료 뒤 기록 조회를 시작하지 않아 하단 기록 대기시간을 줄입니다. */
-  wmLoadLearningRecordsDirectForMap_('parallel-initial-load');
+  /* WM_MAP_CORE_FIRST_RECORDS_AFTER_V1_20260818
+     첫 화면은 인증+현재진행_DB Map 응답을 우선하고, 하단 상세 학습기록은 핵심 Map 렌더 직후 요청합니다. */
 
   /* WM_GET_LEARNING_MAP_CACHE_ONLY_V2
      현재진행_DB 안정화: Map은 getLearningMapCacheData만 호출합니다.
@@ -3076,10 +3065,13 @@ function wmFetchLearningMap(studentId){
     return;
   }
 
+  const sessionToken = wmGetCurrentSessionToken();
   const url = wmGetApiBaseUrl()
     + '?mode=getLearningMapCacheData'
     + '&action=getLearningMapCacheData'
     + '&studentId=' + encodeURIComponent(studentId)
+    + '&sessionToken=' + encodeURIComponent(sessionToken)
+    + '&wmSessionToken=' + encodeURIComponent(sessionToken)
     + '&t=' + Date.now();
 
   fetch(url)
@@ -3088,6 +3080,7 @@ function wmFetchLearningMap(studentId){
       wmHandleLearningMapResponse(data);
     })
     .catch(function(err){
+      wmRevealAuthenticatedMap_();
       wmStopMapLoadingState_();
       if(!wmRenderInstantMapFromStudentCache_()){
         wmShowMapUnavailable_('현재진행_DB 캐시 응답 실패: 임시 학습맵을 표시할 수 없습니다.');
