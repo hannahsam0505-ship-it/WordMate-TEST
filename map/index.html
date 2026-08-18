@@ -2064,7 +2064,9 @@ function wmReadStudentFromRootData(){
 function wmNormalizeStudentObject(data){
   if(!data || typeof data !== 'object') return null;
 
-  const learningMode = (data.학습모드 && typeof data.학습모드 === 'object') ? data.학습모드 : {};
+  const learningMode = (data.학습모드 && typeof data.학습모드 === 'object')
+    ? data.학습모드
+    : ((data.learningMode && typeof data.learningMode === 'object') ? data.learningMode : {});
   const student = {
     학생ID: String(data.학생ID || data.studentId || data.studentID || data.sid || data.id || '').trim().toUpperCase(),
     학생이름: String(data.학생이름 || data.studentName || data.name || data.wmStudentName || '').trim(),
@@ -2431,16 +2433,33 @@ function wmInitLearningMap(){
     !wmCurrentStudent.S6테스트모드 || !wmCurrentStudent.레벨완료조건
   );
 
-  if(wmNeedsFullStudentProfile && window.google && google.script && google.script.run){
-    google.script.run
-      .withSuccessHandler(function(profile){
-        const normalized = wmNormalizeStudentObject(profile);
-        if(normalized && (normalized.학생이름 || normalized.학생ID)){
-          wmCurrentStudent = wmMergeStudentPreserveValues_(wmCurrentStudent, normalized);
-          wmApplyStudentLearningMap(wmCurrentStudent, { skipMapRender:true });
-        }
-      })
-      .getStudentMapProfile(wmCurrentStudent.학생ID);
+  if(wmNeedsFullStudentProfile){
+    const applyStudentDbProfile = function(profile){
+      const source = profile && profile.raw ? profile.raw : profile;
+      const normalized = wmNormalizeStudentObject(source);
+      if(normalized && (normalized.학생이름 || normalized.학생ID)){
+        wmCurrentStudent = wmMergeStudentPreserveValues_(wmCurrentStudent, normalized);
+        wmStudentProfile = wmMergeStudentPreserveValues_(wmStudentProfile || {}, normalized);
+        wmApplyStudentLearningMap(wmCurrentStudent, { skipMapRender:true });
+        wmShowLearningModeBanner();
+      }
+    };
+
+    if(window.google && google.script && google.script.run){
+      google.script.run
+        .withSuccessHandler(applyStudentDbProfile)
+        .getStudentMapProfile(wmCurrentStudent.학생ID);
+    }else{
+      const profileUrl = wmGetApiBaseUrl()
+        + '?mode=getStudentBasicInfoForMap'
+        + '&action=getStudentBasicInfoForMap'
+        + '&studentId=' + encodeURIComponent(wmCurrentStudent.학생ID)
+        + '&t=' + Date.now();
+      fetch(profileUrl)
+        .then(function(res){ return res.json(); })
+        .then(applyStudentDbProfile)
+        .catch(function(err){ console.warn('학생관리_DB 기본정보 조회 실패', err); });
+    }
   }
 
   if(!wmCurrentStudent.학생ID || !wmGetCurrentSessionToken()){
