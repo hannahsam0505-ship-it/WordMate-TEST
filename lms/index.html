@@ -1023,6 +1023,7 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
     #settingCenterTable tbody td,
     #wmSettingClassDbColumnTable tbody td { background-color:inherit; }
     .wm-class-status-select { min-width:104px; border:1px solid var(--wm-line); border-radius:9px; padding:7px 8px; background:#fff; font-weight:800; }
+    .wm-class-teacher-select { min-width:128px; border:1px solid var(--wm-line); border-radius:9px; padding:7px 8px; background:#fff; font-weight:800; }
     .wm-class-status-save { margin-left:5px; }
     .wm-class-db-pager { display:flex; align-items:center; justify-content:center; gap:10px; margin:12px 0 0; flex-wrap:wrap; }
     .wm-class-db-pager button { border:1px solid var(--wm-line); background:#fff; color:var(--wm-dark); border-radius:10px; padding:8px 13px; font-size:13px; font-weight:900; cursor:pointer; }
@@ -7620,7 +7621,7 @@ function wmClearClassRequiredError(id){
 function wmValidateClassRequiredFields(className, teacherName, selectedCount){
   const checks = [
     {id:'wmClassRequiredName', valid:!!String(className || '').trim()},
-    {id:'wmClassRequiredTeacher', valid:!!String(teacherName || '').trim() && teacherName !== '추후선택'},
+    {id:'wmClassRequiredTeacher', valid:!!String(teacherName || '').trim()},
     {id:'wmClassRequiredStudents', valid:Number(selectedCount || 0) > 0}
   ];
   checks.forEach(item=>document.getElementById(item.id)?.classList.toggle('wm-required-error', !item.valid));
@@ -7785,35 +7786,72 @@ function wmMoveClassDbPage(delta){
   renderSettingClassDbRows(wmSettingClassRows, wmSettingClassHeaders);
 }
 
+function wmSettingClassTeacherOptions_(currentName, currentId){
+  const options=[];
+  const seen=new Set();
+  const push=(name,id)=>{
+    const teacherName=String(name||'').trim();
+    const teacherId=String(id||'').trim();
+    const key=teacherName.toUpperCase();
+    if(!teacherName||seen.has(key))return;
+    seen.add(key);
+    options.push({name:teacherName,id:teacherId});
+  };
+  push('추후선택','');
+  push(currentName,currentId);
+  (wmSettingCenterRows||[]).forEach(row=>{
+    if(/^Inactive$/i.test(String(row&&row['상태']||'Active')))return;
+    push(row&&row['교사명'],row&&row['교사ID']);
+  });
+  return options;
+}
+
 async function saveSettingClassStatus(button){
   const row = button && button.closest('tr');
-  const select = row && row.querySelector('.wm-class-status-select');
-  if(!row || !select) return;
+  const statusSelect = row && row.querySelector('.wm-class-status-select');
+  const teacherSelect = row && row.querySelector('.wm-class-teacher-select');
+  if(!row || !statusSelect || !teacherSelect) return;
   const sheetRow = Number(row.dataset.sheetRow || 0);
   const className = String(row.dataset.className || '').trim();
-  const status = /^Inactive$/i.test(select.value) ? 'Inactive' : 'Active';
+  const beforeStatus = /^Inactive$/i.test(String(row.dataset.originalStatus || 'Active')) ? 'Inactive' : 'Active';
+  const beforeTeacher = String(row.dataset.originalTeacherName || '추후선택').trim() || '추후선택';
+  const status = /^Inactive$/i.test(statusSelect.value) ? 'Inactive' : 'Active';
+  const teacherName = String(teacherSelect.value || '추후선택').trim() || '추후선택';
+  const selectedTeacherOption = teacherSelect.options[teacherSelect.selectedIndex] || null;
+  const teacherId = teacherName === '추후선택' ? '' : String(selectedTeacherOption && selectedTeacherOption.dataset.teacherId || '').trim();
+  const changes=[];
+  if(beforeTeacher !== teacherName) changes.push('담당교사: '+beforeTeacher+' → '+teacherName);
+  if(beforeStatus !== status) changes.push('상태: '+beforeStatus+' → '+status);
+  if(!changes.length){ alert('변경된 반 정보가 없습니다.'); return; }
+  if(!confirm(className+' 반 정보를 저장합니다.\n\n'+changes.join('\n')+'\n\n계속하시겠습니까?')) return;
 
   button.disabled = true;
   const previousText = button.textContent;
   button.textContent = '저장중';
-  wmSetSaveWaiting(true, '반 상태를 저장 중입니다...');
+  wmSetSaveWaiting(true, '반 정보를 저장 중입니다...');
   try{
     const result = await wmFetchSettingApi('saveSettingClassStatus', {
       sheetRow:String(sheetRow || ''),
       className:className,
+      teacherName:teacherName,
+      teacherId:teacherId,
       status:status,
       ts:String(Date.now())
     });
     if(!result || result.success !== true){
-      throw new Error((result && (result.error || result.message)) || '반 상태 저장 실패');
+      throw new Error((result && (result.error || result.message)) || '반 정보 저장 실패');
     }
     const target = (wmSettingClassRows || []).find(item=>Number(item && item.__sheetRow || 0) === sheetRow);
-    if(target) target['상태'] = status;
+    if(target){
+      target['담당교사명'] = String(result.teacherName || teacherName).trim() || '추후선택';
+      target['담당교사ID'] = String(result.teacherId || teacherId).trim();
+      target['상태'] = /^Inactive$/i.test(String(result.status || status)) ? 'Inactive' : 'Active';
+    }
     renderSettingClassDbRows(wmSettingClassRows, wmSettingClassHeaders);
-    setSettingStatus('settingClassStatus', className+' 반 상태를 '+status+'로 저장했습니다.', true);
+    setSettingStatus('settingClassStatus', className+' 반 정보를 저장했습니다.', true);
     await loadSettingCenterDB();
   }catch(err){
-    alert('반 상태 저장 실패: '+(err && err.message ? err.message : err));
+    alert('반 정보 저장 실패: '+(err && err.message ? err.message : err));
     await loadSettingCenterDB();
   }finally{
     wmSetSaveWaiting(false);
@@ -7860,10 +7898,22 @@ function renderSettingClassDbRows(rows, headers){
       const serial = startIndex + pageIndex + 1;
       const sheetRow = Number(row && row.__sheetRow || 0);
       const className = String(row && row['반명'] || '').trim();
-      return '<tr data-sheet-row="'+sheetRow+'" data-class-name="'+escapeHtml(className)+'">'
+      const originalTeacherName = String(row && row['담당교사명'] || '추후선택').trim() || '추후선택';
+      const originalTeacherId = String(row && row['담당교사ID'] || '').trim();
+      const originalStatus = /^Inactive$/i.test(String(row && row['상태'] || '')) ? 'Inactive' : 'Active';
+      return '<tr data-sheet-row="'+sheetRow+'" data-class-name="'+escapeHtml(className)+'" data-original-teacher-name="'+escapeHtml(originalTeacherName)+'" data-original-status="'+escapeHtml(originalStatus)+'">'
         +'<td>'+serial+'</td>'
         +finalHeaders.map(header=>{
           const value = row && Object.prototype.hasOwnProperty.call(row, header) ? row[header] : '';
+          if(header === '담당교사명'){
+            if(canChangeStatus){
+              const teacherOptions = wmSettingClassTeacherOptions_(originalTeacherName, originalTeacherId);
+              return '<td><select class="wm-class-teacher-select">'
+                +teacherOptions.map(item=>'<option value="'+escapeHtml(item.name)+'" data-teacher-id="'+escapeHtml(item.id)+'"'+(item.name === originalTeacherName ? ' selected' : '')+'>'+escapeHtml(item.name)+'</option>').join('')
+                +'</select><button type="button" class="wm-mode-save-btn wm-class-status-save" onclick="saveSettingClassStatus(this)">저장</button></td>';
+            }
+            return '<td>'+escapeHtml(originalTeacherName)+'</td>';
+          }
           if(header === '상태'){
             const currentStatus = /^Inactive$/i.test(String(value || '')) ? 'Inactive' : 'Active';
             if(canChangeStatus){
@@ -8261,7 +8311,7 @@ async function saveSettingClass(){
 
   if(!wmValidateClassRequiredFields(className, teacherName, studentIds.length)){
     if(!className) return setSettingStatus('settingClassStatus','반명을 입력하세요.');
-    if(!teacherName || teacherName === '추후선택') return setSettingStatus('settingClassStatus','담당교사를 선택하세요.');
+    if(!teacherName) return setSettingStatus('settingClassStatus','담당교사를 선택하세요.');
     return setSettingStatus('settingClassStatus','연결할 학생을 선택하세요.');
   }
 
@@ -8298,15 +8348,17 @@ async function saveSettingClass(){
 
     /* 저장 응답의 1행만 화면에 반영하고 전체 학생·설정센터·대시보드 재조회는 하지 않습니다. */
     const savedIdSet = new Set(studentIds.map(id=>String(id).trim().toUpperCase()));
+    const savedTeacherName = teacherName === '추후선택' ? '' : teacherName;
+    const savedTeacherId = teacherName === '추후선택' ? '' : teacherId;
     (WM_STUDENT_MANAGE_ROWS || []).forEach(row=>{
       const sid=String(cellValue(row,headerAliases('학생ID'))||'').trim().toUpperCase();
       if(!savedIdSet.has(sid))return;
       row['반명']=className;
       row['현재반']=className;
       row['Class']=className;
-      row['교사명']=teacherName;
-      row['현재담당교사']=teacherName;
-      row['교사ID']=teacherId;
+      row['교사명']=savedTeacherName;
+      row['현재담당교사']=savedTeacherName;
+      row['교사ID']=savedTeacherId;
     });
     const teacherRow=(wmSettingCenterRows || []).find(row=>String(row['교사명']||'').trim()===teacherName);
     if(teacherRow){
@@ -8771,12 +8823,14 @@ function wmHandleStudentRegisterClassChange(className){
   const teacherId = document.getElementById('wmStudentRegisterTeacherId');
   const selected = wmGetActiveStudentRegisterClasses().find(item=>item.className === String(className || '').trim()) || null;
 
+  const selectedTeacherName = selected && selected.teacherName !== '추후선택' ? selected.teacherName : '';
+  const selectedTeacherId = selectedTeacherName ? String(selected && selected.teacherId || '').trim() : '';
   if(teacher){
-    teacher.value = selected ? selected.teacherName : '';
+    teacher.value = selectedTeacherName;
     teacher.disabled = true;
     teacher.readOnly = true;
   }
-  if(teacherId) teacherId.value = selected ? selected.teacherId : '';
+  if(teacherId) teacherId.value = selectedTeacherId;
 }
 
 async function wmPrepareStudentRegisterClassOptions(){
@@ -9249,8 +9303,12 @@ function wmStudentClassSelectHtml_(studentId,value){
   return wmStudentSimpleSelectHtml_(studentId,'반명',value,wmStudentClassOptionValues_(value),'onchange="wmSyncStudentTeacherByClass_(\''+escapeJs(safeId)+'\')"');
 }
 
-function wmStudentTeacherSelectHtml_(studentId,value){
-  return wmStudentSimpleSelectHtml_(studentId,'교사명',value,wmStudentTeacherOptionValues_(value),'');
+function wmStudentTeacherSelectHtml_(studentId,value,className){
+  const targetClass=String(className||'').trim();
+  const classRow=(wmSettingClassRows||[]).find(function(row){return String(row&&row['반명']||'').trim()===targetClass;}) || null;
+  const mappedRaw=classRow ? String(classRow['담당교사명']||'').trim() : String(value||'').trim();
+  const mappedTeacher=mappedRaw && mappedRaw !== '추후선택' ? mappedRaw : '';
+  return wmStudentSimpleSelectHtml_(studentId,'교사명',mappedTeacher,wmStudentTeacherOptionValues_(mappedTeacher),'disabled aria-disabled="true" title="반 담당교사가 자동 적용됩니다."');
 }
 
 function wmNormalizeSchoolGrade_(value){
@@ -9273,9 +9331,9 @@ function wmSyncStudentTeacherByClass_(safeId){
   if(!classSelect||!teacherSelect)return;
   const className=String(classSelect.value||'').trim();
   const classRow=(wmSettingClassRows||[]).find(function(row){return String(row&&row['반명']||'').trim()===className;});
-  const teacherName=String(classRow&&classRow['담당교사명']||'').trim();
-  if(!teacherName)return;
-  if(!Array.from(teacherSelect.options||[]).some(function(option){return option.value===teacherName;}))teacherSelect.add(new Option(teacherName,teacherName));
+  const teacherRaw=String(classRow&&classRow['담당교사명']||'').trim();
+  const teacherName=teacherRaw && teacherRaw !== '추후선택' ? teacherRaw : '';
+  if(teacherName&&!Array.from(teacherSelect.options||[]).some(function(option){return option.value===teacherName;}))teacherSelect.add(new Option(teacherName,teacherName));
   teacherSelect.value=teacherName;
 }
 
@@ -9478,7 +9536,7 @@ async function saveStudentLearningModeFromRow(studentId, skipLockAndToast){
   const studentName = String(row['학생이름'] || '').trim();
   const getSel = key => {
     const el = document.getElementById(`wmMode_${key}_${safeId}`);
-    if(el && !el.disabled) return el.value || '';
+    if(el && (!el.disabled || key === '교사명')) return el.value || '';
     if(key === '최초배정') return String(row['최초배정'] || row['학습배정'] || '').trim();
     return String(row[key] || '').trim();
   };
@@ -10067,7 +10125,7 @@ function renderStudentManageRows(){
       <td>${escapeHtml(wmCurrentSetDisplayValue(row['현재세트']))}</td>
       <td>${wmModeSelectHtml(studentId, '다음레벨완료조건', nextComplete, ['1회','2회','3회'])}</td>
       <td>${wmStudentClassSelectHtml_(studentId, row['반명'] || row['반'] || row['Class'] || '')}</td>
-      <td>${wmStudentTeacherSelectHtml_(studentId, row['교사명'] || '')}</td>
+      <td>${wmStudentTeacherSelectHtml_(studentId, row['교사명'] || '', row['반명'] || row['반'] || row['Class'] || '')}</td>
       <td>${wmStudentTextInputHtml(studentId, '학교', row['학교'] || '', {maxLength:50,placeholder:'학교명'})}</td>
       <td>${wmStudentGradeSelectHtml_(studentId, row['학년'] || '')}</td>
       <td>${wmRecipientTypeInputHtml(studentId, row['수신자구분'] || row['수신구분'] || row['수신'] || '')}</td>
