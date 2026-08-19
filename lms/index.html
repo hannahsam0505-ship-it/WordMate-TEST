@@ -12665,12 +12665,12 @@ document.addEventListener('keydown',function(e){
 /* 🔒 LMS PHASE 5 INTEGRATED ALL LOCK VERIFICATION V1 END */
 </script>
 
-
 <script>
 /* ==========================================================
    🔒 LMS RECENT ADDITIONS FUNCTION + SPEED LOCK V1 / 수정 금지
    기준: 2026-08-19 TEST LMS 12669 최종본
    기존 Phase 1~5 LOCK은 변경하지 않고 최근 추가분만 별도 보호합니다.
+   기존 성공 Phase LOCK과 동일하게 defineProperty를 직접 실행해 writable:false까지 확정합니다.
    LOCK 자체는 네트워크 호출·DB 조회·타이머·반복 이벤트를 추가하지 않습니다.
    ========================================================== */
 (function wmInstallLmsRecentAdditionsFunctionSpeedLock_(){
@@ -12768,12 +12768,9 @@ document.addEventListener('keydown',function(e){
     if(typeof fn!=='function') return Object.freeze({locked:false,reason:'함수 없음'});
     refs[name]=fn;
     try{
-      var old=Object.getOwnPropertyDescriptor(window,name);
-      if(!(old&&old.configurable===false)){
-        Object.defineProperty(window,name,{
-          value:fn,writable:false,configurable:false,enumerable:true
-        });
-      }
+      Object.defineProperty(window,name,{
+        value:fn,writable:false,configurable:false,enumerable:true
+      });
     }catch(error){
       return Object.freeze({locked:false,reason:String(error&&error.message||error)});
     }
