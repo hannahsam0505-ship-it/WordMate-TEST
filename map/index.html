@@ -1653,19 +1653,19 @@ body.wm-map-loading-active #wm-learning-record-widget{
 .wm-map-wrong-btn:disabled{cursor:default;opacity:.62;}
 .wm-map-cumulative-btn{background:#fff7ed;border-color:#fdba74;color:#c2410c;}
 .wm-map-wrong-legacy{color:#94a3b8;font-weight:800;}
-.wm-map-wrong-modal{position:fixed;inset:0;z-index:140000;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(15,23,42,.68);box-sizing:border-box;}
+.wm-map-wrong-modal{position:fixed;inset:0;z-index:140000;display:none;align-items:center;justify-content:center;padding:30px 20px;background:rgba(15,23,42,.68);box-sizing:border-box;} body.wm-test-booth-active .wm-map-wrong-modal{top:var(--wm-test-booth-height);}
 .wm-map-wrong-modal.is-open{display:flex;}
-.wm-map-wrong-modal-card{width:min(1080px,96vw);max-height:calc(100vh - 40px);overflow:auto;background:#fff;border-radius:20px;padding:20px;box-shadow:0 28px 80px rgba(0,0,0,.35);box-sizing:border-box;}
+.wm-map-wrong-modal-card{width:min(1080px,96vw);max-height:calc(100vh - 60px);overflow:auto;background:#fff;border-radius:20px;padding:20px;box-shadow:0 28px 80px rgba(0,0,0,.35);box-sizing:border-box;} body.wm-test-booth-active .wm-map-wrong-modal-card{max-height:calc(100vh - var(--wm-test-booth-height) - 60px);}
 .wm-map-wrong-modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;}
 .wm-map-wrong-modal-title{color:#073b8f;font-size:19px;font-weight:950;}
 .wm-map-wrong-modal-close{border:0;border-radius:10px;background:#0f172a;color:#fff;padding:9px 14px;font-weight:900;cursor:pointer;}
 .wm-map-wrong-modal-groups{display:flex;flex-direction:column;gap:12px;}
 .wm-map-wrong-modal-group{border-top:1px solid #dbe3ef;padding-top:9px;}
 .wm-map-wrong-modal-group:first-child{border-top:0;padding-top:0;}
-.wm-map-wrong-modal-set{display:inline-flex;align-items:center;min-height:22px;margin:0 0 7px;padding:2px 8px;border-radius:999px;background:#eff6ff;color:#1d4ed8;font-size:11px;font-weight:900;line-height:1;}
+.wm-map-wrong-modal-set{display:inline-flex;align-items:center;min-height:22px;margin:0;padding:2px 8px;border-radius:999px;background:#eff6ff;color:#1d4ed8;font-size:11px;font-weight:900;line-height:1;}
 .wm-map-wrong-modal-split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;align-items:stretch;}
 .wm-map-wrong-modal-section{min-width:0;display:flex;flex-direction:column;}
-.wm-map-wrong-modal-section h3{margin:0 0 5px;color:#173b75;font-size:14px;font-weight:950;}
+.wm-map-wrong-modal-section-head{display:flex;align-items:center;gap:8px;min-height:22px;margin:0 0 5px;} .wm-map-wrong-modal-section-head h3{margin:0;color:#173b75;font-size:14px;font-weight:950;}
 .wm-map-wrong-modal-list{width:100%;flex:1 1 auto;border-top:1px solid #dbe3ef;border-bottom:1px solid #dbe3ef;}
 .wm-map-wrong-modal-list-head,.wm-map-wrong-modal-list-row{display:grid;grid-template-columns:minmax(150px,1fr) 62px minmax(180px,1.2fr);align-items:center;column-gap:7px;width:100%;box-sizing:border-box;}
 .wm-map-wrong-modal-list-head{min-height:25px;padding:3px 6px;background:#f8fafc;color:#64748b;font-size:10px;font-weight:900;}
@@ -4367,7 +4367,7 @@ function wmMapWrongWordGroupsHtml_(context){
     const engSet = engItems.filter(function(item){ return String((item && item.setId) || '').trim() === setId; });
     const koSet = koItems.filter(function(item){ return String((item && item.setId) || '').trim() === setId; });
     const setBadge = setId ? '<div class="wm-map-wrong-modal-set">' + escapeHtml(setId) + '</div>' : '';
-    return '<div class="wm-map-wrong-modal-group">' + setBadge + '<div class="wm-map-wrong-modal-split"><section class="wm-map-wrong-modal-section"><h3>영한</h3>' + wmMapWrongWordListHtml_(engSet,'eng-ko') + '</section><section class="wm-map-wrong-modal-section"><h3>한영</h3>' + wmMapWrongWordListHtml_(koSet,'ko-eng') + '</section></div></div>';
+    return '<div class="wm-map-wrong-modal-group"><div class="wm-map-wrong-modal-split"><section class="wm-map-wrong-modal-section"><div class="wm-map-wrong-modal-section-head">' + setBadge + '<h3>영한</h3></div>' + wmMapWrongWordListHtml_(engSet,'eng-ko') + '</section><section class="wm-map-wrong-modal-section"><div class="wm-map-wrong-modal-section-head"><h3>한영</h3></div>' + wmMapWrongWordListHtml_(koSet,'ko-eng') + '</section></div></div>';
   }).join('') + '</div>';
 }
 

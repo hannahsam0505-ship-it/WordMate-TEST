@@ -815,19 +815,19 @@ const WM_APPS_SCRIPT_URL = WM_CONFIG.APPS_SCRIPT_URL;
     .wm-wrong-link-btn:hover { background:#dbeafe; border-color:#0d55c8; }
     .wm-wrong-link-btn.wm-cumulative { background:#fff7ed; border-color:#fdba74; color:#c2410c; margin-left:auto; }
     .wm-wrong-legacy { color:#94a3b8; font-weight:800; }
-    .wm-wrong-modal { position:fixed; inset:0; z-index:140000; display:none; align-items:center; justify-content:center; padding:20px; background:rgba(15,23,42,.68); }
+    .wm-wrong-modal { position:fixed; inset:0; z-index:140000; display:none; align-items:center; justify-content:center; padding:30px 20px; background:rgba(15,23,42,.68); box-sizing:border-box; } body.wm-test-booth-active .wm-wrong-modal { top:var(--wm-test-booth-height); }
     .wm-wrong-modal.active { display:flex; }
-    .wm-wrong-modal-card { width:min(1080px,96vw); max-height:calc(100vh - 40px); overflow:auto; background:#fff; border-radius:20px; padding:20px; box-shadow:0 28px 80px rgba(0,0,0,.35); }
+    .wm-wrong-modal-card { width:min(1080px,96vw); max-height:calc(100vh - 60px); overflow:auto; background:#fff; border-radius:20px; padding:20px; box-shadow:0 28px 80px rgba(0,0,0,.35); box-sizing:border-box; } body.wm-test-booth-active .wm-wrong-modal-card { max-height:calc(100vh - var(--wm-test-booth-height) - 60px); }
     .wm-wrong-modal-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; }
     .wm-wrong-modal-title { color:#073b8f; font-size:19px; font-weight:950; }
     .wm-wrong-modal-close { border:0; border-radius:10px; background:#0f172a; color:#fff; padding:9px 14px; font-weight:900; cursor:pointer; }
     .wm-wrong-modal-groups { display:flex; flex-direction:column; gap:12px; }
     .wm-wrong-modal-group { border-top:1px solid #dbe3ef; padding-top:9px; }
     .wm-wrong-modal-group:first-child { border-top:0; padding-top:0; }
-    .wm-wrong-modal-set { display:inline-flex; align-items:center; min-height:22px; margin:0 0 7px; padding:2px 8px; border-radius:999px; background:#eff6ff; color:#1d4ed8; font-size:11px; font-weight:900; line-height:1; }
+    .wm-wrong-modal-set { display:inline-flex; align-items:center; min-height:22px; margin:0; padding:2px 8px; border-radius:999px; background:#eff6ff; color:#1d4ed8; font-size:11px; font-weight:900; line-height:1; }
     .wm-wrong-modal-split { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:12px; align-items:stretch; }
     .wm-wrong-modal-section { min-width:0; display:flex; flex-direction:column; }
-    .wm-wrong-modal-section h3 { margin:0 0 5px; color:#173b75; font-size:14px; font-weight:950; }
+    .wm-wrong-modal-section-head { display:flex; align-items:center; gap:8px; min-height:22px; margin:0 0 5px; } .wm-wrong-modal-section-head h3 { margin:0; color:#173b75; font-size:14px; font-weight:950; }
     .wm-wrong-modal-list { width:100%; flex:1 1 auto; border-top:1px solid var(--wm-line); border-bottom:1px solid var(--wm-line); }
     .wm-wrong-modal-list-head, .wm-wrong-modal-list-row { display:grid; grid-template-columns:minmax(150px,1fr) 62px minmax(180px,1.2fr); align-items:center; column-gap:7px; width:100%; box-sizing:border-box; }
     .wm-wrong-modal-list-head { min-height:25px; padding:3px 6px; background:#f8fafc; color:#64748b; font-size:10px; font-weight:900; }
@@ -3677,7 +3677,7 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
         const engSet=engItems.filter(item=>String((item && item.setId) || '').trim()===setId);
         const koSet=koItems.filter(item=>String((item && item.setId) || '').trim()===setId);
         const setBadge=setId ? '<div class="wm-wrong-modal-set">'+wmWrongEscapeHtml(setId)+'</div>' : '';
-        return '<div class="wm-wrong-modal-group">'+setBadge+'<div class="wm-wrong-modal-split"><section class="wm-wrong-modal-section"><h3>영한</h3>'+wmWrongWordListHtml(engSet,'eng-ko')+'</section><section class="wm-wrong-modal-section"><h3>한영</h3>'+wmWrongWordListHtml(koSet,'ko-eng')+'</section></div></div>';
+        return '<div class="wm-wrong-modal-group"><div class="wm-wrong-modal-split"><section class="wm-wrong-modal-section"><div class="wm-wrong-modal-section-head">'+setBadge+'<h3>영한</h3></div>'+wmWrongWordListHtml(engSet,'eng-ko')+'</section><section class="wm-wrong-modal-section"><div class="wm-wrong-modal-section-head"><h3>한영</h3></div>'+wmWrongWordListHtml(koSet,'ko-eng')+'</section></div></div>';
       }).join('')+'</div>';
     }
 
