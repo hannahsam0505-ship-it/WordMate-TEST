@@ -421,8 +421,8 @@ const WM_LMS_URL = WM_CONFIG.LMS_URL;
 (function wmSpeedLockBootV1_(){
   'use strict';
 
-  var VERSION = 'WM_SPEED_LOCK_V1.0';
-  var DATE = '2026-07-10';
+  var VERSION = 'WM_SPEED_LOCK_V1.1';
+  var DATE = '2026-08-19';
   var printedFinal = false;
 
   var GROUPS = Object.freeze({
@@ -443,6 +443,16 @@ const WM_LMS_URL = WM_CONFIG.LMS_URL;
       'wmInitHomeworkSearchEnterKey',
       'filterHomeworkRecords',
       'resetHomeworkFilters'
+    ]),
+    recentFeatures: Object.freeze([
+      'wmLoadSharedReportRenderer_',
+      'wmMapRecentRender_',
+      'wmOpenLmsRecentReportModal_',
+      'wmMapBindRecentReport_',
+      'wmRenderMapWrongWordsCell_',
+      'wmUpdateMapCumulativeWrongButton_',
+      'wmOpenMapWrongWordsModal_',
+      'wmCloseMapWrongWordsModal_'
     ])
   });
 
@@ -450,7 +460,8 @@ const WM_LMS_URL = WM_CONFIG.LMS_URL;
     login: 'LOGIN',
     mapInitial: 'MAP INITIAL',
     recordParallel: 'RECORD PARALLEL',
-    search: 'SEARCH'
+    search: 'SEARCH',
+    recentFeatures: 'RECENT REPORT / WRONG WORDS'
   });
 
   function defineLocked_(name, value){
@@ -491,7 +502,7 @@ const WM_LMS_URL = WM_CONFIG.LMS_URL;
       login:Object.freeze({label:LABELS.login, locked:true})
     };
 
-    ['mapInitial','recordParallel','search'].forEach(function(group){
+    ['mapInitial','recordParallel','search','recentFeatures'].forEach(function(group){
       var all = true;
       GROUPS[group].forEach(function(name){
         var result = lockFunction_(name);
@@ -507,7 +518,8 @@ const WM_LMS_URL = WM_CONFIG.LMS_URL;
       login:MODULES.login,
       mapInitial:MODULES.mapInitial,
       recordParallel:MODULES.recordParallel,
-      search:MODULES.search
+      search:MODULES.search,
+      recentFeatures:MODULES.recentFeatures
     });
 
     var globalsOK = [
@@ -533,6 +545,7 @@ const WM_LMS_URL = WM_CONFIG.LMS_URL;
     console.log((REGISTRY.mapInitial.locked ? '✅ ' : '❌ ') + LABELS.mapInitial);
     console.log((REGISTRY.recordParallel.locked ? '✅ ' : '❌ ') + LABELS.recordParallel);
     console.log((REGISTRY.search.locked ? '✅ ' : '❌ ') + LABELS.search);
+    console.log((REGISTRY.recentFeatures.locked ? '✅ ' : '❌ ') + LABELS.recentFeatures);
     console.log(verified ? '🔒 SPEED LOCK VERIFIED' : '⚠️ SPEED LOCK CHECK REQUIRED');
     console.groupEnd();
 
@@ -5408,8 +5421,8 @@ function wmInitPublishedReportModal_(){
 (function wmMapApprovedLockV1_(){
   'use strict';
 
-  var VERSION = 'WM_MAP_APPROVED_UI_FUNCTION_LOCK_V1.0';
-  var DATE = '2026-08-04';
+  var VERSION = 'WM_MAP_APPROVED_UI_FUNCTION_LOCK_V1.1';
+  var DATE = '2026-08-19';
 
   var RAW_GROUPS = {
     topBlueDesign:{
@@ -5428,9 +5441,14 @@ function wmInitPublishedReportModal_(){
       selectors:['#setMap']
     },
     recentReport:{
-      label:'성적표 최근 4개월·드롭다운·모달·월 누적·학생 세션',
-      functions:['wmMapRecentMonths_','wmMapRecentData_','wmMapRecentRender_','wmOpenLmsCurrentReportModal_','wmOpenLmsRecentReportModal_','wmMapBindRecentReport_','wmInitPublishedReportModal_','wmGetCurrentSessionToken'],
+      label:'성적표 최근 4개월·공통렌더러·드롭다운·모달·월 누적·학생 세션',
+      functions:['wmLoadSharedReportRenderer_','wmMapBindRecentReport_','wmMapRecentMonths_','wmMapRecentData_','wmMapRecentRender_','wmOpenLmsRecentReportModal_','wmOpenLmsCurrentReportModal_','wmMapReportSelect_','wmMapReportFillSelect_','wmOpenPublishedReportModal_','wmMapReportBindGradeComment_','wmClosePublishedReportModal_','closeRecentReportModal','changeRecentReportMonth','wmRecentReportBackdropClose','wmInitPublishedReportModal_','wmGetCurrentSessionToken'],
       selectors:['#wm-report-view-button','#wm-recent-report-view-button','#wmRecentReportMount']
+    },
+    wrongWords:{
+      label:'틀린단어·누적오답·Compact 모달·영한/한영 안내',
+      functions:['wmNormalizeMapWrongWordItems_','wmParseMapWrongWords_','wmMapWrongWordsLabel_','wmMapWrongCountLabel_','wmRegisterMapWrongWordContext_','wmBuildMapRecordWrongContext_','wmRenderMapWrongWordsCell_','wmBuildMapCumulativeWrongContext_','wmMapWrongWordListHtml_','wmMapWrongWordGroupsHtml_','wmEnsureMapWrongWordsModal_','wmOpenMapWrongWordsModal_','wmCloseMapWrongWordsModal_','wmOpenMapCumulativeWrongFromSummary_','wmUpdateMapCumulativeWrongButton_'],
+      selectors:['#summaryCumulativeWrongWords','.homework-table']
     },
     homeworkBlueDesign:{
       label:'숙제검사·학습기록 블루 디자인·검색·요약정보',
@@ -5519,7 +5537,7 @@ function wmInitPublishedReportModal_(){
   REGISTRY = Object.freeze(REGISTRY);
 
   function wmGetMapApprovedLockStatus_(){
-    var allLocked = Object.keys(REGISTRY).length === 8 && Object.keys(REGISTRY).every(function(key){
+    var allLocked = Object.keys(REGISTRY).length === 9 && Object.keys(REGISTRY).every(function(key){
       return REGISTRY[key].locked === true;
     });
     return Object.freeze({
@@ -5543,7 +5561,7 @@ function wmInitPublishedReportModal_(){
     console.log('LOCK VERSION : ' + status.version);
     console.log('LOCK DATE    : ' + status.date);
     console.table(rows);
-    console.log(status.allLocked ? '🔒 MAP APPROVED 8 GROUPS ALL LOCK VERIFIED' : '⚠️ MAP APPROVED LOCK CHECK REQUIRED');
+    console.log(status.allLocked ? '🔒 MAP APPROVED 9 GROUPS ALL LOCK VERIFIED' : '⚠️ MAP APPROVED LOCK CHECK REQUIRED');
     console.groupEnd();
     return status;
   }
