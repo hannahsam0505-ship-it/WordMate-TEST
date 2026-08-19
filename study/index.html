@@ -5032,18 +5032,83 @@ async function goNextLearning(){
 function restart(){clearInterval(testTimer);stopWordAudio();learningStartTime=null;wmCurrentStepStartTime=null;wmStepSaveChain=Promise.resolve();wmStepSaveLastError=null;wmStepSaveInFlight=null;wmStepSaveDirty=false;stage=0;renderStart();afterScreenRender();}
 
 /* =========================================================
+ * WM_STUDY_FIXED_FRAME_LOCK_V1.0_20260819
+ * 4번 흰색 학습창 고정프레임 공식 + 렌더 함수 참조 보호.
+ * 새 타이머/DB/API 호출 없이 기존 LOCK 검증 흐름에서 1회 확인합니다.
+ * ========================================================= */
+const WM_STUDY_FIXED_FRAME_LOCK_VERSION = "WM_STUDY_FIXED_FRAME_LOCK_V1.0";
+const WM_STUDY_FIXED_FRAME_LOCK_DATE = "2026-08-19";
+const WM_STUDY_FIXED_FRAME_FORMULA = Object.freeze({
+  PC:586, MOBILE:612, MOBILE_20:640, NARROW:631, NARROW_20:657
+});
+
+function wmGetStudyFixedFrameLockStatus_(){
+  const css = Array.from(document.querySelectorAll("style")).map(style=>style.textContent || "").join("\n").replace(/\s+/g,"");
+  const cssFormulaVerified = [
+    "height:586px;min-height:586px;max-height:586px",
+    "height:612px;min-height:612px;max-height:612px",
+    "height:640px;min-height:640px;max-height:640px",
+    "height:631px;min-height:631px;max-height:631px",
+    "height:657px;min-height:657px;max-height:657px"
+  ].every(rule=>css.includes(rule));
+  const card = app && app.querySelector ? app.querySelector(".wm-card") : null;
+  const isFixedFrame = !!(card && (card.classList.contains("wm-study-step-card") || card.classList.contains("wm-study-state-card")));
+  let expectedHeight = 0;
+  if(isFixedFrame){
+    const word20 = document.querySelector(".wm-study-shell.wm-wordcount-20") !== null;
+    expectedHeight = window.innerWidth <= 470
+      ? (word20 ? WM_STUDY_FIXED_FRAME_FORMULA.NARROW_20 : WM_STUDY_FIXED_FRAME_FORMULA.NARROW)
+      : (window.innerWidth <= 640
+          ? (word20 ? WM_STUDY_FIXED_FRAME_FORMULA.MOBILE_20 : WM_STUDY_FIXED_FRAME_FORMULA.MOBILE)
+          : WM_STUDY_FIXED_FRAME_FORMULA.PC);
+  }
+  const actualHeight = isFixedFrame ? Math.round(card.getBoundingClientRect().height) : 0;
+  const currentFrameVerified = !isFixedFrame || Math.abs(actualHeight - expectedHeight) <= 1;
+  return Object.freeze({
+    formulaFrozen:Object.isFrozen(WM_STUDY_FIXED_FRAME_FORMULA),
+    cssFormulaVerified:cssFormulaVerified,
+    currentFrameVerified:currentFrameVerified,
+    currentFrameHeight:actualHeight,
+    expectedFrameHeight:expectedHeight,
+    verified:Object.isFrozen(WM_STUDY_FIXED_FRAME_FORMULA) && cssFormulaVerified && currentFrameVerified
+  });
+}
+
+function wmLogStudyFixedFrameLockStatus_(){
+  const status = wmGetStudyFixedFrameLockStatus_();
+  console.group("🔒 WORD MATE STUDY FIXED FRAME LOCK STATUS");
+  console.log("LOCK VERSION :", WM_STUDY_FIXED_FRAME_LOCK_VERSION);
+  console.log("LOCK DATE    :", WM_STUDY_FIXED_FRAME_LOCK_DATE);
+  console.table({
+    "고정높이 공식 동결":status.formulaFrozen ? "YES" : "NO",
+    "CSS 고정높이 공식":status.cssFormulaVerified ? "YES" : "NO",
+    "현재 고정프레임 높이":status.currentFrameVerified ? "YES" : "NO",
+    "현재 높이(px)":status.currentFrameHeight,
+    "기준 높이(px)":status.expectedFrameHeight
+  });
+  console.log(status.verified ? "🔒 STUDY FIXED FRAME LOCK VERIFIED" : "❌ STUDY FIXED FRAME LOCK CHECK REQUIRED");
+  console.groupEnd();
+  return status;
+}
+
+/* =========================================================
  * WM_STUDY_ALL_LOCK_V1.0_20260711
  * 정상 확인된 Study 기능과 DEV 동일 음원공식의 함수 참조를 고정합니다.
  * ========================================================= */
-const WM_STUDY_LOCK_VERSION = "WM_STUDY_ALL_LOCK_V1.1";
-const WM_STUDY_LOCK_DATE = "2026-07-13";
+const WM_STUDY_LOCK_VERSION = "WM_STUDY_ALL_LOCK_V1.2";
+const WM_STUDY_LOCK_DATE = "2026-08-19";
 
-const WM_STUDY_SPEED_LOCK_VERSION = "WM_STUDY_SPEED_LOCK_V1.1";
-const WM_STUDY_SPEED_LOCK_DATE = "2026-07-13";
+const WM_STUDY_SPEED_LOCK_VERSION = "WM_STUDY_SPEED_LOCK_V1.2";
+const WM_STUDY_SPEED_LOCK_DATE = "2026-08-19";
 const WM_STUDY_SPEED_LOCKS = Object.freeze({
   SET_LOAD: Object.freeze({loadSetFromDB}),
   SESSION_CHECK: Object.freeze({wmStudyCheckCurrentSession, wmStudyStartSessionWatcher}),
   STEP_SAVE: Object.freeze({queueStepSave, wmWaitForStepSaves, saveLearningRecord}),
+  FIXED_FRAME_RENDER: Object.freeze({
+    wmApplyStudyStepSizeClass, afterScreenRender, renderStart, renderDbLoading,
+    renderStepSaveWaiting, leaveLearning, renderFlashCard, renderStep2, renderStep3,
+    renderMemory, renderOneMoreFlashCard, renderFinalResult
+  }),
   FINAL_TEST_SINGLE_SAVE: Object.freeze({markStepCompleted}),
   FINAL_SAVE: Object.freeze({saveLearningRecord})
 });
@@ -5177,6 +5242,12 @@ const WM_STUDY_LOCKS = Object.freeze({
   }),
   WRITING_EXACT: Object.freeze({wmIsExactEnglishAnswer}),
   STEP1_STEP5_PROGRESS_LAYOUT: Object.freeze({renderWordProgress}),
+  FIXED_LEARNING_FRAME: Object.freeze({
+    wmApplyStudyStepSizeClass, afterScreenRender, renderStart, renderDbLoading,
+    renderStepSaveWaiting, leaveLearning, renderFlashCard, renderStep2, renderStep3,
+    renderMemory, renderOneMoreFlashCard, renderFinalResult,
+    wmGetStudyFixedFrameLockStatus_, wmLogStudyFixedFrameLockStatus_
+  }),
   STUDY_EXIT: Object.freeze({leaveLearning, wmStudyReturnToMap, goFinalExit, goNextLearning, restart})
 });
 
@@ -5207,6 +5278,13 @@ function wmStudyInstallFunctionLocks(){
 }
 
 const WM_STUDY_LOCKED_FUNCTION_NAMES = Object.freeze(wmStudyInstallFunctionLocks());
+try{
+  Object.defineProperty(window, "WM_STUDY_FIXED_FRAME_FORMULA_LOCK", {
+    value:WM_STUDY_FIXED_FRAME_FORMULA, writable:false, configurable:false, enumerable:true
+  });
+}catch(error){
+  console.error("STUDY FIXED FRAME FORMULA LOCK INSTALL ERROR", error);
+}
 
 function wmLogStudyRuntimeExecutionLockStatus(){
   const rows = Object.keys(WM_STUDY_RUNTIME_EXECUTION_LOCKS).map(moduleName=>{
@@ -5522,6 +5600,7 @@ wmLogStudyLockStatus();
    서버 LOCK 검증 5건은 그대로 유지하되 초기 세트 prefetch/학습진입 요청과 경쟁하지 않도록 8초 뒤 1회 실행합니다. */
 function wmRunDeferredStudyServerLockChecks_(){
   wmLogStudyRuntimeExecutionLockStatus();
+  wmLogStudyFixedFrameLockStatus_();
   wmLogStudySpeedLockStatus();
   wmLogCodeGsAllLockStatusOnStudy_();
   window.wmLogLevelTransitionNoticeLockStatus();
