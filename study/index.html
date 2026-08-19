@@ -1166,7 +1166,9 @@ const WM_DEV_LIVE_REVIEW_MODE = window.WM_DEV_ADMIN_REVIEW_MODE === true;
      진입 로딩/저장 확인 화면도 실제 Study Step 카드와 동일한 세로높이를 유지합니다.
      메시지·기존 스피너 크기는 변경하지 않고 내부 세로 공간만 분산합니다. */
   .wm-study-shell .wm-study-state-card{
+    height:581px;
     min-height:581px;
+    max-height:581px;
     display:flex;
     flex-direction:column;
     box-sizing:border-box;
@@ -1189,6 +1191,12 @@ const WM_DEV_LIVE_REVIEW_MODE = window.WM_DEV_ADMIN_REVIEW_MODE === true;
   }
   .wm-study-shell .wm-study-final-save-card{
     justify-content:space-between;
+  }
+  .wm-study-shell .wm-study-start-card{
+    justify-content:space-between;
+  }
+  .wm-study-shell .wm-study-start-card > div:not(.wm-title){
+    margin-top:0 !important;
   }
 
   /* Step 1 / Step 5 : 제목만 다르고 내부 배치는 동일 */
@@ -1293,10 +1301,10 @@ const WM_DEV_LIVE_REVIEW_MODE = window.WM_DEV_ADMIN_REVIEW_MODE === true;
   }
 
   @media(max-width:640px){
-    .wm-study-shell .wm-study-step-card,
-    .wm-study-shell .wm-study-state-card{min-height:612px;}
-    .wm-study-shell.wm-wordcount-20 .wm-study-step-card,
-    .wm-study-shell.wm-wordcount-20 .wm-study-state-card{min-height:640px;}
+    .wm-study-shell .wm-study-step-card{min-height:612px;}
+    .wm-study-shell .wm-study-state-card{height:612px;min-height:612px;max-height:612px;}
+    .wm-study-shell.wm-wordcount-20 .wm-study-step-card{min-height:640px;}
+    .wm-study-shell.wm-wordcount-20 .wm-study-state-card{height:640px;min-height:640px;max-height:640px;}
     .wm-study-shell .wm-step2-card .wm-step2-word-row{padding:0 92px 0 0;}
     .wm-study-shell .wm-step2-card .wm-step2-word-row .audio-btn{right:0;min-width:86px;padding:6px 9px;font-size:12px;}
     .wm-study-shell.wm-wordcount-20 .word-progress{
@@ -4184,7 +4192,7 @@ async function leaveLearning(){
   if(result && result.ok === false){
     const finalResult = await WM_STUDY_SPEED_LOCKS.FINAL_SAVE.saveLearningRecord("completed");
     if(!wmIsSaveSuccess(finalResult)){
-      app.innerHTML = `<div class="wm-card">${wmSetBadgeHtml()}<div class="wm-title">학습기록 저장 확인 필요</div><div class="wm-meaning" style="font-size:18px;line-height:1.8;">저장 응답 확인이 지연되었습니다.<br>이미 저장되었을 수 있으니 학습맵으로 돌아가 확인합니다.</div><button class="wm-btn" onclick="wmStudyReturnToMap()">학습맵으로 이동</button></div>`;
+      app.innerHTML = `<div class="wm-card wm-study-state-card wm-study-start-card">${wmSetBadgeHtml()}<div class="wm-title">학습기록 저장 확인 필요</div><div class="wm-meaning" style="font-size:18px;line-height:1.8;">저장 응답 확인이 지연되었습니다.<br>이미 저장되었을 수 있으니 학습맵으로 돌아가 확인합니다.</div><button class="wm-btn" onclick="wmStudyReturnToMap()">학습맵으로 이동</button></div>`;
       afterScreenRender();
       return;
     }
@@ -4237,7 +4245,7 @@ function render(){
 
 function renderStart(){
   app.innerHTML = `
-    <div class="wm-card">
+    <div class="wm-card wm-study-state-card wm-study-start-card">
       ${wmSetBadgeHtml()}
       <div class="wm-title">
         영어잡는 Word Mate<br>
