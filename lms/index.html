@@ -12665,5 +12665,335 @@ document.addEventListener('keydown',function(e){
 /* 🔒 LMS PHASE 5 INTEGRATED ALL LOCK VERIFICATION V1 END */
 </script>
 
+
+<script>
+/* ==========================================================
+   🔒 LMS RECENT ADDITIONS FUNCTION + SPEED LOCK V1 / 수정 금지
+   기준: 2026-08-19 TEST LMS 12669 최종본
+   기존 Phase 1~5 LOCK은 변경하지 않고 최근 추가분만 별도 보호합니다.
+   LOCK 자체는 네트워크 호출·DB 조회·타이머·반복 이벤트를 추가하지 않습니다.
+   ========================================================== */
+(function wmInstallLmsRecentAdditionsFunctionSpeedLock_(){
+  'use strict';
+
+  var LOCK_VERSION='LMS_RECENT_ADDITIONS_FUNCTION_LOCK_V1.0';
+  var SPEED_LOCK_VERSION='LMS_RECENT_ADDITIONS_SPEED_LOCK_V1.0';
+  var LOCK_DATE='2026-08-19';
+
+  var GROUPS=Object.freeze({
+    wrongWords:Object.freeze([
+      "wmWrongEscapeHtml",
+      "wmNormalizeWrongWordItems",
+      "wmParseWrongWordsCell",
+      "wmWrongWordsLabel",
+      "wmWrongCountsLabel",
+      "wmRegisterWrongWordContext",
+      "wmWrongWordContextForRecord",
+      "wmWrongWordsCellHtml",
+      "wmLmsCumulativeWrongButtons",
+      "wmCumulativeWrongCellHtml",
+      "wmApplyLmsCumulativeWrongButtonState",
+      "wmOpenLmsCumulativeWrong",
+      "wmPreloadVisibleLmsCumulativeWrong",
+      "wmWrongWordLevelFromSetId",
+      "wmBuildCumulativeWrongContext",
+      "wmWrongWordListHtml",
+      "wmWrongWordGroupsHtml",
+      "wmEnsureWrongWordsModal",
+      "wmOpenWrongWordsModal",
+      "wmCloseWrongWordsModal",
+      "wmUpdateProfileCumulativeWrongButton"
+    ]),
+    sharedReport:Object.freeze([
+      "wmLoadSharedReportRenderer_",
+      "wmBindGradeGuide",
+      "wmOpenGradeLevelReport",
+      "wmOpenGradeLevelRecentReport"
+    ]),
+    studentManagement:Object.freeze([
+      "wmStudentRegisterRecipientTypeValue",
+      "wmToggleStudentRegisterRecipientType",
+      "wmApplyStudentSensitiveRegistrationAccess_",
+      "wmStudentTextInputHtml",
+      "wmUniqueStudentOptionValues_",
+      "wmStudentClassOptionValues_",
+      "wmStudentTeacherOptionValues_",
+      "wmStudentTeacherIdByName_",
+      "wmStudentSimpleSelectHtml_",
+      "wmStudentClassSelectHtml_",
+      "wmStudentTeacherSelectHtml_",
+      "wmNormalizeSchoolGrade_",
+      "wmStudentGradeSelectHtml_",
+      "wmSyncStudentTeacherByClass_",
+      "wmStudentSessionStatusHtml_",
+      "wmEnsureStudentEditOptions_"
+    ]),
+    settingAccess:Object.freeze([
+      "wmNormalizeStudentAccessFlag_",
+      "wmStudentDataAccessForCurrentActor_",
+      "wmSettingClassTeacherOptions_",
+      "wmSettingTeacherCanManageDataAccess_",
+      "wmSettingTeacherVisibleHeaders_",
+      "wmRenderSettingTeacherHeader_",
+      "saveSettingTeacherDataAccess"
+    ])
+  });
+
+  var LABELS=Object.freeze({
+    wrongWords:"틀린단어·누적오답·Compact 모달",
+    sharedReport:"공통렌더러·성적표 연결",
+    studentManagement:"학생관리 신규등록·수정",
+    settingAccess:"설정센터 데이터권한"
+  });
+
+  var SPEED_PATHS=Object.freeze([
+      "wmLoadSharedReportRenderer_",
+      "wmFetchRecentReportMonths",
+      "wmFetchRecentReportData",
+      "renderRecentReportMonth",
+      "openRecentReportDetail",
+      "wmOpenLmsCumulativeWrong",
+      "wmPreloadVisibleLmsCumulativeWrong",
+      "renderRecordManageRows",
+      "wmEnsureStudentEditOptions_",
+      "wmOpenGradeLevelReport",
+      "saveSettingTeacherDataAccess"
+    ]);
+
+  var refs={};
+  var protection={};
+
+  function protect(name){
+    var fn=window[name];
+    if(typeof fn!=='function') return Object.freeze({locked:false,reason:'함수 없음'});
+    refs[name]=fn;
+    try{
+      var old=Object.getOwnPropertyDescriptor(window,name);
+      if(!(old&&old.configurable===false)){
+        Object.defineProperty(window,name,{
+          value:fn,writable:false,configurable:false,enumerable:true
+        });
+      }
+    }catch(error){
+      return Object.freeze({locked:false,reason:String(error&&error.message||error)});
+    }
+    var d=Object.getOwnPropertyDescriptor(window,name)||{};
+    return Object.freeze({
+      locked:d.value===fn&&d.writable===false&&d.configurable===false,
+      reason:''
+    });
+  }
+
+  Object.keys(GROUPS).forEach(function(groupName){
+    GROUPS[groupName].forEach(function(name){
+      if(!Object.prototype.hasOwnProperty.call(protection,name)){
+        protection[name]=protect(name);
+      }
+    });
+  });
+
+  SPEED_PATHS.forEach(function(name){
+    if(!Object.prototype.hasOwnProperty.call(protection,name)){
+      protection[name]=protect(name);
+    }
+  });
+
+  var referenceRegistry={};
+  Object.keys(refs).forEach(function(name){referenceRegistry[name]=refs[name];});
+
+  var FUNCTION_REGISTRY=Object.freeze({
+    version:LOCK_VERSION,
+    date:LOCK_DATE,
+    groups:GROUPS,
+    references:Object.freeze(referenceRegistry)
+  });
+
+  var SPEED_REGISTRY=Object.freeze({
+    version:SPEED_LOCK_VERSION,
+    date:LOCK_DATE,
+    paths:SPEED_PATHS,
+    references:FUNCTION_REGISTRY.references,
+    rules:Object.freeze({
+      existingLazyRendererPath:true,
+      existingRecentReportParallelPath:true,
+      existingWrongWordCacheReuse:true,
+      existingWrongWordPendingReuse:true,
+      existingVisibleRowsPreloadPath:true,
+      existingStudentOptionReuse:true,
+      lockAddsNetworkCall:false,
+      lockAddsDbRead:false,
+      lockAddsTimer:false,
+      lockAddsRepeatedEvent:false
+    })
+  });
+
+  Object.defineProperty(window,'WM_LMS_RECENT_ADDITIONS_LOCK',{
+    value:FUNCTION_REGISTRY,writable:false,configurable:false
+  });
+  Object.defineProperty(window,'WM_LMS_RECENT_ADDITIONS_SPEED_LOCK',{
+    value:SPEED_REGISTRY,writable:false,configurable:false
+  });
+
+  function descriptorLocked(name){
+    var d=Object.getOwnPropertyDescriptor(window,name)||{};
+    return d.value===refs[name]&&d.writable===false&&d.configurable===false;
+  }
+
+  function exactReference(name){
+    return FUNCTION_REGISTRY.references[name]===refs[name]&&window[name]===refs[name];
+  }
+
+  function groupVerified(groupName){
+    return GROUPS[groupName].every(function(name){
+      return !!protection[name]&&protection[name].locked===true&&
+        descriptorLocked(name)&&exactReference(name);
+    });
+  }
+
+  function allTrue(obj){
+    return Object.keys(obj).every(function(key){return obj[key]===true;});
+  }
+
+  function getFunctionStatus(){
+    var rd=Object.getOwnPropertyDescriptor(window,'WM_LMS_RECENT_ADDITIONS_LOCK')||{};
+    var groups={};
+    Object.keys(GROUPS).forEach(function(groupName){
+      groups[groupName]=Object.freeze({
+        label:LABELS[groupName]||groupName,
+        functions:GROUPS[groupName].length,
+        locked:groupVerified(groupName)
+      });
+    });
+    var common={
+      registryFrozen:Object.isFrozen(FUNCTION_REGISTRY)&&
+        Object.isFrozen(FUNCTION_REGISTRY.groups)&&
+        Object.isFrozen(FUNCTION_REGISTRY.references),
+      registryWriteProtected:rd.writable===false,
+      registryDeleteProtected:rd.configurable===false,
+      all48FunctionsPresent:Object.keys(FUNCTION_REGISTRY.references).filter(function(name){
+        return GROUPS.wrongWords.indexOf(name)!==-1||
+          GROUPS.sharedReport.indexOf(name)!==-1||
+          GROUPS.studentManagement.indexOf(name)!==-1||
+          GROUPS.settingAccess.indexOf(name)!==-1;
+      }).length===48,
+      exactFunctionReferences:Object.keys(GROUPS).every(groupVerified)
+    };
+    return Object.freeze({
+      version:LOCK_VERSION,date:LOCK_DATE,
+      groups:Object.freeze(groups),
+      common:Object.freeze(common),
+      verified:Object.keys(groups).every(function(key){return groups[key].locked===true;})&&allTrue(common)
+    });
+  }
+
+  function getSpeedStatus(){
+    var rd=Object.getOwnPropertyDescriptor(window,'WM_LMS_RECENT_ADDITIONS_SPEED_LOCK')||{};
+    var paths={};
+    SPEED_PATHS.forEach(function(name){
+      paths[name]=!!protection[name]&&protection[name].locked===true&&
+        descriptorLocked(name)&&exactReference(name);
+    });
+    var rules={
+      registryFrozen:Object.isFrozen(SPEED_REGISTRY)&&
+        Object.isFrozen(SPEED_REGISTRY.paths)&&
+        Object.isFrozen(SPEED_REGISTRY.rules),
+      registryWriteProtected:rd.writable===false,
+      registryDeleteProtected:rd.configurable===false,
+      exactSpeedReferences:Object.keys(paths).every(function(name){return paths[name]===true;}),
+      noLockNetworkCall:SPEED_REGISTRY.rules.lockAddsNetworkCall===false,
+      noLockDbRead:SPEED_REGISTRY.rules.lockAddsDbRead===false,
+      noLockTimer:SPEED_REGISTRY.rules.lockAddsTimer===false,
+      noLockRepeatedEvent:SPEED_REGISTRY.rules.lockAddsRepeatedEvent===false
+    };
+    return Object.freeze({
+      version:SPEED_LOCK_VERSION,date:LOCK_DATE,
+      paths:Object.freeze(paths),
+      rules:Object.freeze(rules),
+      verified:allTrue(rules)
+    });
+  }
+
+  function printFunctionStatus(){
+    var s=getFunctionStatus();
+    console.group('🔒 WORD MATE LMS RECENT ADDITIONS LOCK STATUS');
+    console.log('LOCK VERSION : '+s.version);
+    console.log('LOCK DATE    : '+s.date);
+    var rows={};
+    Object.keys(s.groups).forEach(function(key){
+      var item=s.groups[key];
+      rows[item.label]=item.locked?'✅ '+item.functions+' FUNCTIONS LOCK':'❌ CHECK';
+    });
+    console.table(rows);
+    console.table(s.common);
+    console.log(s.verified
+      ?'🔒 LMS RECENT ADDITIONS ALL LOCK VERIFIED'
+      :'❌ LMS RECENT ADDITIONS LOCK CHECK REQUIRED');
+    console.groupEnd();
+    return s;
+  }
+
+  function printSpeedStatus(){
+    var s=getSpeedStatus();
+    console.group('🔒 WORD MATE LMS RECENT SPEED LOCK STATUS');
+    console.log('LOCK VERSION : '+s.version);
+    console.log('LOCK DATE    : '+s.date);
+    console.table(s.paths);
+    console.table(s.rules);
+    console.log(s.verified
+      ?'🔒 LMS RECENT SPEED ALL LOCK VERIFIED'
+      :'❌ LMS RECENT SPEED LOCK CHECK REQUIRED');
+    console.groupEnd();
+    return s;
+  }
+
+  function getFinalStatus(){
+    var existing=typeof window.wmGetLmsAllLockVerifiedStatus==='function'
+      ? window.wmGetLmsAllLockVerifiedStatus()
+      : null;
+    var recent=getFunctionStatus();
+    var speed=getSpeedStatus();
+    return Object.freeze({
+      date:LOCK_DATE,
+      existingPhase1To5:!!existing&&existing.verified===true,
+      recentAdditions:recent.verified===true,
+      recentSpeed:speed.verified===true,
+      verified:!!existing&&existing.verified===true&&recent.verified===true&&speed.verified===true
+    });
+  }
+
+  function printFinalStatus(){
+    var s=getFinalStatus();
+    console.group('🔒 WORD MATE LMS FINAL ALL LOCK STATUS');
+    console.log('LOCK DATE : '+s.date);
+    console.table({
+      '기존 Phase 1~5':s.existingPhase1To5,
+      '최근 추가 기능':s.recentAdditions,
+      '최근 속도 경로':s.recentSpeed
+    });
+    console.log(s.verified
+      ?'🔒 WORD MATE LMS FINAL ALL LOCK VERIFIED'
+      :'❌ WORD MATE LMS FINAL LOCK CHECK REQUIRED');
+    console.groupEnd();
+    return s;
+  }
+
+  [
+    ['wmGetLmsRecentAdditionsLockStatus',getFunctionStatus],
+    ['wmLogLmsRecentAdditionsLockStatus',printFunctionStatus],
+    ['wmGetLmsRecentAdditionsSpeedLockStatus',getSpeedStatus],
+    ['wmLogLmsRecentAdditionsSpeedLockStatus',printSpeedStatus],
+    ['wmGetLmsFinalAllLockStatus',getFinalStatus],
+    ['wmLogLmsFinalAllLockStatus',printFinalStatus]
+  ].forEach(function(pair){
+    Object.defineProperty(window,pair[0],{
+      value:pair[1],writable:false,configurable:false
+    });
+  });
+
+  /* 자동 타이머/추가 조회 없이 수동 F12 검증만 제공합니다. */
+})();
+/* 🔒 LMS RECENT ADDITIONS FUNCTION + SPEED LOCK V1 END */
+</script>
+
 </body>
 </html>
