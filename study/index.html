@@ -1162,6 +1162,35 @@ const WM_DEV_LIVE_REVIEW_MODE = window.WM_DEV_ADMIN_REVIEW_MODE === true;
     box-sizing:border-box;
   }
 
+  /* WM_STUDY_LOADING_SAVE_FIXED_HEIGHT_V1
+     진입 로딩/저장 확인 화면도 실제 Study Step 카드와 동일한 세로높이를 유지합니다.
+     메시지·기존 스피너 크기는 변경하지 않고 내부 세로 공간만 분산합니다. */
+  .wm-study-shell .wm-study-state-card{
+    min-height:581px;
+    display:flex;
+    flex-direction:column;
+    box-sizing:border-box;
+  }
+  .wm-study-shell .wm-study-state-body{
+    flex:1 1 auto;
+    min-height:0;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:space-evenly;
+    width:100%;
+    padding:12px 0 8px;
+    box-sizing:border-box;
+  }
+  .wm-study-shell .wm-study-state-body .wm-meaning,
+  .wm-study-shell .wm-study-state-body .wm-small{
+    margin-top:0;
+    margin-bottom:0;
+  }
+  .wm-study-shell .wm-study-final-save-card{
+    justify-content:space-between;
+  }
+
   /* Step 1 / Step 5 : 제목만 다르고 내부 배치는 동일 */
   .wm-study-shell .wm-step1-card,
   .wm-study-shell .wm-step5-card{
@@ -1264,8 +1293,10 @@ const WM_DEV_LIVE_REVIEW_MODE = window.WM_DEV_ADMIN_REVIEW_MODE === true;
   }
 
   @media(max-width:640px){
-    .wm-study-shell .wm-study-step-card{min-height:612px;}
-    .wm-study-shell.wm-wordcount-20 .wm-study-step-card{min-height:640px;}
+    .wm-study-shell .wm-study-step-card,
+    .wm-study-shell .wm-study-state-card{min-height:612px;}
+    .wm-study-shell.wm-wordcount-20 .wm-study-step-card,
+    .wm-study-shell.wm-wordcount-20 .wm-study-state-card{min-height:640px;}
     .wm-study-shell .wm-step2-card .wm-step2-word-row{padding:0 92px 0 0;}
     .wm-study-shell .wm-step2-card .wm-step2-word-row .audio-btn{right:0;min-width:86px;padding:6px 9px;font-size:12px;}
     .wm-study-shell.wm-wordcount-20 .word-progress{
@@ -2960,15 +2991,15 @@ function normalizeDbWord(item, index){
 
 function renderDbLoading(){
   app.innerHTML = `
-    <div class="wm-card">
+    <div class="wm-card wm-study-state-card">
       ${wmSetBadgeHtml()}
       <div class="wm-title">
         영어잡는 Word Mate<br>
         ${currentSetName}
       </div>
 
-      <div style="padding:30px 0 24px;text-align:center;">
-        <div class="wm-meaning" style="font-size:25px;margin:4px 0 24px;">
+      <div class="wm-study-state-body" style="text-align:center;">
+        <div class="wm-meaning" style="font-size:25px;">
           학습 데이터를 불러오는 중입니다.
         </div>
 
@@ -2978,7 +3009,7 @@ function renderDbLoading(){
           border:6px solid #e5e7eb;
           border-top-color:#2563eb;
           border-radius:50%;
-          margin:0 auto 22px;
+          margin:0 auto;
           animation:wmSpin .8s linear infinite;
         "></div>
 
@@ -3423,12 +3454,14 @@ async function wmWaitForStepSaves(){
 }
 
 function renderStepSaveWaiting(stepTitle){
-  app.innerHTML = `<div class="wm-card">
+  app.innerHTML = `<div class="wm-card wm-study-state-card">
     ${wmSetBadgeHtml()}
     <div class="wm-title">학습기록 저장 중</div>
-    <div class="wm-meaning" style="font-size:20px;line-height:1.8;margin-bottom:18px;">${stepTitle} 완료 기록을 저장하고 있습니다.</div>
-    <div class="wm-small" style="font-size:15px;color:#555;line-height:1.7;">저장이 끝나면 다음 Step으로 이동합니다.<br>잠시만 기다려 주세요.</div>
-    <div style="width:42px;height:42px;border:5px solid #dbeafe;border-top-color:#2563eb;border-radius:50%;margin:22px auto 0;animation:wmSpin .8s linear infinite;"></div>
+    <div class="wm-study-state-body">
+      <div class="wm-meaning" style="font-size:20px;line-height:1.8;">${stepTitle} 완료 기록을 저장하고 있습니다.</div>
+      <div style="width:42px;height:42px;border:5px solid #dbeafe;border-top-color:#2563eb;border-radius:50%;margin:0 auto;animation:wmSpin .8s linear infinite;"></div>
+      <div class="wm-small" style="font-size:15px;color:#555;line-height:1.7;">저장이 끝나면 다음 Step으로 이동합니다.<br>잠시만 기다려 주세요.</div>
+    </div>
   </div>`;
   afterScreenRender();
 }
@@ -4135,12 +4168,14 @@ async function leaveLearning(){
   const modal=document.getElementById("wmExitModal");
   if(modal) modal.style.display="none";
 
-  app.innerHTML = `<div class="wm-card">
+  app.innerHTML = `<div class="wm-card wm-study-state-card">
     ${wmSetBadgeHtml()}
     <div class="wm-title">학습기록 저장 확인 중</div>
-    <div class="wm-meaning" style="font-size:18px;line-height:1.8;">완료된 Step 기록을 확인하고 있습니다.</div>
-    <div class="wm-small" style="font-size:15px;color:#555;line-height:1.7;">저장이 끝나면 학습맵으로 이동합니다.<br>잠시만 기다려 주세요.</div>
-    <div style="width:42px;height:42px;border:5px solid #dbeafe;border-top-color:#2563eb;border-radius:50%;margin:22px auto 0;animation:wmSpin .8s linear infinite;"></div>
+    <div class="wm-study-state-body">
+      <div class="wm-meaning" style="font-size:18px;line-height:1.8;">완료된 Step 기록을 확인하고 있습니다.</div>
+      <div style="width:42px;height:42px;border:5px solid #dbeafe;border-top-color:#2563eb;border-radius:50%;margin:0 auto;animation:wmSpin .8s linear infinite;"></div>
+      <div class="wm-small" style="font-size:15px;color:#555;line-height:1.7;">저장이 끝나면 학습맵으로 이동합니다.<br>잠시만 기다려 주세요.</div>
+    </div>
   </div>`;
   afterScreenRender();
 
@@ -4815,7 +4850,7 @@ function renderFinalResult(){
   WM_COMPLETED_SAVE_SET_NAME = currentSetName;
   const nextSetId = getNextSetId(currentSetId);
   const nextSetName = makeSetName(nextSetId);
-  app.innerHTML=`<div class="wm-card">
+  app.innerHTML=`<div class="wm-card wm-study-state-card wm-study-final-save-card">
       <div class="final-title">영어잡는 Word Mate<br>${currentSetName}<br>학습을 모두 마쳤습니다</div>
       <div class="final-score-box">${scoreText}</div>
 
