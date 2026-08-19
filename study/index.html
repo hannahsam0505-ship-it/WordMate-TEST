@@ -1157,21 +1157,20 @@ const WM_DEV_LIVE_REVIEW_MODE = window.WM_DEV_ADMIN_REVIEW_MODE === true;
      Step 1/5는 동일 배치, Step 4는 4단계 모두 입력/확인 위치를 고정합니다.
      TEST 화면은 적용 대상에서 제외합니다.
   ========================================================= */
-  .wm-study-shell .wm-study-step-card{
-    min-height:581px;
+  /* WM_STUDY_FIXED_LEARNING_FRAME_V1
+     Step 2 실제 학습카드(PC 586px)를 4번 흰색 학습창의 단일 기준으로 고정합니다.
+     시작/로딩/Step1~5/저장 화면은 같은 고정 프레임 안에서 내용만 교체합니다.
+     글씨·스피너 크기는 변경하지 않습니다. */
+  .wm-study-shell .wm-study-step-card,
+  .wm-study-shell .wm-study-state-card{
+    height:586px;
+    min-height:586px;
+    max-height:586px;
     box-sizing:border-box;
   }
-
-  /* WM_STUDY_LOADING_SAVE_FIXED_HEIGHT_V1
-     진입 로딩/저장 확인 화면도 실제 Study Step 카드와 동일한 세로높이를 유지합니다.
-     메시지·기존 스피너 크기는 변경하지 않고 내부 세로 공간만 분산합니다. */
   .wm-study-shell .wm-study-state-card{
-    height:581px;
-    min-height:581px;
-    max-height:581px;
     display:flex;
     flex-direction:column;
-    box-sizing:border-box;
   }
   .wm-study-shell .wm-study-state-body{
     flex:1 1 auto;
@@ -1301,9 +1300,9 @@ const WM_DEV_LIVE_REVIEW_MODE = window.WM_DEV_ADMIN_REVIEW_MODE === true;
   }
 
   @media(max-width:640px){
-    .wm-study-shell .wm-study-step-card{min-height:612px;}
+    .wm-study-shell .wm-study-step-card,
     .wm-study-shell .wm-study-state-card{height:612px;min-height:612px;max-height:612px;}
-    .wm-study-shell.wm-wordcount-20 .wm-study-step-card{min-height:640px;}
+    .wm-study-shell.wm-wordcount-20 .wm-study-step-card,
     .wm-study-shell.wm-wordcount-20 .wm-study-state-card{height:640px;min-height:640px;max-height:640px;}
     .wm-study-shell .wm-step2-card .wm-step2-word-row{padding:0 92px 0 0;}
     .wm-study-shell .wm-step2-card .wm-step2-word-row .audio-btn{right:0;min-width:86px;padding:6px 9px;font-size:12px;}
@@ -1318,6 +1317,13 @@ const WM_DEV_LIVE_REVIEW_MODE = window.WM_DEV_ADMIN_REVIEW_MODE === true;
       aspect-ratio:auto;
       font-size:10px;
     }
+  }
+
+  @media(max-width:470px){
+    .wm-study-shell .wm-study-step-card,
+    .wm-study-shell .wm-study-state-card{height:631px;min-height:631px;max-height:631px;}
+    .wm-study-shell.wm-wordcount-20 .wm-study-step-card,
+    .wm-study-shell.wm-wordcount-20 .wm-study-state-card{height:657px;min-height:657px;max-height:657px;}
   }
 
 
