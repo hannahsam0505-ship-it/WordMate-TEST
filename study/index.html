@@ -3879,6 +3879,29 @@ function wmNormalizeCompletedStepsFromProgress(progress){
   })).filter(step=>step.stepId);
 }
 
+function wmReadMapPrefetchedLearningProgress_(){
+  if(WM_DEV_LIVE_REVIEW_MODE) return null;
+  try{
+    const raw=sessionStorage.getItem('WM_STUDY_PROGRESS_PREFETCH_V1') || '';
+    if(!raw) return null;
+    const envelope=JSON.parse(raw);
+    const age=Date.now()-Number(envelope && envelope.savedAt || 0);
+    const studentId=String(envelope && envelope.studentId || '').trim();
+    const setId=String(envelope && envelope.setId || '').trim().toUpperCase().replace(/^WM/,'');
+    const activeSetId=String(currentSetId || '').trim().toUpperCase().replace(/^WM/,'');
+    if(!envelope || !envelope.progress || !envelope.progress.success) return null;
+    if(!studentId || studentId!==String(WM_STUDENT_ID || '').trim()) return null;
+    if(!setId || setId!==activeSetId) return null;
+    if(!Number.isFinite(age) || age<0 || age>120000) return null;
+    sessionStorage.removeItem('WM_STUDY_PROGRESS_PREFETCH_V1');
+    wmStudyLastValidSessionAt=Date.now();
+    wmResumeProgress=envelope.progress;
+    return envelope.progress;
+  }catch(err){
+    return null;
+  }
+}
+
 async function wmLoadLearningProgress(){
   if(WM_DEV_LIVE_REVIEW_MODE) return null;
 
@@ -3889,6 +3912,9 @@ async function wmLoadLearningProgress(){
      저장 로직은 건드리지 않고, 복귀 조회 캐시만 제거합니다. */
   wmProgressLoaded = false;
   wmResumeProgress = null;
+
+  const prefetchedProgress=wmReadMapPrefetchedLearningProgress_();
+  if(prefetchedProgress) return prefetchedProgress;
 
   if(!WM_PROGRESS_API_URL || !WM_STUDENT_ID || !currentSetId){
     return null;
@@ -5376,11 +5402,11 @@ function goNextTest(){
         return result;
       });
     }
-    finalSavePromise.then(function(result){
-      if(!wmIsSaveSuccess(result)) return;
-      stage=8;
-      render();
-    });
+    /* WM_FINAL_SCREEN_IMMEDIATE_V1_20260825
+       마지막 [다음] 클릭은 저장응답을 기다리지 않고 최종화면을 즉시 표시합니다.
+       이미 시작된 finalSavePromise만 백그라운드에서 마무리하며 새 저장호출은 만들지 않습니다. */
+    stage=8;
+    render();
     return;
   }
   stage=7;
@@ -5468,27 +5494,45 @@ function renderFinalResult(){
       </div>
 
       <div class="button-row">
-        <button class="wm-btn" onclick="goNextLearning()">다음학습하기</button>
-        <button class="wm-btn" onclick="goFinalExit()">나가기</button>
+        <button id="wmFinalNextBtn" class="wm-btn" onclick="goNextLearning()" disabled>다음학습하기</button>
+        <button id="wmFinalExitBtn" class="wm-btn" onclick="goFinalExit()" disabled>나가기</button>
       </div>
       <div class="wm-small" style="margin-top:14px;">다음 학습: ${nextSetName}</div>
     </div>`;
-  /* WM_FINAL_SCREEN_NO_SAVE_V1_20260825
-     마지막 TEST 완료 시점에 저장과 현재진행 완료 확정이 이미 끝났습니다.
-     이 화면에서는 DB/API 저장을 새로 만들지 않고 완료결과만 표시합니다. */
+  /* WM_FINAL_SCREEN_IMMEDIATE_STATUS_V1_20260825
+     최종화면 자체는 즉시 표시하고, 이미 진행 중인 finalSavePromise의 완료상태만 이 화면에서 반영합니다.
+     여기서는 새 DB/API 저장을 호출하지 않습니다. */
   const saveStatus=document.getElementById("saveStatus");
   const saveIcon=document.getElementById("saveIcon");
-  if(saveStatus) saveStatus.textContent="학습이 완료되었습니다.";
-  if(saveIcon){
-    saveIcon.className="final-save-icon final-save-check";
-    saveIcon.textContent="✅";
-    saveIcon.setAttribute("aria-label", "학습 완료");
+  const nextButton=document.getElementById("wmFinalNextBtn");
+  const exitButton=document.getElementById("wmFinalExitBtn");
+
+  function applyFinalSaveResult_(result){
+    if(!wmIsSaveSuccess(result)){
+      if(saveStatus) saveStatus.textContent="학습 완료 저장을 확인하고 있습니다.";
+      return;
+    }
+    if(saveStatus) saveStatus.textContent="학습이 완료되었습니다.";
+    if(saveIcon){
+      saveIcon.className="final-save-icon final-save-check";
+      saveIcon.textContent="✅";
+      saveIcon.setAttribute("aria-label", "학습 완료");
+    }
+    if(nextButton) nextButton.disabled=false;
+    if(exitButton) exitButton.disabled=false;
+
+    const officialResponse=WM_OFFICIAL_TRANSITION_RESULT || wmGetOfficialSaveResponse(result) || {};
+    if(wmIsLevelTransitionResponse(officialResponse)){
+      renderLevelTransitionNotice(officialResponse);
+    }else if(WM_LMS_RETURN_URL){
+      setTimeout(returnToLmsIfReady,700);
+    }
   }
-  const officialResponse=WM_OFFICIAL_TRANSITION_RESULT || {};
-  if(wmIsLevelTransitionResponse(officialResponse)){
-    renderLevelTransitionNotice(officialResponse);
-  }else if(WM_LMS_RETURN_URL){
-    setTimeout(returnToLmsIfReady,700);
+
+  if(finalSavePromise){
+    Promise.resolve(finalSavePromise).then(applyFinalSaveResult_);
+  }else{
+    applyFinalSaveResult_({ok:true,success:true,response:WM_OFFICIAL_TRANSITION_RESULT || {}});
   }
 }
 function wmIsLevelTransitionResponse(response){

@@ -3443,6 +3443,59 @@ function wmNormalizeLearningRecordForBottomTable_(record, data){
 }
 
 let wmStudyWarmSetId_ = '';
+let wmStudyEntryProgressSource_ = null;
+
+function wmPrepareStudyEntryProgressFromMap_(cacheData){
+  if(!cacheData || !cacheData.raw || !cacheData.currentSet) return false;
+  const raw=cacheData.raw;
+  const studentId=String(
+    raw.학생ID ||
+    (wmCurrentStudent && wmCurrentStudent.학생ID) ||
+    ''
+  ).trim();
+  if(!studentId) return false;
+
+  const plainSetId=wmNormalizeCurrentSetIdForMap_(cacheData.currentSet || '');
+  if(!plainSetId) return false;
+  const normalizedSetId='WM' + plainSetId;
+  const learningMode={
+    S4실루엣단계:String(raw.S4실루엣단계 || raw.s4 || raw.silhouetteStep || '').trim(),
+    S6테스트모드:String(raw.S6테스트모드 || raw.s6 || raw.testMode || '').trim(),
+    레벨완료조건:String(raw.레벨완료조건 || raw.levelCompleteCondition || '').trim(),
+    레벨회차추가:Number(raw.레벨회차추가 || raw.extraRounds || 0) || 0
+  };
+  const progress={
+    success:true,
+    sessionValid:true,
+    valid:true,
+    source:'MAP_CURRENT_PROGRESS_READY',
+    studentId:studentId,
+    setId:String(raw.Set_ID || normalizedSetId).trim().toUpperCase(),
+    recordSetId:String(raw.기록Set_ID || normalizedSetId).trim().toUpperCase(),
+    learningRecordId:String(raw.학습기록ID || '').trim(),
+    currentProgressStep:String(raw.현재Step || cacheData.currentStep || 'Step1').trim(),
+    lastCompletedStep:String(raw.완료Step || cacheData.completedStep || '').trim(),
+    completedSteps:[],
+    learningMode:learningMode,
+    currentProgress:raw,
+    currentProgressCache:raw,
+    currentProgressRow:raw
+  };
+  wmStudyEntryProgressSource_={
+    version:'WM_MAP_STUDY_PROGRESS_PREFETCH_V1',
+    studentId:studentId,
+    setId:normalizedSetId,
+    savedAt:Date.now(),
+    progress:progress
+  };
+  try{
+    sessionStorage.setItem('WM_STUDY_PROGRESS_PREFETCH_V1',JSON.stringify(wmStudyEntryProgressSource_));
+    return true;
+  }catch(err){
+    return false;
+  }
+}
+
 function wmWarmCurrentStudyContentFromMap_(setId){
   /* WM_MAP_STUDY_CONTENT_WARM_V1_20260822
      Map의 현재진행_DB가 현재 학습세트를 확정한 뒤 getSetData 서버 캐시를 백그라운드에서 미리 준비합니다.
@@ -3460,15 +3513,30 @@ function wmWarmCurrentStudyContentFromMap_(setId){
     try{ delete window[callbackName]; }catch(err){ window[callbackName] = undefined; }
     if(script && script.parentNode) script.parentNode.removeChild(script);
   }
-  window[callbackName] = function(){
+  window[callbackName] = function(result){
     if(finished) return;
     finished = true;
     cleanup();
+    /* WM_MAP_STUDY_PAYLOAD_PREFETCH_V1_20260825
+       기존 Map 사전 getSetData 1회의 성공응답을 Study가 이미 읽는 동일 캐시 키에 그대로 보관합니다.
+       추가 DB/API 호출은 만들지 않습니다. */
+    if(result && result.success){
+      try{
+        localStorage.setItem(
+          'wm_study_set_data_v1_' + normalizedSetId,
+          JSON.stringify({savedAt:Date.now(),data:result})
+        );
+      }catch(err){}
+    }
   };
   script = document.createElement('script');
+  const warmStudentId=String(wmCurrentStudent && wmCurrentStudent.학생ID || '').trim();
+  const warmSessionToken=wmGetCurrentSessionToken();
   script.src = wmGetApiBaseUrl()
     + '?action=getSetData'
     + '&set_id=' + encodeURIComponent(normalizedSetId)
+    + '&studentId=' + encodeURIComponent(warmStudentId)
+    + '&sessionToken=' + encodeURIComponent(warmSessionToken)
     + '&callback=' + encodeURIComponent(callbackName)
     + '&t=' + Date.now();
   script.onerror = function(){ if(finished) return; finished = true; cleanup(); };
@@ -3480,6 +3548,7 @@ function wmApplyLearningMapFromCurrentProgressCache_(cacheData, data){
   /* 신규학생은 Set_ID/현재Step/기록Set_ID가 아직 비어 있어도
      현재진행_DB 현재레벨이 확인되면 해당 레벨 맵 전체를 즉시 표시합니다. */
   if(!cacheData || !cacheData.currentLevel || !WM_LEVEL_CONFIG[cacheData.currentLevel]) return false;
+  wmPrepareStudyEntryProgressFromMap_(cacheData);
 
   const profileSource = Object.assign({}, (data && (data.studentProfile || data.profile)) || {}, cacheData.raw || {});
   wmStudentProfile = wmMergeStudentPreserveValues_(wmCurrentStudent || {}, profileSource);
@@ -5344,6 +5413,14 @@ async function startStudy(setId){
   const studentName = wmCurrentStudent && wmCurrentStudent.학생이름 ? String(wmCurrentStudent.학생이름).trim() : '';
   const learningAssign = wmCurrentStudent && wmCurrentStudent.학습배정 ? String(wmCurrentStudent.학습배정).trim() : '';
   const sessionToken = wmGetCurrentSessionToken();
+
+  if(wmStudyEntryProgressSource_){
+    wmStudyEntryProgressSource_.savedAt=Date.now();
+    try{
+      sessionStorage.setItem('WM_STUDY_PROGRESS_PREFETCH_V1',JSON.stringify(wmStudyEntryProgressSource_));
+    }catch(err){}
+  }
+  wmWarmCurrentStudyContentFromMap_(selectedSetId);
 
   const studyUrl =
     framePageUrl
