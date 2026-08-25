@@ -571,12 +571,22 @@ const WM_DEV_LIVE_REVIEW_MODE = window.WM_DEV_ADMIN_REVIEW_MODE === true || (()=
     display:block;
   }
   .wm-test-omr-float-layer{
-    position:fixed;
+    position:absolute;
     top:0;
-    left:0;
-    width:0;
+    right:-22px;
+    bottom:0;
+    width:210px;
     z-index:10010;
-    height:0;
+    pointer-events:none;
+  }
+  .wm-test-omr-floater{
+    position:sticky;
+    top:84px;
+    display:flex;
+    flex-direction:column;
+    align-items:flex-end;
+    gap:8px;
+    width:100%;
     pointer-events:none;
   }
   .wm-test-grid{
@@ -594,9 +604,7 @@ const WM_DEV_LIVE_REVIEW_MODE = window.WM_DEV_ADMIN_REVIEW_MODE === true || (()=
      20문항은 각 OMR카드 내부에서 세로 스크롤합니다. */
   .wm-test-omr{
     display:none;
-    position:absolute;
-    top:46px;
-    right:0;
+    position:static;
     width:210px;
     max-height:62vh;
     overflow:auto;
@@ -610,8 +618,6 @@ const WM_DEV_LIVE_REVIEW_MODE = window.WM_DEV_ADMIN_REVIEW_MODE === true || (()=
   }
   .wm-test-omr.is-open{display:block;}
   @media(min-width:861px){
-    .wm-test-omr{right:-22px;}
-    .wm-test-answer-toggle{right:-22px;}
     .wm-test-omr.wm-test-omr-mode-choice{width:158px;padding:10px;}
     .wm-test-omr.wm-test-omr-mode-write{width:210px;padding:10px;}
   }
@@ -639,9 +645,7 @@ const WM_DEV_LIVE_REVIEW_MODE = window.WM_DEV_ADMIN_REVIEW_MODE === true || (()=
   .wm-test-omr-row.is-active{margin-left:-4px;margin-right:-4px;padding-left:4px;padding-right:4px;border-radius:8px;background:#fff7ed;}
   .wm-test-answer-toggle{
     display:block;
-    position:absolute;
-    top:0;
-    right:0;
+    position:static;
     z-index:10011;
     min-width:96px;
     height:38px;
@@ -657,7 +661,8 @@ const WM_DEV_LIVE_REVIEW_MODE = window.WM_DEV_ADMIN_REVIEW_MODE === true || (()=
     pointer-events:auto;
   }
   @media(max-width:860px){
-    .wm-test-omr-float-layer{position:static;top:auto;left:auto;width:auto;height:auto;}
+    .wm-test-omr-float-layer{position:static;top:auto;right:auto;bottom:auto;width:auto;height:auto;}
+    .wm-test-omr-floater{position:static;display:block;width:auto;}
     .wm-test-omr{
       display:none;position:fixed;left:12px;right:12px;bottom:58px;top:auto;width:auto;max-height:48vh;
       z-index:10020;box-shadow:0 12px 34px rgba(15,23,42,.24);
@@ -5039,31 +5044,7 @@ function wmBuildTestAnswerSheet_(test){
     return `<div class="wm-test-omr-row" data-omr-row="${i}"><div class="wm-test-omr-num">${i+1}</div><input class="wm-test-omr-write" data-omr-write-index="${i}" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" oninput="wmSyncOmrWriteToQuestion_(this)" onkeydown="wmHandleOmrWriteEnter_(event,this)"></div>`;
   }).join("");
   const modeClass=test.type==="choice" ? "wm-test-omr-mode-choice" : "wm-test-omr-mode-write";
-  return `<div class="wm-test-omr-float-layer"><aside id="wmTestOmr" class="wm-test-omr ${modeClass}" aria-label="OMR카드"><div class="wm-test-omr-title">OMR카드</div>${rows}</aside><button type="button" class="wm-test-answer-toggle" onclick="wmToggleTestAnswerSheet_()">OMR카드</button></div>`;
-}
-
-function wmPositionTestOmrFloat_(){
-  const layer=document.querySelector('.wm-test-omr-float-layer');
-  if(!layer) return;
-
-  if(window.innerWidth<=860){
-    layer.style.top='';
-    layer.style.left='';
-    layer.style.width='';
-    layer.style.transform='';
-    return;
-  }
-
-  const grid=document.getElementById('testArea');
-  const firstQuestion=grid && (grid.querySelector('.test-question[data-q-index="0"]') || grid.querySelector('.test-question'));
-  if(!grid || !firstQuestion) return;
-
-  const gridRect=grid.getBoundingClientRect();
-  const firstRect=firstQuestion.getBoundingClientRect();
-  layer.style.top=Math.max(12,Math.round(firstRect.top))+'px';
-  layer.style.left=Math.round(gridRect.left)+'px';
-  layer.style.width=Math.round(gridRect.width)+'px';
-  layer.style.transform='none';
+  return `<div class="wm-test-omr-float-layer"><div class="wm-test-omr-floater"><button type="button" class="wm-test-answer-toggle" onclick="wmToggleTestAnswerSheet_()">OMR카드</button><aside id="wmTestOmr" class="wm-test-omr ${modeClass}" aria-label="OMR카드"><div class="wm-test-omr-title">OMR카드</div>${rows}</aside></div></div>`;
 }
 
 function renderTest(){
@@ -5081,7 +5062,6 @@ function renderTest(){
   activateTestQuestionEvents();
   addWritingEnterMove();
   wmUpdateTestOmr_();
-  wmPositionTestOmrFloat_();
   wmActiveFirstTestStartTime = isRetest ? 0 : Date.now();
   startTimer();
 }
