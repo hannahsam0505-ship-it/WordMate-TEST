@@ -2655,6 +2655,8 @@ function wmApplyStudyReturnSnapshot_(row, latestRecord){
     완료Step:cacheData.completedStep,
     현재Step:cacheData.currentStep,
     기록Set_ID:cacheData.recordSetId,
+    학습기록ID:cacheData.raw && cacheData.raw.학습기록ID || '',
+    현재레벨:cacheData.raw && cacheData.raw.현재레벨 || '',
     currentLevel:cacheData.currentLevel,
     currentSet:cacheData.currentSet,
     setProgress:cacheData.setProgress,
@@ -3446,62 +3448,6 @@ function wmNormalizeLearningRecordForBottomTable_(record, data){
 let wmStudyWarmSetId_ = '';
 let wmStudyWarmPromise_ = null;
 let wmStudyWarmData_ = null;
-let wmStudyEntryProgressSource_ = null;
-
-function wmPrepareStudyEntryProgressFromMap_(cacheData){
-  /* WM_MAP_STUDY_ENTRY_CURRENT_PROGRESS_ONLY_V1_20260825
-     Study 진입 기준은 오직 Map이 이미 받은 8.현재진행_DB 1행입니다.
-     임의 Step/Set 기본값, 만료시간, 다른 조회 fallback을 만들지 않습니다. */
-  if(!cacheData || !cacheData.raw || !cacheData.currentSet) return false;
-  const raw=cacheData.raw;
-  const studentId=String(raw.학생ID || '').trim();
-  const plainSetId=wmNormalizeCurrentSetIdForMap_(cacheData.currentSet || '');
-  const currentStep=String(raw.현재Step || '').trim();
-  if(!studentId || !plainSetId || !currentStep) return false;
-
-  const normalizedSetId='WM' + plainSetId;
-  const learningMode={
-    S4실루엣단계:String(raw.S4실루엣단계 || '').trim(),
-    S6테스트모드:String(raw.S6테스트모드 || '').trim(),
-    레벨완료조건:String(raw.레벨완료조건 || '').trim(),
-    레벨회차추가:Number(raw.레벨회차추가 || 0) || 0
-  };
-  const progress={
-    success:true,
-    sessionValid:true,
-    valid:true,
-    source:'8.현재진행_DB',
-    studentId:studentId,
-    setId:normalizedSetId,
-    recordSetId:String(raw.기록Set_ID || '').trim().toUpperCase(),
-    learningRecordId:String(raw.학습기록ID || '').trim(),
-    currentProgressStep:currentStep,
-    lastCompletedStep:String(raw.완료Step || '').trim(),
-    completedSteps:[],
-    learningMode:learningMode,
-    currentProgress:raw,
-    currentProgressCache:raw,
-    currentProgressRow:raw
-  };
-  wmStudyEntryProgressSource_={
-    version:'WM_STUDY_ENTRY_CURRENT_PROGRESS_V1',
-    studentId:studentId,
-    setId:normalizedSetId,
-    progress:progress
-  };
-
-  /* 아무것도 학습하지 않고 돌아와도 같은 현재진행_DB 1행을 즉시 Map에 되돌려줍니다.
-     Step 저장이 성공하면 Study가 이 값을 최신 현재진행_DB 응답으로 다시 덮어씁니다. */
-  try{
-    sessionStorage.setItem('WM_CURRENT_PROGRESS_RETURN_V1',JSON.stringify({
-      version:'WM_STUDY_RETURN_CURRENT_PROGRESS_DIRECT_V2',
-      studentId:studentId,
-      currentProgress:raw,
-      learningRecord:null
-    }));
-  }catch(err){}
-  return true;
-}
 
 function wmWarmCurrentStudyContentFromMap_(setId){
   /* WM_MAP_STUDY_CONTENT_READY_V2_20260825
@@ -3562,7 +3508,6 @@ function wmApplyLearningMapFromCurrentProgressCache_(cacheData, data){
   /* 신규학생은 Set_ID/현재Step/기록Set_ID가 아직 비어 있어도
      현재진행_DB 현재레벨이 확인되면 해당 레벨 맵 전체를 즉시 표시합니다. */
   if(!cacheData || !cacheData.currentLevel || !WM_LEVEL_CONFIG[cacheData.currentLevel]) return false;
-  wmPrepareStudyEntryProgressFromMap_(cacheData);
 
   const profileSource = Object.assign({}, (data && (data.studentProfile || data.profile)) || {}, cacheData.raw || {});
   wmStudentProfile = wmMergeStudentPreserveValues_(wmCurrentStudent || {}, profileSource);
@@ -3601,6 +3546,8 @@ function wmApplyLearningMapFromCurrentProgressCache_(cacheData, data){
     완료Step: cacheData.completedStep,
     현재Step: cacheData.currentStep,
     기록Set_ID: cacheData.recordSetId,
+    학습기록ID: cacheData.raw && cacheData.raw.학습기록ID || '',
+    현재레벨: cacheData.raw && cacheData.raw.현재레벨 || '',
     currentLevel: cacheData.currentLevel,
     currentSet: cacheData.currentSet,
     setProgress: cacheData.setProgress,
@@ -5428,31 +5375,46 @@ async function startStudy(setId){
   const learningAssign = wmCurrentStudent && wmCurrentStudent.학습배정 ? String(wmCurrentStudent.학습배정).trim() : '';
   const sessionToken = wmGetCurrentSessionToken();
 
-  if(!wmStudyEntryProgressSource_){
-    alert('현재진행_DB 학습 위치를 확인할 수 없습니다.');
-    return;
-  }
+  const preparedSetData=await wmWarmCurrentStudyContentFromMap_(selectedSetId);
+  const currentProgress=wmCurrentProgressDisplayOverride;
+  const currentProgressStudentId=String(wmCurrentStudent && wmCurrentStudent.학생ID || '').trim();
+  const currentProgressSetId='WM' + selectedSetId;
+  const progress={
+    success:true,
+    sessionValid:true,
+    valid:true,
+    source:'8.현재진행_DB',
+    studentId:currentProgressStudentId,
+    setId:currentProgressSetId,
+    recordSetId:String(currentProgress.기록Set_ID || '').trim().toUpperCase(),
+    learningRecordId:String(currentProgress.학습기록ID || '').trim(),
+    currentProgressStep:String(currentProgress.현재Step || '').trim(),
+    lastCompletedStep:String(currentProgress.완료Step || '').trim(),
+    completedSteps:[],
+    learningMode:{
+      S4실루엣단계:String(currentProgress.S4실루엣단계 || '').trim(),
+      S6테스트모드:String(currentProgress.S6테스트모드 || '').trim(),
+      레벨완료조건:String(currentProgress.레벨완료조건 || '').trim(),
+      레벨회차추가:Number(currentProgress.레벨회차추가 || 0) || 0
+    },
+    currentProgress:currentProgress,
+    currentProgressCache:currentProgress,
+    currentProgressRow:currentProgress
+  };
 
-  let preparedSetData=null;
-  try{
-    preparedSetData=await wmWarmCurrentStudyContentFromMap_(selectedSetId);
-  }catch(error){
-    alert(String(error && error.message || '현재세트 콘텐츠를 준비하지 못했습니다.'));
-    return;
-  }
-
-  try{
-    sessionStorage.setItem('WM_STUDY_ENTRY_READY_V1',JSON.stringify({
-      version:'WM_STUDY_ENTRY_READY_V1',
-      studentId:wmStudyEntryProgressSource_.studentId,
-      setId:wmStudyEntryProgressSource_.setId,
-      progress:wmStudyEntryProgressSource_.progress,
-      setData:preparedSetData
-    }));
-  }catch(error){
-    alert('학습 준비자료를 전달하지 못했습니다.');
-    return;
-  }
+  sessionStorage.setItem('WM_STUDY_ENTRY_READY_V1',JSON.stringify({
+    version:'WM_STUDY_ENTRY_READY_V1',
+    studentId:currentProgressStudentId,
+    setId:currentProgressSetId,
+    progress:progress,
+    setData:preparedSetData
+  }));
+  sessionStorage.setItem('WM_CURRENT_PROGRESS_RETURN_V1',JSON.stringify({
+    version:'WM_STUDY_RETURN_CURRENT_PROGRESS_DIRECT_V2',
+    studentId:currentProgressStudentId,
+    currentProgress:currentProgress,
+    learningRecord:null
+  }));
 
   const studyUrl =
     framePageUrl
