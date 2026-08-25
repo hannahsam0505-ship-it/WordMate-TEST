@@ -5821,6 +5821,20 @@ function resetHomeworkFilters(){
     serverIntegration: Object.freeze([
       'wmVerifyLoginServerSpeedLockOnMap_',
       'wmVerifyCodeGsAllLockOnMap_'
+    ]),
+    currentProgressFastPath: Object.freeze([
+      'wmSaveMapReturnSnapshot_',
+      'wmReadMapReturnSnapshot_',
+      'wmApplyStudyReturnSnapshot_',
+      'wmReadStudyReturnCurrentProgress_',
+      'wmRenderStudyReturnCurrentProgress_',
+      'wmWarmCurrentStudyContentFromMap_'
+    ]),
+    studentHeaderScoreDisplay: Object.freeze([
+      'wmApplyStudentLearningMap',
+      'wmParseLearningMapScoreJsonForMap_',
+      'wmGetLearningMapScoreFromState_',
+      'wmApplyLearningMapScoreJsonToSetData_'
     ])
   });
 
@@ -5835,7 +5849,9 @@ function resetHomeworkFilters(){
     learningRecord: '학습기록',
     search: '검색',
     navigation: '화면 이동',
-    serverIntegration: '서버 연동'
+    serverIntegration: '서버 연동',
+    currentProgressFastPath: '현재진행 즉시 진입·복귀',
+    studentHeaderScoreDisplay: '상단 학생정보·점수표시'
   });
 
   function wmProtectGlobalFunction_(functionName){

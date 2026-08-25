@@ -5748,7 +5748,11 @@ const WM_STUDY_LOCKS = Object.freeze({
   }),
   WRITING_EXACT: Object.freeze({wmIsExactEnglishAnswer}),
   STEP1_STEP5_PROGRESS_LAYOUT: Object.freeze({renderWordProgress}),
-  STUDY_EXIT: Object.freeze({leaveLearning, wmStudyReturnToMap, goFinalExit, goNextLearning, restart})
+  STUDY_EXIT: Object.freeze({leaveLearning, wmStudyReturnToMap, goFinalExit, goNextLearning, restart}),
+  CURRENT_PROGRESS_FAST_PATH: Object.freeze({
+    wmReadMapStudyEntryReady_,
+    wmCacheCurrentProgressForMapReturn_
+  })
 });
 
 function wmStudyInstallFunctionLocks(){
