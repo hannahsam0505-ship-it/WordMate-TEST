@@ -319,6 +319,24 @@ WMDC_CURRENT_SET_RUN_AND_AUX_TESTS_V2 적용: 현재세트실행 상단 고정�
   word-break:break-word;
 }
 
+/* WM_DEV_BLUE_UI_V1_20260825
+   DEV CENTER 제어영역만 블루 계열로 통일.
+   실제 Study iframe/Study 원본 화면에는 적용하지 않음. */
+#wmdc-root .dev-header{
+  background:#0c4fb8;
+}
+#wmdc-root .status-item,
+#wmdc-root .wmdc-course-badge{
+  background:#1d4ed8;
+}
+#wmdc-root .dev-wrap button,
+#wmdc-root .dev-wrap .wmdc-lms-link-btn{
+  background:#2563eb !important;
+  border-color:#2563eb !important;
+  color:#fff !important;
+}
+
+
 
 #wmdc-root .dev-player{
   border:2px solid #2563eb;
@@ -10374,11 +10392,56 @@ renderStart();
     selector.innerHTML = '';
   }
 
+  function wmdcSwitchLiveStudyTestInPlace_(selectedIndex){
+    var frame=wmdcById('wmdc-live-study-frame');
+    if(!frame || !frame.contentWindow) return false;
+
+    try{
+      var studyWindow=frame.contentWindow;
+      if(studyWindow.location.origin !== window.location.origin) return false;
+
+      var liveUrl=new URL(studyWindow.location.href);
+      if(liveUrl.searchParams.get('wmDevReview') !== '1') return false;
+      if(liveUrl.searchParams.get('wmDevStep') !== '6') return false;
+      if(String(liveUrl.searchParams.get('set_id') || '') !== String(wmdcGetSetId())) return false;
+
+      var targetIndex=Math.max(0,Number(selectedIndex) || 0);
+      var switched=studyWindow.eval(
+        '(function(targetIndex){' +
+          'if(typeof getTestList!=="function"||typeof render!=="function"||typeof shuffle!=="function")return false;' +
+          'if(typeof originalWords==="undefined"||!Array.isArray(originalWords)||originalWords.length===0)return false;' +
+          'var tests=getTestList();' +
+          'if(!tests.length)return false;' +
+          'targetIndex=Math.max(0,Math.min(Number(targetIndex)||0,tests.length-1));' +
+          'if(typeof testIndex!=="undefined"&&targetIndex===testIndex+1&&typeof goNextTest==="function"){' +
+            'goNextTest();' +
+          '}else{' +
+            'testIndex=targetIndex;' +
+            'isRetest=false;' +
+            'testWords=shuffle(originalWords);' +
+            'stage=7;' +
+            'render();' +
+          '}' +
+          'return true;' +
+        '})(' + targetIndex + ')'
+      );
+
+      if(switched !== true) return false;
+      liveUrl.searchParams.set('wmDevTestIndex',String(targetIndex));
+      studyWindow.history.replaceState(null,'',liveUrl.pathname + liveUrl.search);
+      return true;
+    }catch(error){
+      wmdcLog('[DEV TEST SWITCH ERROR] 현재 Study 내부 TEST 즉시전환 실패 · ' + (error && error.message ? error.message : String(error)));
+      return false;
+    }
+  }
+
   function wmdcRunSelectedTest(selectedIndex){
     var tests = getTestList();
     if(!tests.length){ return; }
     var nextIndex = Math.max(0, Math.min(Number(selectedIndex) || 0, tests.length - 1));
-    if(!wmdcMountLiveStudyFrame('6', nextIndex)){ return; }
+    var switchedInPlace = wmdcSwitchLiveStudyTestInPlace_(nextIndex);
+    if(!switchedInPlace && !wmdcMountLiveStudyFrame('6', nextIndex)){ return; }
 
     var selector = wmdcById('wmdc-test-selector');
     if(selector){
@@ -10390,9 +10453,11 @@ renderStart();
     var title = wmdcById('wmdc-quick-title');
     if(title){ title.textContent = 'DEV 빠른 이동 테스트 실행 · ' + wmdcMakeCourseLabel(wmdcGetSetId()) + ' · ' + wmdcGetTestSelectorLabel(tests[nextIndex], nextIndex); }
     wmdcSetText('wmdc-status-step', 'STEP : ' + wmdcGetTestSelectorLabel(tests[nextIndex], nextIndex));
-    wmdcSetText('wmdc-status-real-db', 'REAL DB : LOADING');
-    wmdcSetText('wmdc-status-result', 'RESULT : READY');
-    wmdcLog('[DEV TEST RUN] 현재 /study 원본 TEST 실행 시작 · ' + wmdcGetTestSelectorLabel(tests[nextIndex], nextIndex));
+    wmdcSetText('wmdc-status-real-db', switchedInPlace ? 'REAL DB : SUCCESS' : 'REAL DB : LOADING');
+    wmdcSetText('wmdc-status-result', switchedInPlace ? 'RESULT : SUCCESS' : 'RESULT : READY');
+    wmdcLog(switchedInPlace
+      ? '[DEV TEST SWITCH] 현재 Study 내부 TEST 즉시전환 · ' + wmdcGetTestSelectorLabel(tests[nextIndex], nextIndex)
+      : '[DEV TEST RUN] 현재 /study 원본 TEST 최초 실행 시작 · ' + wmdcGetTestSelectorLabel(tests[nextIndex], nextIndex));
   }
 
   function wmdcShowTestSelector(){
