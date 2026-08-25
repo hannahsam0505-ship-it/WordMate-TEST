@@ -3261,27 +3261,15 @@ function wmApplyLearningMapScoreJsonToSetData_(){
 }
 
 function wmPickLearningRecordsFromPayload_(data, cacheData){
-  /* WM_MAP_BOTTOM_RECORDS_DIRECT_FALLBACK_20260707_V2
-     하단 학습기록은 2.학습기록_DB records를 1순위로 사용합니다.
-     서버 응답 구조가 currentProgressCache 중심이어도 최근30건JSON을 직접 파싱해
-     빈 기본행(학습전)으로 떨어지지 않게 보강합니다. */
-  const parsedFromCurrentProgress = wmParseRecent30Records_(wmPickFirstValue_(
-    data && data.currentProgressCache && data.currentProgressCache.최근30건JSON,
-    data && data.currentProgress && data.currentProgress.최근30건JSON,
-    data && data.currentProgressRow && data.currentProgressRow.최근30건JSON,
-    data && data.progressCache && data.progressCache.최근30건JSON,
-    data && data.mapCache && data.mapCache.최근30건JSON,
-    data && data.최근30건JSON
-  ));
-
+  /* WM_MAP_BOTTOM_RECORDS_DETAIL_ONLY_20260825_V1
+     하단 상세 학습기록은 2.학습기록_DB 상세 records만 사용합니다.
+     현재진행_DB 최근30건JSON 축약본은 하단 상세표에 사용하지 않습니다. */
   const candidates = [
     data && data.records,
     data && data.learningRecords,
     data && data.recordsAll,
     data && data.homeworkRecords,
-    data && data.learningRecordList,
-    cacheData && cacheData.recent30Records,
-    parsedFromCurrentProgress
+    data && data.learningRecordList
   ];
 
   for(const list of candidates){
