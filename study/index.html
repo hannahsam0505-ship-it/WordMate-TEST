@@ -61,7 +61,10 @@ const WM_LMS_URL = WM_CONFIG.LMS_URL;
 /* WM_STUDY_DEV_LIVE_REVIEW_MODE_V1
    일반 학생 진입에는 적용되지 않습니다.
    DEV가 현재 Study 원본을 직접 실행할 때만 세션·저장·전체화면·학습맵 이동을 차단합니다. */
-const WM_DEV_LIVE_REVIEW_MODE = window.WM_DEV_ADMIN_REVIEW_MODE === true;
+const WM_DEV_LIVE_REVIEW_MODE = window.WM_DEV_ADMIN_REVIEW_MODE === true || (()=>{
+  try{ return new URLSearchParams(window.location.search || '').get('wmDevReview') === '1'; }
+  catch(err){ return false; }
+})();
 
 /* WM_STUDY_DIRECT_ENTRY_GUARD_V1
    로그인 → 학습맵 → Study 경로로 들어온 경우만 허용합니다.
@@ -568,8 +571,10 @@ const WM_DEV_LIVE_REVIEW_MODE = window.WM_DEV_ADMIN_REVIEW_MODE === true;
     display:block;
   }
   .wm-test-omr-float-layer{
-    position:sticky;
-    top:10px;
+    position:fixed;
+    top:0;
+    left:0;
+    width:0;
     z-index:10010;
     height:0;
     pointer-events:none;
@@ -652,7 +657,7 @@ const WM_DEV_LIVE_REVIEW_MODE = window.WM_DEV_ADMIN_REVIEW_MODE === true;
     pointer-events:auto;
   }
   @media(max-width:860px){
-    .wm-test-omr-float-layer{position:static;height:auto;}
+    .wm-test-omr-float-layer{position:static;top:auto;left:auto;width:auto;height:auto;}
     .wm-test-omr{
       display:none;position:fixed;left:12px;right:12px;bottom:58px;top:auto;width:auto;max-height:48vh;
       z-index:10020;box-shadow:0 12px 34px rgba(15,23,42,.24);
@@ -1923,7 +1928,8 @@ let WM_COMPLETED_SAVE_SET_NAME = "";
 let finalSavePromise = null;
 let WM_OFFICIAL_TRANSITION_RESULT = null;
 let WM_OFFICIAL_NEXT_SET_ID = "";
-let WM_RECORD_SESSION_ID = ''; // 공식 학습기록ID는 Code.gs가 R+YY+MM+3자리 순번으로 생성합니다.
+let WM_RECORD_SESSION_ID = ''; // 현재 Study 접속에서 생성된 공식 학습기록ID입니다.
+let WM_RESUME_SOURCE_RECORD_ID = ''; // 재접속 시 직전 미완료행은 새 접속 누적행의 승계 원본으로만 사용합니다.
 let wmStepSaveChain = Promise.resolve();
 let wmStepSaveLastError = null;
 let wmStepSaveInFlight = null;
@@ -3732,12 +3738,21 @@ function queueStepSave(status){
     return Promise.resolve({ok:true, localOnly:true, payload});
   }
 
-  /* WM_STEP_CUMULATIVE_SAVE_FIFO_V1_20260821
-     Step 완료 순간의 payload를 각각 고정해 순서대로 저장합니다.
-     저장 중 다음 Step이 끝나도 합치지 않고 Step1~5를 모두 새 누적행으로 보냅니다. */
+  /* WM_STEP_SESSION_ROW_FIFO_V1_20260825
+     Step 완료 순간의 payload는 순서대로 저장하되 새 행은 접속당 1개만 사용합니다.
+     첫 완료 Step이 새 학습기록ID를 만들고, 같은 접속의 다음 Step/TEST는 그 행을 계속 갱신합니다. */
   const queuedSave = Promise.resolve(wmStepSaveChain)
     .catch(function(){ return {ok:false}; })
     .then(function(){
+      /* 이전 Step 저장 응답으로 현재 접속의 recordId가 확정되었으면
+         큐에 미리 만들어진 다음 Step payload도 같은 행을 사용하게 갱신합니다. */
+      if(WM_RECORD_SESSION_ID){
+        payload.recordSessionId = WM_RECORD_SESSION_ID;
+        payload.resumeSourceRecordId = "";
+      }else if(WM_RESUME_SOURCE_RECORD_ID){
+        payload.recordSessionId = "";
+        payload.resumeSourceRecordId = WM_RESUME_SOURCE_RECORD_ID;
+      }
       return WM_STUDY_SPEED_LOCKS.STEP_SAVE.saveLearningRecord(saveStatus, payload);
     })
     .then(function(result){
@@ -3943,11 +3958,12 @@ function wmApplyResumeProgress(progress){
 
   const progressStep = String(progress.currentProgressStep || "").toUpperCase().trim();
 
-  /* WM_RESUME_RECORD_ID_SAME_ROW_RESTORE_20260821_V1
-     이어학습은 현재진행_DB의 학습기록ID를 그대로 재사용해
-     같은 Set_ID의 Step1~Step5~TEST가 학습 종료/재접속 후에도 동일 행에 누적됩니다.
-     새 세트/STEP1은 이전 완료행을 재사용하지 않습니다. */
-  WM_RECORD_SESSION_ID = (
+  /* WM_SPLIT_SESSION_CUMULATIVE_SOURCE_V1_20260825
+     새 Study 접속에서는 직전 학습기록ID를 UPDATE 대상으로 재사용하지 않습니다.
+     직전 미완료행은 누적시간 승계 원본으로만 보관하고,
+     새 접속에서 최소 1개 Step을 완료했을 때 새 학습기록ID/새 행을 생성합니다. */
+  WM_RECORD_SESSION_ID = "";
+  WM_RESUME_SOURCE_RECORD_ID = (
     progressStep !== "COMPLETE" &&
     progressStep !== "STEP1" &&
     progressStep &&
@@ -4106,6 +4122,7 @@ function buildLearningPayload(status){
     currentProgressStep: wmCurrentProgressStepCode(status),
     lastCompletedStep: wmLastCompletedStepCode(),
     recordSessionId: WM_RECORD_SESSION_ID,
+    resumeSourceRecordId: WM_RESUME_SOURCE_RECORD_ID,
     completedSteps:[...completedSteps],
     officialTimeSummary: buildOfficialTimeSummary(),
     scores:[...firstTestScores],
@@ -4251,6 +4268,7 @@ async function saveLearningRecord(status="completed", payloadOverride=null){
 
     if(result && result.success && result.recordId){
       WM_RECORD_SESSION_ID = String(result.recordId || '').trim();
+      if(WM_RECORD_SESSION_ID) WM_RESUME_SOURCE_RECORD_ID = "";
     }
     if(result && result.success && status === 'completed'){
       wmClearCachedStudyMode(payload.Set_ID || payload.setId || currentSetId);
@@ -5021,7 +5039,31 @@ function wmBuildTestAnswerSheet_(test){
     return `<div class="wm-test-omr-row" data-omr-row="${i}"><div class="wm-test-omr-num">${i+1}</div><input class="wm-test-omr-write" data-omr-write-index="${i}" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" oninput="wmSyncOmrWriteToQuestion_(this)" onkeydown="wmHandleOmrWriteEnter_(event,this)"></div>`;
   }).join("");
   const modeClass=test.type==="choice" ? "wm-test-omr-mode-choice" : "wm-test-omr-mode-write";
-  return `<div class="wm-test-omr-float-layer"><aside id="wmTestOmr" class="wm-test-omr ${modeClass}" aria-label="OMR카드"><div class="wm-test-omr-title">OMR카드</div>${rows}</aside></div><button type="button" class="wm-test-answer-toggle" onclick="wmToggleTestAnswerSheet_()">OMR카드</button>`;
+  return `<div class="wm-test-omr-float-layer"><aside id="wmTestOmr" class="wm-test-omr ${modeClass}" aria-label="OMR카드"><div class="wm-test-omr-title">OMR카드</div>${rows}</aside><button type="button" class="wm-test-answer-toggle" onclick="wmToggleTestAnswerSheet_()">OMR카드</button></div>`;
+}
+
+function wmPositionTestOmrFloat_(){
+  const layer=document.querySelector('.wm-test-omr-float-layer');
+  if(!layer) return;
+
+  if(window.innerWidth<=860){
+    layer.style.top='';
+    layer.style.left='';
+    layer.style.width='';
+    layer.style.transform='';
+    return;
+  }
+
+  const grid=document.getElementById('testArea');
+  const firstQuestion=grid && (grid.querySelector('.test-question[data-q-index="0"]') || grid.querySelector('.test-question'));
+  if(!grid || !firstQuestion) return;
+
+  const gridRect=grid.getBoundingClientRect();
+  const firstRect=firstQuestion.getBoundingClientRect();
+  layer.style.top=Math.max(12,Math.round(firstRect.top))+'px';
+  layer.style.left=Math.round(gridRect.left)+'px';
+  layer.style.width=Math.round(gridRect.width)+'px';
+  layer.style.transform='none';
 }
 
 function renderTest(){
@@ -5039,6 +5081,7 @@ function renderTest(){
   activateTestQuestionEvents();
   addWritingEnterMove();
   wmUpdateTestOmr_();
+  wmPositionTestOmrFloat_();
   wmActiveFirstTestStartTime = isRetest ? 0 : Date.now();
   startTimer();
 }
@@ -5527,6 +5570,7 @@ async function goNextLearning(){
   currentWords = [];
   completedSteps = [];
   WM_RECORD_SESSION_ID = "";
+  WM_RESUME_SOURCE_RECORD_ID = "";
   wmResumeProgress = null;
   wmProgressLoaded = false;
   latestSavedPayload = null;
@@ -6098,6 +6142,86 @@ document.addEventListener("keydown",function(e){
   }
 });
 
+/* WM_STUDY_DEV_LIVE_QUICK_STEP_V1_20260825
+   DEV 빠른 이동테스트는 복제된 Study 화면이 아니라 현재 배포된 /study 원본을 직접 렌더링합니다.
+   wmDevReview=1일 때만 실행하며 학생 저장·세션감시·전체화면·Map 이동은 기존 REVIEW 보호를 사용합니다. */
+function wmPostDevLiveReviewStatus_(status, detail){
+  if(!WM_DEV_LIVE_REVIEW_MODE || window.parent === window) return;
+  try{
+    window.parent.postMessage({
+      type:'WM_DEV_STUDY_LIVE_REVIEW',
+      status:String(status || ''),
+      setId:String(currentSetId || ''),
+      step:String(new URLSearchParams(window.location.search || '').get('wmDevStep') || ''),
+      detail:String(detail || '')
+    }, window.location.origin);
+  }catch(err){}
+}
+
+async function wmRunDevLiveReviewFromUrl_(){
+  if(!WM_DEV_LIVE_REVIEW_MODE) return false;
+
+  let params;
+  try{ params = new URLSearchParams(window.location.search || ''); }
+  catch(err){ return false; }
+
+  const requestedStep = String(params.get('wmDevStep') || '').trim();
+  if(!requestedStep) return false;
+
+  const loaded = await loadSetFromDB();
+  if(!loaded){
+    wmPostDevLiveReviewStatus_('FAIL', dbLoadError || 'DB load failed');
+    afterScreenRender();
+    return true;
+  }
+
+  await wmPrepareStudyModeForCurrentSet();
+  clearInterval(testTimer);
+  stopWordAudio();
+  learningStartTime = Date.now();
+  wmCurrentStepStartTime = learningStartTime;
+  completedSteps = [];
+  currentWords = shuffle(originalWords);
+  index = 0;
+  step2Wrong = [];
+  step3Wrong = [];
+  memoryWrong = [];
+  step2WrongTotal = [];
+  step3WrongTotal = [];
+  memoryWrongTotal = [];
+  isStep2Review = false;
+  isStep3Review = false;
+  isMemoryReview = false;
+  memoryPhase = 0;
+  memoryCount = 0;
+  memoryLocked = false;
+  afterMemoryAction = null;
+  isRetest = false;
+  firstTestScores = [];
+  firstEngKoWriteWrongWords = [];
+  firstKoEngWriteWrongWords = [];
+  currentTestResults = [];
+  currentTestWrongs = [];
+  activeTestQuestionIndex = null;
+
+  if(requestedStep === '2') stage = 2;
+  else if(requestedStep === '3') stage = 3;
+  else if(requestedStep === '4') stage = 4;
+  else if(requestedStep === '5') stage = 6;
+  else if(requestedStep === '6'){
+    stage = 7;
+    const tests = getTestList();
+    const requestedTestIndex = Number(params.get('wmDevTestIndex') || 0) || 0;
+    testIndex = Math.max(0, Math.min(requestedTestIndex, Math.max(0, tests.length - 1)));
+    testWords = shuffle(originalWords);
+  }else if(requestedStep === 'complete') stage = 8;
+  else stage = 1;
+
+  render();
+  wmPostDevLiveReviewStatus_('SUCCESS', '현재 Study 원본 렌더링 완료');
+  return true;
+}
+
 wmLogStudyLockStatus();
 /* WM_STUDY_SERVER_LOCK_VERIFY_DEFER_V1_20260818
    서버 LOCK 검증 5건은 그대로 유지하되 초기 세트 prefetch/학습진입 요청과 경쟁하지 않도록 8초 뒤 1회 실행합니다. */
@@ -6109,7 +6233,13 @@ function wmRunDeferredStudyServerLockChecks_(){
   wmLogRoundRecordRecoveryLockStatus_();
 }
 window.setTimeout(wmRunDeferredStudyServerLockChecks_, 8000);
-renderStart();
+if(WM_DEV_LIVE_REVIEW_MODE){
+  wmRunDevLiveReviewFromUrl_().then(function(ran){
+    if(!ran) renderStart();
+  });
+}else{
+  renderStart();
+}
 </script>
 
 
