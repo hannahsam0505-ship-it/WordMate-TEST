@@ -1855,6 +1855,7 @@ let wmBottomRecordsDetailedLoaded = false;
 let wmCurrentProgressRecentScoreForMap_ = '';
 let wmCurrentProgressDisplayOverride = null;
 let wmStudyReturnSnapshotActive_ = false;
+let wmStudyReturnLatestRecord_ = null;
 const WM_MAP_RETURN_SNAPSHOT_KEY_ = 'WM_MAP_RETURN_SNAPSHOT_V1';
 let wmMapAllWrongWordRecords_ = [];
 let wmMapWrongWordStudentId_ = '';
@@ -2529,13 +2530,18 @@ function wmSaveMapReturnSnapshot_(){
   const studentId=String(wmCurrentStudent && wmCurrentStudent.학생ID || '').trim();
   if(!studentId || !Array.isArray(setData) || !setData.length) return false;
 
+  const visibleLearningRecords=(Array.isArray(wmHomeworkCurrentSourceRecords) && wmHomeworkCurrentSourceRecords.length)
+    ? wmHomeworkCurrentSourceRecords
+    : wmLearningRecords;
   const snapshot={
     version:'WM_MAP_RETURN_SNAPSHOT_V1',
     studentId:studentId,
     savedAt:Date.now(),
     currentLevelNumber:Number(currentLevelNumber || 0),
     setData:setData.map(function(item){ return Object.assign({},item); }),
-    learningRecords:Array.isArray(wmLearningRecords) ? wmLearningRecords.slice(0,WM_HOMEWORK_PAGE_SIZE).map(function(record){ return Object.assign({},record); }) : []
+    learningRecords:Array.isArray(visibleLearningRecords) ? visibleLearningRecords.slice(0,WM_HOMEWORK_PAGE_SIZE).map(function(record){ return Object.assign({},record); }) : [],
+    homeworkServerPaged:wmHomeworkServerPaged === true,
+    homeworkServerHasMore:wmHomeworkServerHasMore === true
   };
 
   try{
@@ -2571,7 +2577,7 @@ function wmReadMapReturnSnapshot_(){
   return snapshot;
 }
 
-function wmApplyStudyReturnSnapshot_(row){
+function wmApplyStudyReturnSnapshot_(row, latestRecord){
   const snapshot=wmReadMapReturnSnapshot_();
   if(!snapshot) return false;
 
@@ -2582,14 +2588,59 @@ function wmApplyStudyReturnSnapshot_(row){
   });
   if(!cacheData || !cacheData.currentLevel || !WM_LEVEL_CONFIG[cacheData.currentLevel]) return false;
 
-  if(Number(snapshot.currentLevelNumber || 0)!==Number(cacheData.currentLevel || 0)){
-    try{ sessionStorage.removeItem(WM_MAP_RETURN_SNAPSHOT_KEY_); }catch(err){}
-    return false;
+  const snapshotLevel=Number(snapshot.currentLevelNumber || 0);
+  const returnLevel=Number(cacheData.currentLevel || 0);
+  const snapshotRecords=Array.isArray(snapshot.learningRecords)
+    ? snapshot.learningRecords.map(function(record){ return Object.assign({},record); })
+    : [];
+  const snapshotRecordCount=snapshotRecords.length;
+  let latestWasNew=false;
+  if(latestRecord && typeof latestRecord === 'object'){
+    const normalizedLatest=wmNormalizeLearningRecordForBottomTable_(latestRecord,{currentProgressCache:row});
+    const latestId=String(normalizedLatest.학습기록ID || normalizedLatest.recordId || '').trim();
+    let existingIndex=-1;
+    if(latestId){
+      existingIndex=snapshotRecords.findIndex(function(record){
+        return String(record && (record.학습기록ID || record.recordId) || '').trim()===latestId;
+      });
+    }
+    if(existingIndex>=0){
+      snapshotRecords.splice(existingIndex,1);
+    }else{
+      latestWasNew=true;
+    }
+    snapshotRecords.unshift(normalizedLatest);
   }
+
+  wmLearningRecords=wmSortLearningRecordsDesc_(snapshotRecords).slice(0,WM_HOMEWORK_PAGE_SIZE);
+  wmBottomRecordsDetailedLoaded=true;
+  wmBottomRecordsDirectLoading=false;
+  wmHomeworkCurrentPage=1;
+  wmHomeworkServerPaged=snapshot.homeworkServerPaged === true || (latestWasNew && snapshotRecordCount>=WM_HOMEWORK_PAGE_SIZE);
+  wmHomeworkServerHasMore=snapshot.homeworkServerHasMore === true || (latestWasNew && snapshotRecordCount>=WM_HOMEWORK_PAGE_SIZE);
+  wmHomeworkAllRecordsLoaded=false;
 
   wmLearningMapScoreStateForMap_=cacheData.learningMapScoreState || {v:2,scores:{}};
   wmStudyReturnSnapshotActive_=true;
   try{ sessionStorage.removeItem(WM_MAP_RETURN_SNAPSHOT_KEY_); }catch(err){}
+
+  if(snapshotLevel!==returnLevel){
+    wmHandleLearningMapResponse({
+      success:true,
+      sessionValid:true,
+      valid:true,
+      source:'STUDY_RETURN_SNAPSHOT_LEVEL_CHANGE',
+      currentProgressCache:row,
+      currentProgress:row,
+      currentProgressRow:row,
+      progressCache:row,
+      mapCache:row,
+      studentProfile:row,
+      recordsDeferred:false,
+      records:wmLearningRecords
+    });
+    return true;
+  }
 
   wmStudentProfile=wmMergeStudentPreserveValues_(wmCurrentStudent || {},row || {});
   wmCurrentStudent=wmMergeStudentPreserveValues_(wmCurrentStudent || {},wmStudentProfile || {});
@@ -2600,9 +2651,6 @@ function wmApplyStudyReturnSnapshot_(row){
   currentLevelNumber=cacheData.currentLevel;
 
   setData=snapshot.setData.map(function(item){ return Object.assign({},item); });
-  wmLearningRecords=Array.isArray(snapshot.learningRecords)
-    ? snapshot.learningRecords.map(function(record){ return Object.assign({},record); })
-    : [];
 
   wmCurrentProgressDisplayOverride={
     Set_ID:cacheData.sourceSetId,
@@ -2677,7 +2725,18 @@ function wmApplyStudyReturnSnapshot_(row){
   const fill=document.getElementById('progressFill');
   if(fill) fill.style.width=cacheData.levelProgress + '%';
 
-  renderHomeworkTable(wmLearningRecords,wmStudentProfile || wmCurrentStudent);
+  renderHomeworkTable(wmLearningRecords,wmStudentProfile || wmCurrentStudent,wmHomeworkServerPaged ? {
+    serverPage:true,
+    serverPageNumber:1,
+    serverHasMore:wmHomeworkServerHasMore,
+    skipPeriod:true,
+    requestComplete:true,
+    emptyState:'initial'
+  } : {
+    skipPeriod:true,
+    requestComplete:true,
+    emptyState:'initial'
+  });
   wmShowLearningModeBanner();
 
   if(typeof window.wmMarkMapFrameRuntime==='function'){
@@ -2687,7 +2746,6 @@ function wmApplyStudyReturnSnapshot_(row){
   }
 
   window.setTimeout(function(){ wmWarmCurrentStudyContentFromMap_(cacheData.currentSet); },200);
-  window.setTimeout(function(){ wmLoadLearningRecordsDirectForMap_('study-return-first-page'); },0);
   return true;
 }
 
@@ -2714,6 +2772,9 @@ function wmReadStudyReturnCurrentProgress_(){
   if(!row || typeof row !== 'object') return null;
   const rowStudentId = String(row.학생ID || row.studentId || '').trim();
   if(rowStudentId && rowStudentId !== currentStudentId) return null;
+  wmStudyReturnLatestRecord_=(envelope.learningRecord && typeof envelope.learningRecord === 'object')
+    ? Object.assign({},envelope.learningRecord)
+    : null;
   return row;
 }
 
@@ -2724,7 +2785,7 @@ function wmRenderStudyReturnCurrentProgress_(){
   const row = wmReadStudyReturnCurrentProgress_();
   if(!row) return false;
 
-  if(wmApplyStudyReturnSnapshot_(row)) return true;
+  if(wmApplyStudyReturnSnapshot_(row,wmStudyReturnLatestRecord_)) return true;
 
   wmHandleLearningMapResponse({
     success:true,
