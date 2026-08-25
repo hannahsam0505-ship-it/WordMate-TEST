@@ -3725,12 +3725,11 @@ function markStepCompleted(stepId, stepTitle){
     elapsedSeconds:stepElapsedSeconds
   });
   wmCurrentStepStartTime = Date.now();
-  /* WM_FINAL_TEST_SINGLE_SAVE_SPEED_V1_20260711
-     마지막 TEST 완료는 곧바로 renderFinalResult()의 completed 저장으로 이어집니다.
-     TEST 완료 payload는 completed 저장에 이미 포함되므로 step_completed 중복 서버 저장을 생략합니다. */
+  /* WM_FINAL_TEST_COMPLETE_SAVE_BEFORE_FINISH_V1_20260825
+     마지막 TEST 완료 순간에 completed 저장까지 확정합니다.
+     마침화면에서는 새 저장을 만들지 않고 이미 완료된 저장결과만 사용합니다. */
   if(stepId === "test_all"){
-    saveProgressSnapshot("step_completed");
-    return Promise.resolve({ok:true, finalSavePending:true});
+    return WM_STUDY_SPEED_LOCKS.STEP_SAVE.queueStepSave("completed");
   }
   return WM_STUDY_SPEED_LOCKS.STEP_SAVE.queueStepSave("step_completed");
 }
@@ -4006,9 +4005,9 @@ function wmApplyResumeProgress(progress){
 
 
 function buildOfficialTimeSummary(){
-  /* WM_STUDY_OFFICIAL_TIME_SUMMARY_V2_20260608
+  /* WM_STUDY_OFFICIAL_TIME_SUMMARY_V3_20260825
      총소요시간 공식값을 Study.html에서 직접 계산해 payload에 실어 보냅니다.
-     공식: Step1 + Step2 + Step3 + Step4 + 시험전재학습 + Test_총시간
+     공식: Step1 + Step2 + Step3 + Step4 + Step5_총시간 + Test_총시간
      payload.elapsedSeconds 또는 마지막 Step 시간은 총소요시간으로 쓰지 않습니다. */
   const stepSeconds = {
     step1_flash_card: 0,
@@ -4041,6 +4040,7 @@ function buildOfficialTimeSummary(){
     step2: stepSeconds.step2_choose_meaning,
     step3: stepSeconds.step3_choose_english,
     step4: stepSeconds.step4_memory,
+    step5: stepSeconds.step6_last_flash_review,
     beforeTest: stepSeconds.step6_last_flash_review,
     testTime: stepSeconds.test_all,
     totalSeconds
@@ -5305,6 +5305,15 @@ function submitTest(){
   if(!isRetest){
     firstTestScores.push({title:test.title,type:test.type,direction:test.direction,score:correctCount,total:testWords.length,percent:Math.round((correctCount/testWords.length)*100)});
   }
+  if(testIndex===getTestList().length-1 && wrongs.length===0 && !completedSteps.some(step=>step.stepId==="test_all")){
+    finalSavePromise=Promise.resolve(WM_STUDY_SPEED_LOCKS.FINAL_TEST_SINGLE_SAVE.markStepCompleted("test_all", "All TEST")).then(function(result){
+      const officialResponse=wmGetOfficialSaveResponse(result);
+      WM_OFFICIAL_TRANSITION_RESULT=officialResponse;
+      WM_OFFICIAL_NEXT_SET_ID=wmNormalizeOfficialNextSetId(officialResponse.nextOfficialSetId);
+      if(wmIsSaveSuccess(result)) wmCacheCurrentProgressForMapReturn_(result);
+      return result;
+    });
+  }
   renderTestResult(test,correctCount,testWords.length,wrongs);
 }
 
@@ -5358,7 +5367,17 @@ function goNextTest(){
   isRetest=false;
   testWords=shuffle(originalWords);
   if(testIndex>=getTestList().length){
-    completeStepThen("test_all", "All TEST", function(){
+    if(!finalSavePromise){
+      finalSavePromise=Promise.resolve(WM_STUDY_SPEED_LOCKS.FINAL_TEST_SINGLE_SAVE.markStepCompleted("test_all", "All TEST")).then(function(result){
+        const officialResponse=wmGetOfficialSaveResponse(result);
+        WM_OFFICIAL_TRANSITION_RESULT=officialResponse;
+        WM_OFFICIAL_NEXT_SET_ID=wmNormalizeOfficialNextSetId(officialResponse.nextOfficialSetId);
+        if(wmIsSaveSuccess(result)) wmCacheCurrentProgressForMapReturn_(result);
+        return result;
+      });
+    }
+    finalSavePromise.then(function(result){
+      if(!wmIsSaveSuccess(result)) return;
       stage=8;
       render();
     });
@@ -5454,37 +5473,24 @@ function renderFinalResult(){
       </div>
       <div class="wm-small" style="margin-top:14px;">다음 학습: ${nextSetName}</div>
     </div>`;
-  /* WM_FINAL_COMPLETE_AFTER_CUMULATIVE_V1_20260819
-     Step1~5 누적저장은 백그라운드에서 계속 진행합니다.
-     마지막에는 누적 큐가 비었는지만 확인한 뒤 Test 결과 + 현재 세트 완료만 확정합니다. */
-  finalSavePromise = wmWaitForStepSaves().then(function(){
-    return WM_STUDY_SPEED_LOCKS.FINAL_SAVE.saveLearningRecord("completed");
-  }).then(result=>{
-    const officialResponse=wmGetOfficialSaveResponse(result);
-    WM_OFFICIAL_TRANSITION_RESULT=officialResponse;
-    WM_OFFICIAL_NEXT_SET_ID=wmNormalizeOfficialNextSetId(officialResponse.nextOfficialSetId);
-    if(wmIsSaveSuccess(result)) wmCacheCurrentProgressForMapReturn_(result);
-    const saveStatus=document.getElementById("saveStatus");
-    const saveIcon=document.getElementById("saveIcon");
-    if(saveStatus){
-      const saveOk = wmIsSaveSuccess(result);
-      saveStatus.textContent=saveOk ? "학습이 완료되었습니다." : "학습 완료를 확인하고 있습니다.";
-    }
-    if(saveIcon){
-      const saveOk = wmIsSaveSuccess(result);
-      saveIcon.className = saveOk ? "final-save-icon final-save-check" : "final-save-icon final-save-spinner";
-      saveIcon.textContent = saveOk ? "✅" : "";
-      saveIcon.setAttribute("aria-label", saveOk ? "학습 완료" : "학습 완료 확인 중");
-    }
-    if(wmIsSaveSuccess(result) && wmIsLevelTransitionResponse(officialResponse)){
-      renderLevelTransitionNotice(officialResponse);
-    }else if(wmIsSaveSuccess(result) && WM_LMS_RETURN_URL){
-      setTimeout(returnToLmsIfReady,700);
-    }
-    return result;
-  });
+  /* WM_FINAL_SCREEN_NO_SAVE_V1_20260825
+     마지막 TEST 완료 시점에 저장과 현재진행 완료 확정이 이미 끝났습니다.
+     이 화면에서는 DB/API 저장을 새로 만들지 않고 완료결과만 표시합니다. */
+  const saveStatus=document.getElementById("saveStatus");
+  const saveIcon=document.getElementById("saveIcon");
+  if(saveStatus) saveStatus.textContent="학습이 완료되었습니다.";
+  if(saveIcon){
+    saveIcon.className="final-save-icon final-save-check";
+    saveIcon.textContent="✅";
+    saveIcon.setAttribute("aria-label", "학습 완료");
+  }
+  const officialResponse=WM_OFFICIAL_TRANSITION_RESULT || {};
+  if(wmIsLevelTransitionResponse(officialResponse)){
+    renderLevelTransitionNotice(officialResponse);
+  }else if(WM_LMS_RETURN_URL){
+    setTimeout(returnToLmsIfReady,700);
+  }
 }
-
 function wmIsLevelTransitionResponse(response){
   const type=String(response && response.transitionType || "").trim().toUpperCase();
   return type === "ROUND_CONTINUE" || type === "LEVEL_COMPLETE" || type === "COURSE_COMPLETE";
@@ -5526,26 +5532,9 @@ function renderLevelTransitionNotice(response){
   </div>`;
 }
 
-async function goFinalExit(){
+function goFinalExit(){
   stopWordAudio();
   clearInterval(testTimer);
-
-  const saveStatus=document.getElementById("saveStatus");
-  const saveIcon=document.getElementById("saveIcon");
-  if(saveStatus) saveStatus.textContent="학습 완료를 확인하고 있습니다.";
-  if(saveIcon){
-    saveIcon.className="final-save-icon final-save-spinner";
-    saveIcon.textContent="";
-    saveIcon.setAttribute("aria-label", "학습 완료 확인 중");
-  }
-
-  const saveResult = await wmEnsureFinalSave_();
-  if(!wmIsSaveSuccess(saveResult)){
-    const saveError=String((saveResult && (saveResult.error || (saveResult.response && (saveResult.response.error || saveResult.response.message)))) || "응답 확인 실패");
-    if(saveStatus) saveStatus.textContent="학습 완료를 확인하고 있습니다.";
-    return;
-  }
-
   exitLearningFullscreen();
   wmStudyReturnToMap();
 }
@@ -5554,23 +5543,7 @@ async function goNextLearning(){
   stopWordAudio();
   clearInterval(testTimer);
 
-  const saveStatus=document.getElementById("saveStatus");
-  const saveIcon=document.getElementById("saveIcon");
-  if(saveStatus) saveStatus.textContent="학습 완료를 확인하고 있습니다.";
-  if(saveIcon){
-    saveIcon.className="final-save-icon final-save-spinner";
-    saveIcon.textContent="";
-    saveIcon.setAttribute("aria-label", "학습 완료 확인 중");
-  }
-
-  const saveResult = await wmEnsureFinalSave_();
-  if(!wmIsSaveSuccess(saveResult)){
-    const saveError=String((saveResult && (saveResult.error || (saveResult.response && (saveResult.response.error || saveResult.response.message)))) || "응답 확인 실패");
-    if(saveStatus) saveStatus.textContent="학습 완료를 확인하고 있습니다.";
-    return;
-  }
-
-  const confirmedResponse = wmGetOfficialSaveResponse(saveResult);
+  const confirmedResponse = WM_OFFICIAL_TRANSITION_RESULT || {};
   const nextSetId = wmNormalizeOfficialNextSetId(confirmedResponse.nextOfficialSetId || WM_OFFICIAL_NEXT_SET_ID);
   if(!nextSetId){
     alert("현재진행_DB의 다음 학습 세트 정보를 확인할 수 없습니다.");

@@ -5199,6 +5199,7 @@ function wmBuildEmptyLearningRecordFromProfile(profile){
     Step2_총시간: '',
     Step3_총시간: '',
     Step4_총시간: '',
+    Step5_총시간: '',
     시험전학습: '',
     Test_총시간: '',
     영한객관식: '',
@@ -5236,7 +5237,7 @@ function wmRenderHomeworkRow(record, serialNumber){
       <td>${escapeHtml(record.Step2_총시간 || '')}</td>
       <td>${escapeHtml(record.Step3_총시간 || '')}</td>
       <td>${escapeHtml(record.Step4_총시간 || '')}</td>
-      <td>${escapeHtml(record.시험전학습 || record.시험전재학습 || '')}</td>
+      <td>${escapeHtml(record.Step5_총시간 || record.시험전학습 || record.시험전재학습 || '')}</td>
       <td class="time">${escapeHtml(record.Test_총시간 || '')}</td>
       <td>${escapeHtml(wmFormatScoreWithPoint_(record.영한객관식))}</td>
       <td>${escapeHtml(wmFormatScoreWithPoint_(record.한영객관식))}</td>
