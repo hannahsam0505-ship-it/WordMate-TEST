@@ -580,14 +580,15 @@ const WM_DEV_LIVE_REVIEW_MODE = window.WM_DEV_ADMIN_REVIEW_MODE === true || (()=
     pointer-events:none;
   }
   .wm-test-omr-floater{
-    position:sticky;
-    top:84px;
+    position:relative;
+    top:0;
     display:flex;
     flex-direction:column;
     align-items:flex-end;
     gap:8px;
     width:100%;
     pointer-events:none;
+    will-change:transform;
   }
   .wm-test-grid{
     display:grid;
@@ -5036,6 +5037,35 @@ function startTest(){
   render();
 }
 
+let wmTestOmrFloatRaf_=0;
+let wmTestOmrFloatBound_=false;
+function wmPositionTestOmrFloat_(){
+  if(wmTestOmrFloatRaf_) return;
+  wmTestOmrFloatRaf_=requestAnimationFrame(()=>{
+    wmTestOmrFloatRaf_=0;
+    const layer=document.querySelector(".wm-test-omr-float-layer");
+    const floater=document.querySelector(".wm-test-omr-floater");
+    if(!layer || !floater) return;
+    if(window.innerWidth<=860){
+      floater.style.transform="";
+      return;
+    }
+    const layerRect=layer.getBoundingClientRect();
+    const layerPageTop=window.scrollY+layerRect.top;
+    const topBoundary=24;
+    const desiredPageTop=window.scrollY+topBoundary;
+    const maxY=Math.max(0,layer.clientHeight-floater.offsetHeight);
+    const nextY=Math.max(0,Math.min(desiredPageTop-layerPageTop,maxY));
+    floater.style.transform=`translate3d(0,${Math.round(nextY)}px,0)`;
+  });
+}
+function wmBindTestOmrFloat_(){
+  if(wmTestOmrFloatBound_) return;
+  wmTestOmrFloatBound_=true;
+  window.addEventListener("scroll",wmPositionTestOmrFloat_,{passive:true});
+  window.addEventListener("resize",wmPositionTestOmrFloat_,{passive:true});
+}
+
 function wmBuildTestAnswerSheet_(test){
   const rows=testWords.map((item,i)=>{
     if(test.type==="choice"){
@@ -5062,6 +5092,8 @@ function renderTest(){
   activateTestQuestionEvents();
   addWritingEnterMove();
   wmUpdateTestOmr_();
+  wmBindTestOmrFloat_();
+  wmPositionTestOmrFloat_();
   wmActiveFirstTestStartTime = isRetest ? 0 : Date.now();
   startTimer();
 }
@@ -5140,6 +5172,7 @@ function wmToggleTestAnswerSheet_(){
   if(!sheet) return;
   const opened=sheet.classList.toggle("is-open");
   if(button) button.textContent=opened ? "OMR카드 닫기" : "OMR카드";
+  wmPositionTestOmrFloat_();
 }
 
 function activateTestQuestionEvents(){
