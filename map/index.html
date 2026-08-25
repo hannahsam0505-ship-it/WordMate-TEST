@@ -2561,12 +2561,10 @@ function wmReadMapReturnSnapshot_(){
   try{ snapshot=JSON.parse(raw); }catch(err){ snapshot=null; }
 
   const currentStudentId=String(wmCurrentStudent && wmCurrentStudent.학생ID || '').trim();
-  const age=Date.now()-Number(snapshot && snapshot.savedAt || 0);
   const valid=!!(
     snapshot &&
     snapshot.version==='WM_MAP_RETURN_SNAPSHOT_V1' &&
     String(snapshot.studentId || '').trim()===currentStudentId &&
-    Number.isFinite(age) && age>=0 && age<=21600000 &&
     Array.isArray(snapshot.setData) && snapshot.setData.length
   );
 
@@ -2745,7 +2743,7 @@ function wmApplyStudyReturnSnapshot_(row, latestRecord){
     window.wmMarkMapFrameRuntime('frameRun');
   }
 
-  window.setTimeout(function(){ wmWarmCurrentStudyContentFromMap_(cacheData.currentSet); },200);
+  wmWarmCurrentStudyContentFromMap_(cacheData.currentSet).catch(function(error){ console.warn('Study content prepare failed',error); });
   return true;
 }
 
@@ -2764,9 +2762,7 @@ function wmReadStudyReturnCurrentProgress_(){
   if(!envelope || typeof envelope !== 'object') return null;
   const studentId = String(envelope.studentId || '').trim();
   const currentStudentId = String(wmCurrentStudent && wmCurrentStudent.학생ID || '').trim();
-  const age = Date.now() - Number(envelope.savedAt || 0);
   if(!studentId || !currentStudentId || studentId !== currentStudentId) return null;
-  if(!Number.isFinite(age) || age < 0 || age > 120000) return null;
 
   const row = envelope.currentProgress;
   if(!row || typeof row !== 'object') return null;
@@ -2783,7 +2779,12 @@ function wmRenderStudyReturnCurrentProgress_(){
   if(source !== 'study') return false;
 
   const row = wmReadStudyReturnCurrentProgress_();
-  if(!row) return false;
+  if(!row){
+    wmRevealAuthenticatedMap_();
+    wmStopMapLoadingState_();
+    wmShowMapUnavailable_('Study 복귀용 현재진행_DB 자료를 확인할 수 없습니다.');
+    return true;
+  }
 
   if(wmApplyStudyReturnSnapshot_(row,wmStudyReturnLatestRecord_)) return true;
 
@@ -3443,38 +3444,39 @@ function wmNormalizeLearningRecordForBottomTable_(record, data){
 }
 
 let wmStudyWarmSetId_ = '';
+let wmStudyWarmPromise_ = null;
+let wmStudyWarmData_ = null;
 let wmStudyEntryProgressSource_ = null;
 
 function wmPrepareStudyEntryProgressFromMap_(cacheData){
+  /* WM_MAP_STUDY_ENTRY_CURRENT_PROGRESS_ONLY_V1_20260825
+     Study 진입 기준은 오직 Map이 이미 받은 8.현재진행_DB 1행입니다.
+     임의 Step/Set 기본값, 만료시간, 다른 조회 fallback을 만들지 않습니다. */
   if(!cacheData || !cacheData.raw || !cacheData.currentSet) return false;
   const raw=cacheData.raw;
-  const studentId=String(
-    raw.학생ID ||
-    (wmCurrentStudent && wmCurrentStudent.학생ID) ||
-    ''
-  ).trim();
-  if(!studentId) return false;
-
+  const studentId=String(raw.학생ID || '').trim();
   const plainSetId=wmNormalizeCurrentSetIdForMap_(cacheData.currentSet || '');
-  if(!plainSetId) return false;
+  const currentStep=String(raw.현재Step || '').trim();
+  if(!studentId || !plainSetId || !currentStep) return false;
+
   const normalizedSetId='WM' + plainSetId;
   const learningMode={
-    S4실루엣단계:String(raw.S4실루엣단계 || raw.s4 || raw.silhouetteStep || '').trim(),
-    S6테스트모드:String(raw.S6테스트모드 || raw.s6 || raw.testMode || '').trim(),
-    레벨완료조건:String(raw.레벨완료조건 || raw.levelCompleteCondition || '').trim(),
-    레벨회차추가:Number(raw.레벨회차추가 || raw.extraRounds || 0) || 0
+    S4실루엣단계:String(raw.S4실루엣단계 || '').trim(),
+    S6테스트모드:String(raw.S6테스트모드 || '').trim(),
+    레벨완료조건:String(raw.레벨완료조건 || '').trim(),
+    레벨회차추가:Number(raw.레벨회차추가 || 0) || 0
   };
   const progress={
     success:true,
     sessionValid:true,
     valid:true,
-    source:'MAP_CURRENT_PROGRESS_READY',
+    source:'8.현재진행_DB',
     studentId:studentId,
-    setId:String(raw.Set_ID || normalizedSetId).trim().toUpperCase(),
-    recordSetId:String(raw.기록Set_ID || normalizedSetId).trim().toUpperCase(),
+    setId:normalizedSetId,
+    recordSetId:String(raw.기록Set_ID || '').trim().toUpperCase(),
     learningRecordId:String(raw.학습기록ID || '').trim(),
-    currentProgressStep:String(raw.현재Step || cacheData.currentStep || 'Step1').trim(),
-    lastCompletedStep:String(raw.완료Step || cacheData.completedStep || '').trim(),
+    currentProgressStep:currentStep,
+    lastCompletedStep:String(raw.완료Step || '').trim(),
     completedSteps:[],
     learningMode:learningMode,
     currentProgress:raw,
@@ -3482,66 +3484,78 @@ function wmPrepareStudyEntryProgressFromMap_(cacheData){
     currentProgressRow:raw
   };
   wmStudyEntryProgressSource_={
-    version:'WM_MAP_STUDY_PROGRESS_PREFETCH_V1',
+    version:'WM_STUDY_ENTRY_CURRENT_PROGRESS_V1',
     studentId:studentId,
     setId:normalizedSetId,
-    savedAt:Date.now(),
     progress:progress
   };
+
+  /* 아무것도 학습하지 않고 돌아와도 같은 현재진행_DB 1행을 즉시 Map에 되돌려줍니다.
+     Step 저장이 성공하면 Study가 이 값을 최신 현재진행_DB 응답으로 다시 덮어씁니다. */
   try{
-    sessionStorage.setItem('WM_STUDY_PROGRESS_PREFETCH_V1',JSON.stringify(wmStudyEntryProgressSource_));
-    return true;
-  }catch(err){
-    return false;
-  }
+    sessionStorage.setItem('WM_CURRENT_PROGRESS_RETURN_V1',JSON.stringify({
+      version:'WM_STUDY_RETURN_CURRENT_PROGRESS_DIRECT_V2',
+      studentId:studentId,
+      currentProgress:raw,
+      learningRecord:null
+    }));
+  }catch(err){}
+  return true;
 }
 
 function wmWarmCurrentStudyContentFromMap_(setId){
-  /* WM_MAP_STUDY_CONTENT_WARM_V1_20260822
-     Map의 현재진행_DB가 현재 학습세트를 확정한 뒤 getSetData 서버 캐시를 백그라운드에서 미리 준비합니다.
-     Map 첫 화면/학습기록 렌더를 막지 않으며 Study 진입 때 콘텐츠 DB 조회 대기를 줄입니다. */
-  const plainSetId = wmNormalizeCurrentSetIdForMap_(setId || '');
-  if(!plainSetId) return;
-  const normalizedSetId = 'WM' + plainSetId;
-  if(wmStudyWarmSetId_ === normalizedSetId) return;
-  wmStudyWarmSetId_ = normalizedSetId;
+  /* WM_MAP_STUDY_CONTENT_READY_V2_20260825
+     현재진행_DB가 확정한 현재세트의 getSetData 1회만 Map에서 미리 시작합니다.
+     같은 세트는 같은 Promise를 그대로 사용하며 Study에서 중복 조회하지 않습니다. */
+  const plainSetId=wmNormalizeCurrentSetIdForMap_(setId || '');
+  if(!plainSetId) return Promise.reject(new Error('현재진행_DB 현재세트가 없습니다.'));
+  const normalizedSetId='WM' + plainSetId;
 
-  const callbackName = 'wmMapStudyWarm_' + Date.now() + '_' + Math.random().toString(36).slice(2);
-  let script = null;
-  let finished = false;
-  function cleanup(){
-    try{ delete window[callbackName]; }catch(err){ window[callbackName] = undefined; }
-    if(script && script.parentNode) script.parentNode.removeChild(script);
+  if(wmStudyWarmSetId_===normalizedSetId && wmStudyWarmPromise_){
+    return wmStudyWarmPromise_;
   }
-  window[callbackName] = function(result){
-    if(finished) return;
-    finished = true;
-    cleanup();
-    /* WM_MAP_STUDY_PAYLOAD_PREFETCH_V1_20260825
-       기존 Map 사전 getSetData 1회의 성공응답을 Study가 이미 읽는 동일 캐시 키에 그대로 보관합니다.
-       추가 DB/API 호출은 만들지 않습니다. */
-    if(result && result.success){
-      try{
-        localStorage.setItem(
-          'wm_study_set_data_v1_' + normalizedSetId,
-          JSON.stringify({savedAt:Date.now(),data:result})
-        );
-      }catch(err){}
+
+  wmStudyWarmSetId_=normalizedSetId;
+  wmStudyWarmData_=null;
+  wmStudyWarmPromise_=new Promise(function(resolve,reject){
+    const callbackName='wmMapStudyWarm_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+    let script=null;
+    let finished=false;
+
+    function cleanup(){
+      try{ delete window[callbackName]; }catch(err){ window[callbackName]=undefined; }
+      if(script && script.parentNode) script.parentNode.removeChild(script);
     }
-  };
-  script = document.createElement('script');
-  const warmStudentId=String(wmCurrentStudent && wmCurrentStudent.학생ID || '').trim();
-  const warmSessionToken=wmGetCurrentSessionToken();
-  script.src = wmGetApiBaseUrl()
-    + '?action=getSetData'
-    + '&set_id=' + encodeURIComponent(normalizedSetId)
-    + '&studentId=' + encodeURIComponent(warmStudentId)
-    + '&sessionToken=' + encodeURIComponent(warmSessionToken)
-    + '&callback=' + encodeURIComponent(callbackName)
-    + '&t=' + Date.now();
-  script.onerror = function(){ if(finished) return; finished = true; cleanup(); };
-  document.body.appendChild(script);
-  window.setTimeout(function(){ if(finished) return; finished = true; cleanup(); }, 10000);
+
+    window[callbackName]=function(result){
+      if(finished) return;
+      finished=true;
+      cleanup();
+      if(!result || result.success!==true){
+        reject(new Error(String(result && result.message || '현재세트 콘텐츠를 불러오지 못했습니다.')));
+        return;
+      }
+      wmStudyWarmData_=result;
+      resolve(result);
+    };
+
+    script=document.createElement('script');
+    script.src=wmGetApiBaseUrl()
+      + '?action=getSetData'
+      + '&set_id=' + encodeURIComponent(normalizedSetId)
+      + '&studentId=' + encodeURIComponent(String(wmCurrentStudent && wmCurrentStudent.학생ID || '').trim())
+      + '&sessionToken=' + encodeURIComponent(wmGetCurrentSessionToken())
+      + '&callback=' + encodeURIComponent(callbackName)
+      + '&t=' + Date.now();
+    script.onerror=function(){
+      if(finished) return;
+      finished=true;
+      cleanup();
+      reject(new Error('현재세트 콘텐츠 요청에 실패했습니다.'));
+    };
+    document.body.appendChild(script);
+  });
+  return wmStudyWarmPromise_;
 }
 
 function wmApplyLearningMapFromCurrentProgressCache_(cacheData, data){
@@ -3657,7 +3671,7 @@ function wmApplyLearningMapFromCurrentProgressCache_(cacheData, data){
 
   renderHomeworkTable(wmLearningRecords, wmStudentProfile || wmCurrentStudent);
   wmShowLearningModeBanner();
-  window.setTimeout(function(){ wmWarmCurrentStudyContentFromMap_(cacheData.currentSet); }, 200);
+  wmWarmCurrentStudyContentFromMap_(cacheData.currentSet).catch(function(error){ console.warn('Study content prepare failed',error); });
   return true;
 }
 
@@ -5414,13 +5428,31 @@ async function startStudy(setId){
   const learningAssign = wmCurrentStudent && wmCurrentStudent.학습배정 ? String(wmCurrentStudent.학습배정).trim() : '';
   const sessionToken = wmGetCurrentSessionToken();
 
-  if(wmStudyEntryProgressSource_){
-    wmStudyEntryProgressSource_.savedAt=Date.now();
-    try{
-      sessionStorage.setItem('WM_STUDY_PROGRESS_PREFETCH_V1',JSON.stringify(wmStudyEntryProgressSource_));
-    }catch(err){}
+  if(!wmStudyEntryProgressSource_){
+    alert('현재진행_DB 학습 위치를 확인할 수 없습니다.');
+    return;
   }
-  wmWarmCurrentStudyContentFromMap_(selectedSetId);
+
+  let preparedSetData=null;
+  try{
+    preparedSetData=await wmWarmCurrentStudyContentFromMap_(selectedSetId);
+  }catch(error){
+    alert(String(error && error.message || '현재세트 콘텐츠를 준비하지 못했습니다.'));
+    return;
+  }
+
+  try{
+    sessionStorage.setItem('WM_STUDY_ENTRY_READY_V1',JSON.stringify({
+      version:'WM_STUDY_ENTRY_READY_V1',
+      studentId:wmStudyEntryProgressSource_.studentId,
+      setId:wmStudyEntryProgressSource_.setId,
+      progress:wmStudyEntryProgressSource_.progress,
+      setData:preparedSetData
+    }));
+  }catch(error){
+    alert('학습 준비자료를 전달하지 못했습니다.');
+    return;
+  }
 
   const studyUrl =
     framePageUrl

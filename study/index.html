@@ -3426,15 +3426,18 @@ function wmPrefetchNextStudySet(){
   wmFetchStudySetData(nextSetId).catch(function(){});
 }
 
-async function loadSetFromDB(){
+async function loadSetFromDB(preparedData=null){
   if(isDbLoading) return false;
 
   isDbLoading = true;
   dbLoadError = "";
-  renderDbLoading();
+  const hasPreparedData=!!(preparedData && preparedData.success===true);
+  if(!hasPreparedData) renderDbLoading();
 
   try{
-    const data = wmReadStudySetDataCache(currentSetId) || await wmFetchStudySetData(currentSetId);
+    const data = hasPreparedData
+      ? preparedData
+      : (wmReadStudySetDataCache(currentSetId) || await wmFetchStudySetData(currentSetId));
 
     if(data && (data.sessionExpired === true || data.sessionValid === false || data.valid === false)){
       wmStudyShowSessionExpiredModal();
@@ -3879,24 +3882,24 @@ function wmNormalizeCompletedStepsFromProgress(progress){
   })).filter(step=>step.stepId);
 }
 
-function wmReadMapPrefetchedLearningProgress_(){
+function wmReadMapStudyEntryReady_(){
+  /* WM_STUDY_ENTRY_CURRENT_PROGRESS_ONLY_V1_20260825
+     정상 학생 Study 진입은 Map이 이미 준비한 현재진행_DB + 현재세트 콘텐츠만 사용합니다.
+     임의 유효기간이나 서버 재조회 fallback을 사용하지 않습니다. */
   if(WM_DEV_LIVE_REVIEW_MODE) return null;
   try{
-    const raw=sessionStorage.getItem('WM_STUDY_PROGRESS_PREFETCH_V1') || '';
+    const raw=sessionStorage.getItem('WM_STUDY_ENTRY_READY_V1') || '';
     if(!raw) return null;
     const envelope=JSON.parse(raw);
-    const age=Date.now()-Number(envelope && envelope.savedAt || 0);
     const studentId=String(envelope && envelope.studentId || '').trim();
-    const setId=String(envelope && envelope.setId || '').trim().toUpperCase().replace(/^WM/,'');
-    const activeSetId=String(currentSetId || '').trim().toUpperCase().replace(/^WM/,'');
-    if(!envelope || !envelope.progress || !envelope.progress.success) return null;
-    if(!studentId || studentId!==String(WM_STUDENT_ID || '').trim()) return null;
-    if(!setId || setId!==activeSetId) return null;
-    if(!Number.isFinite(age) || age<0 || age>120000) return null;
-    sessionStorage.removeItem('WM_STUDY_PROGRESS_PREFETCH_V1');
-    wmStudyLastValidSessionAt=Date.now();
-    wmResumeProgress=envelope.progress;
-    return envelope.progress;
+    const setId=String(envelope && envelope.setId || '').trim().toUpperCase();
+    const activeSetId=String(currentSetId || '').trim().toUpperCase();
+    if(!envelope || envelope.version!=='WM_STUDY_ENTRY_READY_V1') return null;
+    if(!envelope.progress || envelope.progress.success!==true) return null;
+    if(!envelope.setData || envelope.setData.success!==true) return null;
+    if(studentId!==String(WM_STUDENT_ID || '').trim()) return null;
+    if(setId!==activeSetId) return null;
+    return envelope;
   }catch(err){
     return null;
   }
@@ -3912,9 +3915,6 @@ async function wmLoadLearningProgress(){
      저장 로직은 건드리지 않고, 복귀 조회 캐시만 제거합니다. */
   wmProgressLoaded = false;
   wmResumeProgress = null;
-
-  const prefetchedProgress=wmReadMapPrefetchedLearningProgress_();
-  if(prefetchedProgress) return prefetchedProgress;
 
   if(!WM_PROGRESS_API_URL || !WM_STUDENT_ID || !currentSetId){
     return null;
@@ -4589,35 +4589,26 @@ function wmStudyReturnToMap(){
 }
 
 async function leaveLearning(){
+  /* WM_STUDY_EXIT_NO_NEW_SAVE_V1_20260825
+     복귀 버튼에서는 새 저장·재저장·현재진행 재조회를 만들지 않습니다.
+     아무 Step도 완료하지 않았거나 기존 Step 저장이 이미 끝났으면 즉시 복귀합니다.
+     실제로 진행 중인 Step 저장 1건이 있을 때만 그 이미 시작된 요청의 완료만 확인합니다. */
   const modal=document.getElementById("wmExitModal");
   if(modal) modal.style.display="none";
 
-  app.innerHTML = `<div class="wm-card wm-study-state-card">
-    ${wmSetBadgeHtml()}
-    <div class="wm-title">학습기록 저장 확인 중</div>
-    <div class="wm-study-state-body">
-      <div class="wm-meaning" style="font-size:18px;line-height:1.8;">완료된 Step 기록을 확인하고 있습니다.</div>
-      <div style="width:42px;height:42px;border:5px solid #dbeafe;border-top-color:#2563eb;border-radius:50%;margin:0 auto;animation:wmSpin .8s linear infinite;"></div>
-      <div class="wm-small" style="font-size:15px;color:#555;line-height:1.7;">저장이 끝나면 학습맵으로 이동합니다.<br>잠시만 기다려 주세요.</div>
-    </div>
-  </div>`;
-  afterScreenRender();
-
-  let result = await wmWaitForStepSaves();
-
-  if(result && result.ok === false){
-    /* WM_STUDY_EXIT_STEP_RETRY_NO_FALSE_COMPLETE_V1_20260819
-       중간 Step 저장 실패를 세트 완료(completed)로 바꾸지 않습니다.
-       같은 누적 Step 상태를 step_completed로 1회만 재저장합니다. */
-    result = await WM_STUDY_SPEED_LOCKS.STEP_SAVE.saveLearningRecord("step_completed");
+  const pendingSave=wmStepSaveInFlight;
+  if(pendingSave){
+    const result=await Promise.resolve(pendingSave).catch(function(error){
+      return {ok:false,error:String(error)};
+    });
     if(!wmIsSaveSuccess(result)){
-      app.innerHTML = `<div class="wm-card wm-study-state-card wm-study-start-card">${wmSetBadgeHtml()}<div class="wm-title">학습기록 저장 확인 필요</div><div class="wm-meaning" style="font-size:18px;line-height:1.8;">완료된 Step 저장 응답을 확인하지 못했습니다.<br>세트 완료 처리 없이 현재 학습 위치를 보호합니다.</div><button class="wm-btn" onclick="wmStudyReturnToMap()">학습맵으로 이동</button></div>`;
+      app.innerHTML=`<div class="wm-card wm-study-state-card wm-study-start-card">${wmSetBadgeHtml()}<div class="wm-title">학습기록 저장 확인 필요</div><div class="wm-meaning" style="font-size:18px;line-height:1.8;">이미 진행 중이던 Step 저장 응답을 확인하지 못했습니다.</div></div>`;
       afterScreenRender();
       return;
     }
+    wmCacheCurrentProgressForMapReturn_(result);
   }
 
-  wmCacheCurrentProgressForMapReturn_(result);
   exitLearningFullscreen();
   wmStudyReturnToMap();
 }
@@ -4698,54 +4689,32 @@ function renderStart(){
 }
 
 async function startLearning(){
-  renderDbLoading();
-
-  /* WM_STUDY_CORE_TWO_REQUEST_START_V1_20260818
-     세트 데이터와 현재진행을 병렬 조회합니다.
-     현재진행 응답이 세션검증과 현재 세트 학습모드를 함께 반환하므로
-     별도 세션조회·학습모드조회는 정상 경로에서 중복 실행하지 않습니다. */
-  const needsDbLoad = !isDbReady || !originalWords.length;
-  const parallelLoad = await Promise.all([
-    needsDbLoad ? WM_STUDY_SPEED_LOCKS.SET_LOAD.loadSetFromDB() : Promise.resolve(true),
-    wmLoadLearningProgress()
-  ]);
-  if(!parallelLoad[0]) return;
-
-  let progress = parallelLoad[1];
-  if(progress && (progress.sessionExpired === true || progress.sessionValid === false || progress.valid === false)){
-    return;
-  }
-
-  /* WM_STUDY_RESUME_RETRY_NO_STEP1_FALLBACK_V1_20260819
-     정상 경로는 기존 2개 병렬호출을 유지합니다.
-     현재진행 조회만 탈락한 경우에만 세트 조회 종료 후 1회 순차 재조회하고,
-     재조회도 실패하면 STEP1로 임의 진입하지 않습니다. */
-  if(!progress || !progress.success){
-    progress = await wmLoadLearningProgress();
-    if(progress && (progress.sessionExpired === true || progress.sessionValid === false || progress.valid === false)){
-      return;
-    }
-  }
-
-  if(!progress || !progress.success){
-    app.innerHTML = `<div class="wm-card wm-study-state-card wm-study-start-card">${wmSetBadgeHtml()}<div class="wm-title">학습 위치 확인 필요</div><div class="wm-meaning" style="font-size:18px;line-height:1.8;">현재 학습 Step을 확인하지 못했습니다.<br>STEP1로 초기화하지 않고 다시 조회합니다.</div><button class="wm-btn" onclick="startLearning()">다시 시도</button></div>`;
+  /* WM_STUDY_MAP_READY_DIRECT_START_V1_20260825
+     정상 학생경로는 Map이 현재진행_DB로 확정하고 미리 준비한
+     현재세트 콘텐츠 + 현재Step을 그대로 사용합니다.
+     Study 진입 시 getStudyProgressFast/getSetData 재조회나 임의 fallback을 만들지 않습니다. */
+  const ready=wmReadMapStudyEntryReady_();
+  if(!ready){
+    app.innerHTML=`<div class="wm-card wm-study-state-card wm-study-start-card">${wmSetBadgeHtml()}<div class="wm-title">학습 준비 확인 필요</div><div class="wm-meaning" style="font-size:18px;line-height:1.8;">학습맵의 현재진행_DB 준비자료를 확인할 수 없습니다.</div></div>`;
     afterScreenRender();
     return;
   }
 
-  if(progress.learningMode){
-    WM_ACTIVE_STUDY_MODE = wmNormalizeStudyMode(progress.learningMode);
-    WM_ACTIVE_STUDY_MODE_SET_ID = currentSetId;
-    try{
-      const modeParams = new URLSearchParams(window.location.search || '');
-      WM_ACTIVE_LEARNING_ASSIGN = String(modeParams.get('learningAssign') || modeParams.get('wmLearningAssign') || modeParams.get('level') || '').trim();
-    }catch(err){}
-    wmCacheStudyMode(currentSetId, WM_ACTIVE_STUDY_MODE);
-  }else{
-    const sessionValid = await wmStudyCheckCurrentSession();
-    if(!sessionValid) return;
-    await wmPrepareStudyModeForCurrentSet();
-  }
+  const loaded=await WM_STUDY_SPEED_LOCKS.SET_LOAD.loadSetFromDB(ready.setData);
+  if(!loaded) return;
+
+  const progress=ready.progress;
+  wmStudyLastValidSessionAt=Date.now();
+  wmResumeProgress=progress;
+  try{ sessionStorage.removeItem('WM_STUDY_ENTRY_READY_V1'); }catch(err){}
+
+  WM_ACTIVE_STUDY_MODE = wmNormalizeStudyMode(progress.learningMode || {});
+  WM_ACTIVE_STUDY_MODE_SET_ID = currentSetId;
+  try{
+    const modeParams = new URLSearchParams(window.location.search || '');
+    WM_ACTIVE_LEARNING_ASSIGN = String(modeParams.get('learningAssign') || modeParams.get('wmLearningAssign') || modeParams.get('level') || '').trim();
+  }catch(err){}
+  wmCacheStudyMode(currentSetId, WM_ACTIVE_STUDY_MODE);
 
   wmStudyStartSessionWatcher();
 
