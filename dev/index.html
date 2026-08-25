@@ -10710,13 +10710,23 @@ renderStart();
       wmdcAnalyzeActualAudioQa:wmdcAnalyzeActualAudioQa,
       wmdcPlayActualStudyAudio:wmdcPlayActualStudyAudio,
       wmdcSetHumanQa:wmdcSetHumanQa
+    }),
+    LIVE_STUDY:Object.freeze({
+      wmdcBuildLiveStudyUrl:wmdcBuildLiveStudyUrl,
+      wmdcMountLiveStudyFrame:wmdcMountLiveStudyFrame,
+      wmdcSwitchLiveStudyTestInPlace_:wmdcSwitchLiveStudyTestInPlace_,
+      wmdcRunSelectedTest:wmdcRunSelectedTest
     })
   });
   function wmVerifyDevAudioQaPrivateLock(){
     return Object.isFrozen(WM_DEV_AUDIO_QA_PRIVATE_LOCK) &&
       Object.isFrozen(WM_DEV_AUDIO_QA_PRIVATE_LOCK.AUDIO_QA) &&
+      Object.isFrozen(WM_DEV_AUDIO_QA_PRIVATE_LOCK.LIVE_STUDY) &&
       Object.keys(WM_DEV_AUDIO_QA_PRIVATE_LOCK.AUDIO_QA).every(function(name){
         return typeof WM_DEV_AUDIO_QA_PRIVATE_LOCK.AUDIO_QA[name] === 'function';
+      }) &&
+      Object.keys(WM_DEV_AUDIO_QA_PRIVATE_LOCK.LIVE_STUDY).every(function(name){
+        return typeof WM_DEV_AUDIO_QA_PRIVATE_LOCK.LIVE_STUDY[name] === 'function';
       });
   }
   Object.defineProperty(window,'WM_DEV_AUDIO_QA_PRIVATE_LOCK',{value:WM_DEV_AUDIO_QA_PRIVATE_LOCK,writable:false,configurable:false});
