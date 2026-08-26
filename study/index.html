@@ -5021,9 +5021,11 @@ function wmPositionTestOmrFloat_(){
     const floater=document.querySelector(".wm-test-omr-floater");
     if(!layer || !floater) return;
     if(window.innerWidth<=860){
+      if(layer.style.display!=="none") layer.style.setProperty("display","none","important");
       floater.style.transform="";
       return;
     }
+    if(layer.style.display==="none") layer.style.removeProperty("display");
     const layerRect=layer.getBoundingClientRect();
     const layerPageTop=window.scrollY+layerRect.top;
     const topBoundary=24;
