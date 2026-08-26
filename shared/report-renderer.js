@@ -482,7 +482,10 @@ body.wm-report-preview-open{overflow:hidden}
   #wmRecentReportModal .wm-report-preview-modal-card{width:210mm!important;max-height:none!important;margin:0!important;border-radius:0!important;box-shadow:none!important;overflow:visible!important}
   #wmRecentReportModal .wm-report-preview-modal-head{display:none!important}
   #wmRecentReportModal .wm-report-preview-modal-body{display:block!important;padding:0!important;background:#fff!important;overflow:visible!important}
-  #wmRecentReportModal .wm-report-preview-modal-body .wmr-sheet{margin:0!important}
+  #wmRecentReportModal .wm-report-preview-modal-body .wmr-sheet{
+    margin:0 auto!important;
+    zoom:.985;
+  }
 }
 `;
 
@@ -576,7 +579,7 @@ body.wm-report-preview-open{overflow:hidden}
     templateLock: 'WM_REPORT_TEMPLATE_LOCK_V3',
     templateAttribute: 'data-wmr-template-lock="V1"',
     templateLength: 124659,
-    modalStyleLength: 3451,
+    modalStyleLength: 3480,
     modalHtmlLength: 900
   });
 
