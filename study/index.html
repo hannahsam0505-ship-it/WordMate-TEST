@@ -5020,7 +5020,7 @@ function wmPositionTestOmrFloat_(){
     const layer=document.querySelector(".wm-test-omr-float-layer");
     const floater=document.querySelector(".wm-test-omr-floater");
     if(!layer || !floater) return;
-    if(window.innerWidth<=860){
+    if(getSimpleDeviceInfo()==="Mobile" || window.innerWidth<=860){
       if(layer.style.display!=="none") layer.style.setProperty("display","none","important");
       floater.style.transform="";
       return;
