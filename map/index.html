@@ -1821,10 +1821,17 @@ body.wm-map-loading-active #wm-learning-record-widget{
   body{
     margin:0 !important;
     padding:0 !important;
+    width:100% !important;
+    min-height:283mm !important;
     background:#fff !important;
-    overflow:visible !important;
+    overflow:hidden !important;
     -webkit-print-color-adjust:exact !important;
     print-color-adjust:exact !important;
+  }
+  body{
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
   }
 
   body.wm-test-booth-active{margin-top:0 !important;}
@@ -1837,7 +1844,7 @@ body.wm-map-loading-active #wm-learning-record-widget{
   #wm-map-root{
     width:1320px !important;
     max-width:1320px !important;
-    margin:0 !important;
+    margin:0 auto !important;
     padding:24px !important;
     padding-bottom:44px !important;
     background:#D8EEFF !important;
@@ -1875,9 +1882,12 @@ body.wm-map-loading-active #wm-learning-record-widget{
   .record-summary{grid-template-columns:repeat(5,1fr) !important;}
   .learning-block-area{grid-template-columns:repeat(4,1fr) !important;}
 
-  .homework-table-scroll,
+  .homework-table-scroll{
+    max-height:690px !important;
+    overflow:hidden !important;
+  }
   .detail-box{
-    overflow:visible !important;
+    overflow:hidden !important;
   }
   .homework-scroll-top-fixed,
   .homework-scroll-bottom-fixed{
@@ -3613,7 +3623,9 @@ function wmApplyLearningMapFromCurrentProgressCache_(cacheData, data){
 
   wmApplyStudentLearningMap(wmCurrentStudent, { skipMapRender:true });
 
-  const receivedLearningRecords = wmSortLearningRecordsDesc_(wmPickLearningRecordsFromPayload_(data, cacheData));
+  const receivedLearningRecords = (data && data.recordsDeferred === true)
+    ? []
+    : wmSortLearningRecordsDesc_(wmPickLearningRecordsFromPayload_(data, cacheData));
   if(!wmBottomRecordsDetailedLoaded && receivedLearningRecords.length){
     wmLearningRecords = receivedLearningRecords;
   }
@@ -3695,7 +3707,9 @@ function wmApplyLearningMapFromCurrentProgressCache_(cacheData, data){
   wmCurrentProgressRecentScoreForMap_ = cacheData.recentScore || '';
   setText('summaryRecentScore', wmCurrentProgressRecentScoreForMap_ ? wmCurrentProgressRecentScoreForMap_ + '점' : '-');
 
-  renderHomeworkTable(wmLearningRecords, wmStudentProfile || wmCurrentStudent);
+  if(!(data && data.recordsDeferred === true && !wmBottomRecordsDetailedLoaded)){
+    renderHomeworkTable(wmLearningRecords, wmStudentProfile || wmCurrentStudent);
+  }
   wmShowLearningModeBanner();
   wmWarmCurrentStudyContentFromMap_(cacheData.currentSet).catch(function(error){ console.warn('Study content prepare failed',error); });
   return true;
@@ -6103,7 +6117,7 @@ wmInitHomeworkSearchEnterKey();
  * LMS 성적표생성 최근성적표와 동일한 /shared/report-renderer.js를 클릭 시점에만 사용합니다.
  * 로그인·학습맵 초기 진입에는 파일 요청·성적표 API 호출을 추가하지 않습니다.
  */
-const WM_SHARED_REPORT_RENDERER_URL='/shared/report-renderer.js?v=3';
+const WM_SHARED_REPORT_RENDERER_URL='/shared/report-renderer.js?v=4';
 let WM_SHARED_REPORT_RENDERER_PROMISE=null;
 let wmMapRecentReportState_={loaded:false,loading:false,months:[],defaultYearMonth:'',studentId:'',cache:new Map()};
 

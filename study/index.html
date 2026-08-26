@@ -4743,11 +4743,36 @@ function wmApplyStudyStepSizeClass(){
   card.classList.add("wm-study-step-card", stepClass);
 }
 
+let wmTypingVisibilityBound_=false;
+
+function wmBindTypingInputVisibility_(){
+  const device=getSimpleDeviceInfo();
+  if(device!=="Mobile" && device!=="Tap") return;
+
+  function revealActiveTypingInput_(){
+    const input=document.activeElement;
+    if(!input || !input.matches(".memory-input, .test-input, .wm-test-omr-write")) return;
+    try{ input.scrollIntoView({block:"center",inline:"nearest",behavior:"auto"}); }catch(err){}
+  }
+
+  document.querySelectorAll(".memory-input, .test-input, .wm-test-omr-write").forEach(input=>{
+    if(input.dataset.wmTypingVisibilityBound==="1") return;
+    input.dataset.wmTypingVisibilityBound="1";
+    input.addEventListener("focus",revealActiveTypingInput_);
+  });
+
+  if(!wmTypingVisibilityBound_ && window.visualViewport){
+    wmTypingVisibilityBound_=true;
+    window.visualViewport.addEventListener("resize",revealActiveTypingInput_);
+  }
+}
+
 function afterScreenRender(){
   wmSyncStudyShell();
   wmApplyStudyStepSizeClass();
   ensureExitControls();
   protectDirectTypingInputs();
+  wmBindTypingInputVisibility_();
 }
 
 function render(){

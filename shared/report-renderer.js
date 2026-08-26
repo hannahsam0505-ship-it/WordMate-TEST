@@ -464,7 +464,9 @@
 #wmRecentReportModal .wm-report-preview-modal-card{width:min(1120px,96vw);max-height:calc(100vh - 94px);background:#fff;border-radius:18px;box-shadow:0 28px 80px rgba(0,0,0,.35);overflow:hidden;display:flex;flex-direction:column}
 #wmRecentReportModal .wm-report-preview-modal-head{position:relative;top:auto;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:10px;flex:0 0 auto;background:#fff;border-bottom:1px solid #e5e7eb;padding:12px 16px}
 #wmRecentReportModal .wm-report-preview-modal-title{font-size:16px;font-weight:950;color:#173b75;white-space:nowrap}
+#wmRecentReportModal .wm-report-preview-modal-actions{display:flex;align-items:center;gap:8px;margin-left:auto}
 #wmRecentReportModal .wm-recent-report-select{min-width:150px;border:1px solid #9fbce8;border-radius:9px;background:#fff;color:#173b75;padding:8px 10px;font-size:13px;font-weight:900}
+#wmRecentReportModal .wm-report-print-button{border:1px solid #0d55c8;background:#0d55c8;color:#fff;border-radius:9px;padding:8px 13px;font-size:13px;font-weight:900;cursor:pointer;white-space:nowrap}
 #wmRecentReportModal .wm-action-btn.sub{border:1px solid #e5e7eb;background:#f3f4f6;color:#1f2937;border-radius:12px;padding:11px 15px;font-weight:900;cursor:pointer}
 #wmRecentReportModal .wm-report-preview-modal-body{flex:1 1 auto;min-height:140px;padding:18px;background:#eaf0f8;display:flex;justify-content:center;overflow:auto}
 #wmRecentReportModal .wm-report-preview-modal-body .wmr-sheet{margin:0 auto}
@@ -474,6 +476,14 @@
 body.wm-report-preview-open{overflow:hidden}
 @keyframes wmSharedRecentReportSpin{to{transform:rotate(360deg)}}
 @media(max-width:720px){#wmRecentReportModal{padding:64px 8px 8px}#wmRecentReportModal .wm-report-preview-modal-body{padding:8px;overflow:auto;justify-content:flex-start}}
+@media print{
+  body.wm-report-preview-open>*:not(#wmRecentReportModal){display:none!important}
+  #wmRecentReportModal{position:static!important;inset:auto!important;display:block!important;padding:0!important;background:#fff!important;overflow:visible!important}
+  #wmRecentReportModal .wm-report-preview-modal-card{width:210mm!important;max-height:none!important;margin:0!important;border-radius:0!important;box-shadow:none!important;overflow:visible!important}
+  #wmRecentReportModal .wm-report-preview-modal-head{display:none!important}
+  #wmRecentReportModal .wm-report-preview-modal-body{display:block!important;padding:0!important;background:#fff!important;overflow:visible!important}
+  #wmRecentReportModal .wm-report-preview-modal-body .wmr-sheet{margin:0!important}
+}
 `;
 
   const WM_SHARED_RECENT_MODAL_HTML = `
@@ -481,8 +491,11 @@ body.wm-report-preview-open{overflow:hidden}
   <div class="wm-report-preview-modal-card">
     <div class="wm-report-preview-modal-head">
       <div id="wmRecentReportModalTitle" class="wm-report-preview-modal-title">최근성적표보기</div>
-      <select id="wmRecentReportMonthSelect" class="wm-recent-report-select" aria-label="최근성적표 월 선택" onchange="changeRecentReportMonth()"></select>
-      <button type="button" class="wm-action-btn sub" aria-label="최근성적표 닫기" onclick="closeRecentReportModal()">×</button>
+      <div class="wm-report-preview-modal-actions">
+        <select id="wmRecentReportMonthSelect" class="wm-recent-report-select" aria-label="최근성적표 월 선택" onchange="changeRecentReportMonth()"></select>
+        <button type="button" class="wm-report-print-button" onclick="window.print()">인쇄하기</button>
+        <button type="button" class="wm-action-btn sub" aria-label="최근성적표 닫기" onclick="closeRecentReportModal()">×</button>
+      </div>
     </div>
     <div id="wmRecentReportModalBody" class="wm-report-preview-modal-body"></div>
   </div>
@@ -563,8 +576,8 @@ body.wm-report-preview-open{overflow:hidden}
     templateLock: 'WM_REPORT_TEMPLATE_LOCK_V3',
     templateAttribute: 'data-wmr-template-lock="V1"',
     templateLength: 124659,
-    modalStyleLength: 2360,
-    modalHtmlLength: 731
+    modalStyleLength: 3451,
+    modalHtmlLength: 900
   });
 
   const WM_SHARED_REPORT_API = Object.freeze({
