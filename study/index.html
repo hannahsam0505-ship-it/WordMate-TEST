@@ -662,16 +662,7 @@ const WM_DEV_LIVE_REVIEW_MODE = window.WM_DEV_ADMIN_REVIEW_MODE === true || (()=
     pointer-events:auto;
   }
   @media(max-width:860px){
-    .wm-test-omr-float-layer{position:static;top:auto;right:auto;bottom:auto;width:auto;height:auto;}
-    .wm-test-omr-floater{position:static;display:block;width:auto;}
-    .wm-test-omr{
-      display:none;position:fixed;left:12px;right:12px;bottom:58px;top:auto;width:auto;max-height:48vh;
-      z-index:10020;box-shadow:0 12px 34px rgba(15,23,42,.24);
-    }
-    .wm-test-omr.is-open{display:block;}
-    .wm-test-answer-toggle{
-      position:fixed;right:14px;bottom:12px;top:auto;z-index:10021;
-    }
+    .wm-test-omr-float-layer{display:none!important;}
   }
   @media(max-width:640px){.wm-test-grid{grid-template-columns:1fr;}}
 
