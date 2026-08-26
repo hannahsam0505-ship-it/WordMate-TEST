@@ -4596,13 +4596,20 @@ async function leaveLearning(){
 }
 
 function protectDirectTypingInputs(){
-  document.querySelectorAll(".memory-input, .test-input").forEach(input=>{
+  document.querySelectorAll(".memory-input, .test-input, .wm-test-omr-write").forEach(input=>{
     input.setAttribute("autocomplete","off");
     input.setAttribute("autocorrect","off");
     input.setAttribute("autocapitalize","off");
     input.setAttribute("spellcheck","false");
+    input.setAttribute("writingsuggestions","false");
     input.addEventListener("paste",e=>e.preventDefault());
     input.addEventListener("drop",e=>e.preventDefault());
+    input.onbeforeinput=e=>{
+      const inputType=String(e.inputType || "");
+      if(inputType==="insertReplacementText" || inputType==="insertFromPaste" || inputType==="insertFromDrop"){
+        e.preventDefault();
+      }
+    };
   });
 }
 
@@ -4892,7 +4899,7 @@ function renderMemory(){
   const currentStep=activeMemorySteps[memoryPhase] || activeMemorySteps[0];
   const silhouette=getSilhouette(item.word,currentStep.type);
   const title="Step 4 Memory";
-  app.innerHTML=`<div class="wm-card">${wmSetBadgeHtml()}${wmStepWrongBadgeHtml_(4,memoryWrongTotal.length)}<div class="wm-title">${title}</div>${learningGuide("red")}<div style="margin:8px 28px 18px;"><div style="color:#2563eb;font-size:16px;font-weight:800;margin-bottom:8px;text-align:center;">전체단어 ${index+1}/${currentWords.length} 학습, ${Math.round((index/currentWords.length)*100)}% 완료</div><div style="width:100%;height:14px;background:#dbeafe;border-radius:999px;overflow:hidden;"><div style="width:${(index/currentWords.length)*100}%;height:100%;background:#2563eb;border-radius:999px;transition:width .3s ease;"></div></div></div><div class="wm-memory-count">총${getActiveMemoryTotalRounds()}회 받아쓰기 ${getMemoryRoundNumber()} / ${getActiveMemoryTotalRounds()}</div>${renderMemoryProgress()}<button class="audio-btn" onclick="playWordSegment(currentWords[index], 5)">🔊 다시 듣기</button><div class="wm-word wm-silhouette">${silhouette}</div><div class="wm-pos">${item.pos}</div><div class="wm-meaning">${item.meaning}</div><input id="memoryInput" class="memory-input" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"><div id="memoryMessage" class="wm-alert"></div><button class="wm-btn" onclick="checkMemory()">확인</button>${wmWrongRetryBottomHtml_(isMemoryReview)}</div>`;
+  app.innerHTML=`<div class="wm-card">${wmSetBadgeHtml()}${wmStepWrongBadgeHtml_(4,memoryWrongTotal.length)}<div class="wm-title">${title}</div>${learningGuide("red")}<div style="margin:8px 28px 18px;"><div style="color:#2563eb;font-size:16px;font-weight:800;margin-bottom:8px;text-align:center;">전체단어 ${index+1}/${currentWords.length} 학습, ${Math.round((index/currentWords.length)*100)}% 완료</div><div style="width:100%;height:14px;background:#dbeafe;border-radius:999px;overflow:hidden;"><div style="width:${(index/currentWords.length)*100}%;height:100%;background:#2563eb;border-radius:999px;transition:width .3s ease;"></div></div></div><div class="wm-memory-count">총${getActiveMemoryTotalRounds()}회 받아쓰기 ${getMemoryRoundNumber()} / ${getActiveMemoryTotalRounds()}</div>${renderMemoryProgress()}<button class="audio-btn" onclick="playWordSegment(currentWords[index], 5)">🔊 다시 듣기</button><div class="wm-word wm-silhouette">${silhouette}</div><div class="wm-pos">${item.pos}</div><div class="wm-meaning">${item.meaning}</div><input id="memoryInput" class="memory-input" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" writingsuggestions="false"><div id="memoryMessage" class="wm-alert"></div><button class="wm-btn" onclick="checkMemory()">확인</button>${wmWrongRetryBottomHtml_(isMemoryReview)}</div>`;
   const input=document.getElementById("memoryInput");
   setTimeout(()=>input.focus(),100);
   input.addEventListener("keydown",e=>{if(e.key==="Enter") checkMemory();});
@@ -5049,7 +5056,7 @@ function wmBuildTestAnswerSheet_(test){
     if(test.type==="choice"){
       return `<div class="wm-test-omr-row" data-omr-row="${i}"><div class="wm-test-omr-num">${i+1}</div><div class="wm-test-omr-choice">${[0,1,2,3,4].map(optionIndex=>`<button type="button" class="wm-test-omr-choice-btn" data-omr-index="${i}" data-omr-option="${optionIndex}" onclick="wmSelectOmrChoice_(${i},${optionIndex})">${optionIndex+1}</button>`).join("")}</div></div>`;
     }
-    return `<div class="wm-test-omr-row" data-omr-row="${i}"><div class="wm-test-omr-num">${i+1}</div><input class="wm-test-omr-write" data-omr-write-index="${i}" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" oninput="wmSyncOmrWriteToQuestion_(this)" onkeydown="wmHandleOmrWriteEnter_(event,this)"></div>`;
+    return `<div class="wm-test-omr-row" data-omr-row="${i}"><div class="wm-test-omr-num">${i+1}</div><input class="wm-test-omr-write" data-omr-write-index="${i}" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" writingsuggestions="false" oninput="wmSyncOmrWriteToQuestion_(this)" onkeydown="wmHandleOmrWriteEnter_(event,this)"></div>`;
   }).join("");
   const modeClass=test.type==="choice" ? "wm-test-omr-mode-choice" : "wm-test-omr-mode-write";
   return `<div class="wm-test-omr-float-layer"><div class="wm-test-omr-floater"><button type="button" class="wm-test-answer-toggle" onclick="wmToggleTestAnswerSheet_()">OMR카드</button><aside id="wmTestOmr" class="wm-test-omr ${modeClass}" aria-label="OMR카드"><div class="wm-test-omr-title">OMR카드</div>${rows}</aside></div></div>`;
@@ -5087,7 +5094,7 @@ function renderTestQuestion(test,item,i){
     return `<div class="test-question" tabindex="0" data-q-index="${i}"><div class="test-q-title">${i+1}. ${question}</div>${options.map((option,j)=>`<label class="test-option"><input type="radio" name="q${i}" value="${option}" data-option-index="${j}"> ${j+1}. ${option}</label>`).join("")}</div>`;
   }
   const question=test.direction==="eng-ko"?item.word:item.meaning;
-  return `<div class="test-question" data-q-index="${i}"><div class="test-q-title">${i+1}. ${question}</div><input class="test-input" id="q${i}" data-direction="${test.direction}" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></div>`;
+  return `<div class="test-question" data-q-index="${i}"><div class="test-q-title">${i+1}. ${question}</div><input class="test-input" id="q${i}" data-direction="${test.direction}" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" writingsuggestions="false"></div>`;
 }
 
 function wmUpdateTestOmr_(){
