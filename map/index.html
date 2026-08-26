@@ -2902,6 +2902,11 @@ function wmRenderStudyReturnCurrentProgress_(){
 
   if(wmApplyStudyReturnSnapshot_(row,wmStudyReturnLatestRecord_)) return true;
 
+  /* WM_MAP_STUDY_RETURN_RECORDS_TRUE_PARALLEL_V1_20260826
+     복귀용 현재진행 전체행 렌더와 기존 학습기록 첫 페이지 조회를 동시에 시작합니다.
+     새 API를 만들지 않고 기존 getLearningRecordsForMapData 1회 호출 시점만 앞당깁니다. */
+  wmLoadLearningRecordsDirectForMap_('parallel-study-return');
+
   wmHandleLearningMapResponse({
     success:true,
     sessionValid:true,

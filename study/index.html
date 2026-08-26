@@ -4572,27 +4572,13 @@ function wmStudyReturnToMap(){
   }
 }
 
-async function leaveLearning(){
-  /* WM_STUDY_EXIT_NO_NEW_SAVE_V1_20260825
-     복귀 버튼에서는 새 저장·재저장·현재진행 재조회를 만들지 않습니다.
-     아무 Step도 완료하지 않았거나 기존 Step 저장이 이미 끝났으면 즉시 복귀합니다.
-     실제로 진행 중인 Step 저장 1건이 있을 때만 그 이미 시작된 요청의 완료만 확인합니다. */
+function leaveLearning(){
+  /* WM_STUDY_EXIT_IMMEDIATE_RETURN_V2_20260826
+     Map→Study 진입 때 이미 저장해 둔 최신 현재진행 전체행을 그대로 Map에 전달합니다.
+     Step/TEST/아무것도 하지 않은 복귀를 구분하지 않고 동일 공식으로 즉시 복귀합니다.
+     복귀 버튼에서는 새 저장·API·DB 재조회·진행 중 요청 대기를 만들지 않습니다. */
   const modal=document.getElementById("wmExitModal");
   if(modal) modal.style.display="none";
-
-  const pendingSave=wmStepSaveInFlight;
-  if(pendingSave){
-    const result=await Promise.resolve(pendingSave).catch(function(error){
-      return {ok:false,error:String(error)};
-    });
-    if(!wmIsSaveSuccess(result)){
-      app.innerHTML=`<div class="wm-card wm-study-state-card wm-study-start-card">${wmSetBadgeHtml()}<div class="wm-title">학습기록 저장 확인 필요</div><div class="wm-meaning" style="font-size:18px;line-height:1.8;">이미 진행 중이던 Step 저장 응답을 확인하지 못했습니다.</div></div>`;
-      afterScreenRender();
-      return;
-    }
-    wmCacheCurrentProgressForMapReturn_(result);
-  }
-
   exitLearningFullscreen();
   wmStudyReturnToMap();
 }
