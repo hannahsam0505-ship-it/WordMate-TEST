@@ -4597,6 +4597,8 @@ async function leaveLearning(){
 
 function protectDirectTypingInputs(){
   document.querySelectorAll(".memory-input, .test-input, .wm-test-omr-write").forEach(input=>{
+    if(input.dataset.wmDirectTypingBound==="1") return;
+    input.dataset.wmDirectTypingBound="1";
     input.setAttribute("autocomplete","off");
     input.setAttribute("autocorrect","off");
     input.setAttribute("autocapitalize","off");
@@ -4606,15 +4608,22 @@ function protectDirectTypingInputs(){
     let acceptedValue=String(input.value || "");
     let acceptedStart=Number.isInteger(input.selectionStart) ? input.selectionStart : acceptedValue.length;
     let acceptedEnd=Number.isInteger(input.selectionEnd) ? input.selectionEnd : acceptedStart;
+    let directKeyArmed=false;
+    let directDeleteArmed=false;
+    let directComposition=false;
+    input.dataset.wmDirectTypingValue=acceptedValue;
 
     function rememberAcceptedValue_(){
       acceptedValue=String(input.value || "");
       acceptedStart=Number.isInteger(input.selectionStart) ? input.selectionStart : acceptedValue.length;
       acceptedEnd=Number.isInteger(input.selectionEnd) ? input.selectionEnd : acceptedStart;
+      input.dataset.wmDirectTypingValue=acceptedValue;
+      if(input.classList.contains("wm-test-omr-write")) wmSyncOmrWriteToQuestion_(input);
     }
 
     function restoreAcceptedValue_(){
       input.value=acceptedValue;
+      input.dataset.wmDirectTypingValue=acceptedValue;
       try{ input.setSelectionRange(acceptedStart,acceptedEnd); }catch(err){}
       if(input.classList.contains("wm-test-omr-write")){
         wmSyncOmrWriteToQuestion_(input);
@@ -4637,6 +4646,30 @@ function protectDirectTypingInputs(){
       return Math.max(0,afterChars.length-prefix-suffix);
     }
 
+    input.addEventListener("keydown",e=>{
+      const key=String(e.key || "");
+      directKeyArmed=false;
+      directDeleteArmed=false;
+      if(e.ctrlKey || e.metaKey || e.altKey) return;
+      if(key==="Backspace" || key==="Delete"){
+        directDeleteArmed=true;
+        return;
+      }
+      if(key==="Process" || key==="Unidentified" || Array.from(key).length===1){
+        directKeyArmed=true;
+      }
+    });
+
+    input.addEventListener("compositionstart",()=>{
+      directComposition=true;
+    });
+    input.addEventListener("compositionend",()=>{
+      directComposition=false;
+      if(insertedCharacterCount_(acceptedValue,String(input.value || ""))<=1) rememberAcceptedValue_();
+      else restoreAcceptedValue_();
+      directKeyArmed=false;
+    });
+
     input.addEventListener("paste",e=>e.preventDefault());
     input.addEventListener("drop",e=>e.preventDefault());
 
@@ -4646,25 +4679,58 @@ function protectDirectTypingInputs(){
         e.preventDefault();
         return;
       }
-      if(inputType==="insertText" && !e.isComposing && Array.from(String(e.data || "")).length>1){
-        e.preventDefault();
+      if(inputType.indexOf("delete")===0){
+        if(!directDeleteArmed) e.preventDefault();
+        return;
       }
+      if(inputType==="insertCompositionText" || e.isComposing || directComposition) return;
+      if(inputType==="insertText"){
+        if(!directKeyArmed || Array.from(String(e.data || "")).length!==1) e.preventDefault();
+        return;
+      }
+      if(inputType.indexOf("insert")===0) e.preventDefault();
     };
 
     input.addEventListener("input",e=>{
+      if(e.isTrusted===false){
+        rememberAcceptedValue_();
+        return;
+      }
+
       const inputType=String(e.inputType || "");
       const currentValue=String(input.value || "");
-      const blockedType=
-        inputType==="insertReplacementText" ||
-        inputType==="insertFromPaste" ||
-        inputType==="insertFromDrop";
       const insertedCount=insertedCharacterCount_(acceptedValue,currentValue);
 
-      if(blockedType || insertedCount>1){
+      if(
+        inputType==="insertReplacementText" ||
+        inputType==="insertFromPaste" ||
+        inputType==="insertFromDrop"
+      ){
         restoreAcceptedValue_();
         return;
       }
-      rememberAcceptedValue_();
+
+      if(inputType.indexOf("delete")===0){
+        if(directDeleteArmed) rememberAcceptedValue_();
+        else restoreAcceptedValue_();
+        directDeleteArmed=false;
+        return;
+      }
+
+      if(inputType==="insertCompositionText" || e.isComposing || directComposition){
+        if(insertedCount<=1) rememberAcceptedValue_();
+        else restoreAcceptedValue_();
+        return;
+      }
+
+      if(inputType==="insertText" && directKeyArmed && insertedCount<=1){
+        rememberAcceptedValue_();
+        directKeyArmed=false;
+        return;
+      }
+
+      restoreAcceptedValue_();
+      directKeyArmed=false;
     });
   });
 }
@@ -4956,6 +5022,15 @@ function renderMemory(){
   const silhouette=getSilhouette(item.word,currentStep.type);
   const title="Step 4 Memory";
   app.innerHTML=`<div class="wm-card">${wmSetBadgeHtml()}${wmStepWrongBadgeHtml_(4,memoryWrongTotal.length)}<div class="wm-title">${title}</div>${learningGuide("red")}<div style="margin:8px 28px 18px;"><div style="color:#2563eb;font-size:16px;font-weight:800;margin-bottom:8px;text-align:center;">전체단어 ${index+1}/${currentWords.length} 학습, ${Math.round((index/currentWords.length)*100)}% 완료</div><div style="width:100%;height:14px;background:#dbeafe;border-radius:999px;overflow:hidden;"><div style="width:${(index/currentWords.length)*100}%;height:100%;background:#2563eb;border-radius:999px;transition:width .3s ease;"></div></div></div><div class="wm-memory-count">총${getActiveMemoryTotalRounds()}회 받아쓰기 ${getMemoryRoundNumber()} / ${getActiveMemoryTotalRounds()}</div>${renderMemoryProgress()}<button class="audio-btn" onclick="playWordSegment(currentWords[index], 5)">🔊 다시 듣기</button><div class="wm-word wm-silhouette">${silhouette}</div><div class="wm-pos">${item.pos}</div><div class="wm-meaning">${item.meaning}</div><input id="memoryInput" class="memory-input" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" writingsuggestions="false"><div id="memoryMessage" class="wm-alert"></div><button class="wm-btn" onclick="checkMemory()">확인</button>${wmWrongRetryBottomHtml_(isMemoryReview)}</div>`;
+  const memoryCard=app.querySelector(".wm-card");
+  const memoryDevice=getSimpleDeviceInfo();
+  if(memoryCard && (memoryDevice==="Mobile" || memoryDevice==="Tap")){
+    memoryCard.style.height="auto";
+    memoryCard.style.minHeight="0";
+    memoryCard.style.maxHeight="none";
+    memoryCard.style.overflow="visible";
+    memoryCard.style.justifyContent="flex-start";
+  }
   const input=document.getElementById("memoryInput");
   setTimeout(()=>input.focus(),100);
   input.addEventListener("keydown",e=>{if(e.key==="Enter") checkMemory();});
@@ -4967,7 +5042,7 @@ function checkMemory(){
   const item=currentWords[index];
   const inputEl=document.getElementById("memoryInput");
   const messageEl=document.getElementById("memoryMessage");
-  const input=inputEl.value;
+  const input=String(inputEl.dataset.wmDirectTypingValue || "");
   const answer=item.word;
   const currentStep=getActiveMemorySteps()[memoryPhase];
   const isExactAnswer=WM_STUDY_LOCKS.WRITING_EXACT.wmIsExactEnglishAnswer(input, answer);
@@ -4977,6 +5052,7 @@ function checkMemory(){
   if(currentStep.type!=="0" && !isExactAnswer){
     messageEl.textContent="Try again.";
     inputEl.value="";
+    inputEl.dispatchEvent(new Event("input",{bubbles:true}));
     inputEl.focus();
     return;
   }
@@ -5186,7 +5262,7 @@ function wmSyncOmrWriteToQuestion_(source){
   const input=document.getElementById(`q${qIndex}`);
   if(!input) return;
   activeTestQuestionIndex=qIndex;
-  input.value=String(source.value || "");
+  input.value=String(source && source.dataset ? (source.dataset.wmDirectTypingValue || "") : "");
   input.dispatchEvent(new Event("input",{bubbles:true}));
   wmUpdateTestOmr_();
 }
@@ -5316,7 +5392,7 @@ function submitTest(){
       userAnswer=checked?checked.value:"";
     }else{
       const input=document.getElementById(`q${i}`);
-      userAnswer=input?input.value:"";
+      userAnswer=input?String(input.dataset.wmDirectTypingValue || ""):"";
     }
     let isCorrect=false;
     if(test.direction==="eng-ko") isCorrect=test.type==="choice" ? userAnswer===item.meaning : isMeaningCorrect(userAnswer,item.meaning);
