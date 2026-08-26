@@ -1,3 +1,4 @@
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <!-- ============================================================
    🧪 WORD MATE Study.html - TEST / REAL 전환 설정
    ============================================================
@@ -5043,6 +5044,7 @@ function wmBindTestOmrFloat_(){
 }
 
 function wmBuildTestAnswerSheet_(test){
+  if(getSimpleDeviceInfo()==="Mobile") return "";
   const rows=testWords.map((item,i)=>{
     if(test.type==="choice"){
       return `<div class="wm-test-omr-row" data-omr-row="${i}"><div class="wm-test-omr-num">${i+1}</div><div class="wm-test-omr-choice">${[0,1,2,3,4].map(optionIndex=>`<button type="button" class="wm-test-omr-choice-btn" data-omr-index="${i}" data-omr-option="${optionIndex}" onclick="wmSelectOmrChoice_(${i},${optionIndex})">${optionIndex+1}</button>`).join("")}</div></div>`;
