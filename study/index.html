@@ -4605,10 +4605,20 @@ function protectDirectTypingInputs(){
     input.setAttribute("spellcheck","false");
     input.setAttribute("writingsuggestions","false");
 
+    const direction = input.classList.contains("memory-input")
+      ? "ko-eng"
+      : String(
+          input.dataset.direction ||
+          (input.classList.contains("wm-test-omr-write")
+            ? ((document.getElementById(`q${Number(input.getAttribute("data-omr-write-index"))}`) || {}).dataset || {}).direction
+            : "")
+          || ""
+        );
+    const englishDirectOnly = input.classList.contains("memory-input") || direction==="ko-eng";
+
     let acceptedValue=String(input.value || "");
     let acceptedStart=Number.isInteger(input.selectionStart) ? input.selectionStart : acceptedValue.length;
     let acceptedEnd=Number.isInteger(input.selectionEnd) ? input.selectionEnd : acceptedStart;
-    let directKeyArmed=false;
     let directDeleteArmed=false;
     let directComposition=false;
     input.dataset.wmDirectTypingValue=acceptedValue;
@@ -4647,27 +4657,23 @@ function protectDirectTypingInputs(){
     }
 
     input.addEventListener("keydown",e=>{
-      const key=String(e.key || "");
-      directKeyArmed=false;
       directDeleteArmed=false;
       if(e.ctrlKey || e.metaKey || e.altKey) return;
-      if(key==="Backspace" || key==="Delete"){
-        directDeleteArmed=true;
-        return;
-      }
-      if(key==="Process" || key==="Unidentified" || Array.from(key).length===1){
-        directKeyArmed=true;
-      }
+      if(e.key==="Backspace" || e.key==="Delete") directDeleteArmed=true;
     });
 
     input.addEventListener("compositionstart",()=>{
       directComposition=true;
     });
+
     input.addEventListener("compositionend",()=>{
       directComposition=false;
+      if(englishDirectOnly){
+        restoreAcceptedValue_();
+        return;
+      }
       if(insertedCharacterCount_(acceptedValue,String(input.value || ""))<=1) rememberAcceptedValue_();
       else restoreAcceptedValue_();
-      directKeyArmed=false;
     });
 
     input.addEventListener("paste",e=>e.preventDefault());
@@ -4675,19 +4681,31 @@ function protectDirectTypingInputs(){
 
     input.onbeforeinput=e=>{
       const inputType=String(e.inputType || "");
-      if(inputType==="insertReplacementText" || inputType==="insertFromPaste" || inputType==="insertFromDrop"){
+
+      if(
+        inputType==="insertReplacementText" ||
+        inputType==="insertFromPaste" ||
+        inputType==="insertFromDrop"
+      ){
         e.preventDefault();
         return;
       }
+
       if(inputType.indexOf("delete")===0){
         if(!directDeleteArmed) e.preventDefault();
         return;
       }
-      if(inputType==="insertCompositionText" || e.isComposing || directComposition) return;
-      if(inputType==="insertText"){
-        if(!directKeyArmed || Array.from(String(e.data || "")).length!==1) e.preventDefault();
+
+      if(inputType==="insertCompositionText" || e.isComposing || directComposition){
+        if(englishDirectOnly) e.preventDefault();
         return;
       }
+
+      if(inputType==="insertText"){
+        if(Array.from(String(e.data || "")).length!==1) e.preventDefault();
+        return;
+      }
+
       if(inputType.indexOf("insert")===0) e.preventDefault();
     };
 
@@ -4718,23 +4736,24 @@ function protectDirectTypingInputs(){
       }
 
       if(inputType==="insertCompositionText" || e.isComposing || directComposition){
+        if(englishDirectOnly){
+          restoreAcceptedValue_();
+          return;
+        }
         if(insertedCount<=1) rememberAcceptedValue_();
         else restoreAcceptedValue_();
         return;
       }
 
-      if(inputType==="insertText" && directKeyArmed && insertedCount<=1){
+      if(inputType==="insertText" && insertedCount<=1){
         rememberAcceptedValue_();
-        directKeyArmed=false;
         return;
       }
 
       restoreAcceptedValue_();
-      directKeyArmed=false;
     });
   });
 }
-
 function wmApplyStudyStepSizeClass(){
   const card = app && app.querySelector ? app.querySelector(".wm-card") : null;
   if(!card) return;
