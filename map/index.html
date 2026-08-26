@@ -1810,6 +1810,113 @@ body.wm-map-loading-active #wm-learning-record-widget{
   }
 
 }
+
+@page{
+  size:A4 portrait;
+  margin:7mm;
+}
+
+@media print{
+  html,
+  body{
+    margin:0 !important;
+    padding:0 !important;
+    background:#fff !important;
+    overflow:visible !important;
+    -webkit-print-color-adjust:exact !important;
+    print-color-adjust:exact !important;
+  }
+
+  body.wm-test-booth-active{margin-top:0 !important;}
+  #wm-test-booth-banner,
+  .wm-map-wrong-modal,
+  .wm-homework-search-notice-modal{
+    display:none !important;
+  }
+
+  #wm-map-root{
+    width:1320px !important;
+    max-width:1320px !important;
+    margin:0 !important;
+    padding:24px !important;
+    padding-bottom:44px !important;
+    background:#D8EEFF !important;
+    border-radius:28px !important;
+    box-sizing:border-box !important;
+    overflow:visible !important;
+    zoom:.55;
+    -webkit-print-color-adjust:exact !important;
+    print-color-adjust:exact !important;
+  }
+
+  #wm-map-root,
+  #wm-map-root *{
+    -webkit-print-color-adjust:exact !important;
+    print-color-adjust:exact !important;
+  }
+
+  .student-info-row{gap:10px !important;}
+  .student-info-row-main{grid-template-columns:25fr 25fr 25fr 25fr !important;}
+  .student-info-row-sub{grid-template-columns:repeat(5,1fr) !important;}
+
+  .filter-box{
+    grid-template-columns:1fr 1fr 1fr 1fr 1fr 1fr auto auto !important;
+  }
+
+  .wm-map-report-buttons{
+    width:auto !important;
+    margin-left:auto !important;
+  }
+  .wm-report-view-button{
+    flex:0 0 auto !important;
+    width:180px !important;
+  }
+
+  .record-summary{grid-template-columns:repeat(5,1fr) !important;}
+  .learning-block-area{grid-template-columns:repeat(4,1fr) !important;}
+
+  .homework-table-scroll,
+  .detail-box{
+    overflow:visible !important;
+  }
+  .homework-scroll-top-fixed,
+  .homework-scroll-bottom-fixed{
+    display:none !important;
+  }
+
+  .homework-table{
+    width:100% !important;
+    min-width:1180px !important;
+    --wm-sticky-col-1:78px;
+    --wm-sticky-col-2:102px;
+    --wm-sticky-col-3:92px;
+    --wm-sticky-col-4:64px;
+    white-space:nowrap !important;
+  }
+
+  .homework-table th,
+  .homework-table td{
+    position:static !important;
+    left:auto !important;
+    right:auto !important;
+  }
+  .homework-table thead{display:table-header-group;}
+  .homework-table tr{
+    break-inside:avoid;
+    page-break-inside:avoid;
+  }
+
+  .student-top-card,
+  .progress-area,
+  .map-guide,
+  .set-row,
+  .wm-homework-control-box,
+  .record-summary div,
+  .learning-detail-box{
+    break-inside:avoid;
+    page-break-inside:avoid;
+  }
+}
 </style>
 
 
