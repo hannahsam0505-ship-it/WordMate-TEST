@@ -4602,14 +4602,70 @@ function protectDirectTypingInputs(){
     input.setAttribute("autocapitalize","off");
     input.setAttribute("spellcheck","false");
     input.setAttribute("writingsuggestions","false");
+
+    let acceptedValue=String(input.value || "");
+    let acceptedStart=Number.isInteger(input.selectionStart) ? input.selectionStart : acceptedValue.length;
+    let acceptedEnd=Number.isInteger(input.selectionEnd) ? input.selectionEnd : acceptedStart;
+
+    function rememberAcceptedValue_(){
+      acceptedValue=String(input.value || "");
+      acceptedStart=Number.isInteger(input.selectionStart) ? input.selectionStart : acceptedValue.length;
+      acceptedEnd=Number.isInteger(input.selectionEnd) ? input.selectionEnd : acceptedStart;
+    }
+
+    function restoreAcceptedValue_(){
+      input.value=acceptedValue;
+      try{ input.setSelectionRange(acceptedStart,acceptedEnd); }catch(err){}
+      if(input.classList.contains("wm-test-omr-write")){
+        wmSyncOmrWriteToQuestion_(input);
+      }else if(input.classList.contains("test-input")){
+        wmUpdateTestOmr_();
+      }
+    }
+
+    function insertedCharacterCount_(previousValue,currentValue){
+      const beforeChars=Array.from(String(previousValue || ""));
+      const afterChars=Array.from(String(currentValue || ""));
+      let prefix=0;
+      while(prefix<beforeChars.length && prefix<afterChars.length && beforeChars[prefix]===afterChars[prefix]) prefix++;
+      let suffix=0;
+      while(
+        suffix<beforeChars.length-prefix &&
+        suffix<afterChars.length-prefix &&
+        beforeChars[beforeChars.length-1-suffix]===afterChars[afterChars.length-1-suffix]
+      ) suffix++;
+      return Math.max(0,afterChars.length-prefix-suffix);
+    }
+
     input.addEventListener("paste",e=>e.preventDefault());
     input.addEventListener("drop",e=>e.preventDefault());
+
     input.onbeforeinput=e=>{
       const inputType=String(e.inputType || "");
       if(inputType==="insertReplacementText" || inputType==="insertFromPaste" || inputType==="insertFromDrop"){
         e.preventDefault();
+        return;
+      }
+      if(inputType==="insertText" && !e.isComposing && Array.from(String(e.data || "")).length>1){
+        e.preventDefault();
       }
     };
+
+    input.addEventListener("input",e=>{
+      const inputType=String(e.inputType || "");
+      const currentValue=String(input.value || "");
+      const blockedType=
+        inputType==="insertReplacementText" ||
+        inputType==="insertFromPaste" ||
+        inputType==="insertFromDrop";
+      const insertedCount=insertedCharacterCount_(acceptedValue,currentValue);
+
+      if(blockedType || insertedCount>1){
+        restoreAcceptedValue_();
+        return;
+      }
+      rememberAcceptedValue_();
+    });
   });
 }
 
