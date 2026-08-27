@@ -749,4 +749,81 @@ body.wm-report-preview-open{overflow:hidden}
     writable: false,
     configurable: false
   });
+
+  /* ============================================================
+     🔒 WM_SHARED_RECENT_REPORT_PRINT_A4_FORMAT_LOCK_V1
+     성적표 인쇄 A4 포맷 전용 LOCK
+     - 기존 렌더·디자인·속도 LOCK 수정 없음
+     - window.print 전역 함수 수정 없음
+     - API/DB/iframe/타이머/이벤트 추가 없음
+  ============================================================ */
+  const WM_SHARED_REPORT_PRINT_FORMAT = Object.freeze({
+    pageSize:'A4 portrait',
+    pageMargin:'0',
+    sheetWidth:'210mm',
+    sheetHeight:'297mm',
+    modalCardWidth:'210mm',
+    modalSheetZoom:'.985'
+  });
+
+  const WM_SHARED_REPORT_PRINT_LOCK = Object.freeze({
+    version:'WM_SHARED_RECENT_REPORT_PRINT_A4_FORMAT_LOCK_V1.0',
+    date:'2026-08-27',
+    format:WM_SHARED_REPORT_PRINT_FORMAT
+  });
+
+  function wmSharedReportPrintDescriptorLocked_(name,value){
+    const d=Object.getOwnPropertyDescriptor(root,name)||{};
+    return d.value===value && d.writable===false && d.configurable===false;
+  }
+
+  function wmGetSharedRecentReportPrintA4FormatLockStatus_(){
+    const template=WM_SHARED_TEMPLATE_HTML.replace(/\s+/g,'');
+    const modalStyle=WM_SHARED_RECENT_MODAL_STYLE.replace(/\s+/g,'');
+    const modalHtml=WM_SHARED_RECENT_MODAL_HTML.replace(/\s+/g,'');
+    const lock=root.WM_SHARED_RECENT_REPORT_PRINT_A4_FORMAT_LOCK;
+
+    const status={
+      registryFrozen:!!lock && Object.isFrozen(lock) && Object.isFrozen(lock.format),
+      registryWriteProtected:wmSharedReportPrintDescriptorLocked_('WM_SHARED_RECENT_REPORT_PRINT_A4_FORMAT_LOCK',WM_SHARED_REPORT_PRINT_LOCK),
+      templateA4:template.indexOf('@page{size:A4portrait;margin:0}')!==-1,
+      sheetA4:template.indexOf('.wmr-sheet{width:210mm;height:297mm;margin:0;border-radius:0;box-shadow:none;page-break-after:avoid}')!==-1,
+      modalA4:modalStyle.indexOf('.wm-report-preview-modal-card{width:210mm!important;max-height:none!important;margin:0!important;border-radius:0!important;box-shadow:none!important;overflow:visible!important}')!==-1,
+      modalZoom:modalStyle.indexOf('#wmRecentReportModal.wm-report-preview-modal-body.wmr-sheet{margin:0auto!important;zoom:.985;}')!==-1,
+      printButton:modalHtml.indexOf('class="wm-report-print-button"onclick="window.print()"')!==-1
+    };
+    status.verified=Object.keys(status).every(function(key){
+      return key==='verified' || status[key]===true;
+    });
+    return Object.freeze(status);
+  }
+
+  function wmLogSharedRecentReportPrintA4FormatLockStatus_(){
+    const s=wmGetSharedRecentReportPrintA4FormatLockStatus_();
+    console.group('🔒 WORD MATE SHARED REPORT PRINT A4 FORMAT LOCK STATUS');
+    console.log('LOCK VERSION : '+WM_SHARED_REPORT_PRINT_LOCK.version);
+    console.log('LOCK DATE    : '+WM_SHARED_REPORT_PRINT_LOCK.date);
+    console.table(s);
+    console.log(s.verified?'🔒 SHARED REPORT PRINT A4 FORMAT LOCK VERIFIED':'❌ SHARED REPORT PRINT A4 FORMAT LOCK CHECK REQUIRED');
+    console.groupEnd();
+    return s;
+  }
+
+  Object.defineProperty(root,'WM_SHARED_RECENT_REPORT_PRINT_A4_FORMAT_LOCK',{
+    value:WM_SHARED_REPORT_PRINT_LOCK,
+    writable:false,
+    configurable:false,
+    enumerable:true
+  });
+  Object.defineProperty(root,'wmGetSharedRecentReportPrintA4FormatLockStatus',{
+    value:wmGetSharedRecentReportPrintA4FormatLockStatus_,
+    writable:false,
+    configurable:false
+  });
+  Object.defineProperty(root,'wmLogSharedRecentReportPrintA4FormatLockStatus',{
+    value:wmLogSharedRecentReportPrintA4FormatLockStatus_,
+    writable:false,
+    configurable:false
+  });
+
 })(window);

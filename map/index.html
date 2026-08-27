@@ -6451,6 +6451,113 @@ function wmInitPublishedReportModal_(){
   wmPrintMapApprovedLockStatus_();
 })();
 
+/* ==========================================================
+   🔒 WM_MAP_PRINT_A4_FORMAT_LOCK_V1 / 인쇄 포맷 전용 LOCK
+
+   - 현재 성공 A4 세로 포맷과 printRecords 실제 함수 참조만 보호
+   - 기존 MAP LOCK·기능·API·DB·타이머·이벤트 수정 없음
+   - 상태 확인은 F12에서 수동 실행할 때만 CSS를 검사
+   ========================================================== */
+(function wmMapPrintA4FormatLockV1_(){
+  'use strict';
+
+  var VERSION = 'WM_MAP_PRINT_A4_FORMAT_LOCK_V1.0';
+  var DATE = '2026-08-27';
+  var PRINT_FN = window.printRecords;
+
+  var FORMAT = Object.freeze({
+    pageSize:'A4 portrait',
+    pageMargin:'7mm',
+    bodyMinHeight:'283mm',
+    rootWidth:'1320px',
+    rootPadding:'24px',
+    rootPaddingBottom:'44px',
+    rootZoom:'.51'
+  });
+
+  function lockGlobal_(name, value){
+    try{
+      var d = Object.getOwnPropertyDescriptor(window, name);
+      if(d && d.configurable === false){
+        if(d.value !== value) return false;
+        if(d.writable === true){
+          Object.defineProperty(window, name, {writable:false});
+          d = Object.getOwnPropertyDescriptor(window, name);
+        }
+        return !!d && d.value === value && d.writable === false && d.configurable === false;
+      }
+      Object.defineProperty(window, name, {
+        value:value,
+        writable:false,
+        configurable:false
+      });
+      d = Object.getOwnPropertyDescriptor(window, name);
+      return !!d && d.value === value && d.writable === false && d.configurable === false;
+    }catch(err){
+      return false;
+    }
+  }
+
+  function wmMapPrintA4CssMatches_(){
+    var css = Array.prototype.map.call(document.querySelectorAll('style'), function(style){
+      return style.textContent || '';
+    }).join('\n').replace(/\s+/g,'');
+
+    var rootMatch = /#wm-map-root\{[^}]*width:1320px!important;[^}]*max-width:1320px!important;[^}]*padding:24px!important;[^}]*padding-bottom:44px!important;[^}]*zoom:\.51;[^}]*\}/.test(css);
+
+    return css.indexOf('@page{size:A4portrait;margin:7mm;}') !== -1
+      && css.indexOf('min-height:283mm!important;') !== -1
+      && rootMatch;
+  }
+
+  var REGISTRY = Object.freeze({
+    version:VERSION,
+    date:DATE,
+    printRecords:PRINT_FN,
+    format:FORMAT
+  });
+
+  var printFunctionLocked = typeof PRINT_FN === 'function' && lockGlobal_('printRecords', PRINT_FN);
+
+  function wmGetMapPrintA4FormatLockStatus_(){
+    var d = Object.getOwnPropertyDescriptor(window, 'printRecords') || {};
+    var registry = window.WM_MAP_PRINT_A4_FORMAT_LOCK;
+    var status = {
+      printFunction: printFunctionLocked === true && window.printRecords === PRINT_FN,
+      functionWriteProtected: d.writable === false,
+      functionDeleteProtected: d.configurable === false,
+      registryFrozen: !!registry && Object.isFrozen(registry) && Object.isFrozen(registry.format),
+      exactReference: !!registry && registry.printRecords === PRINT_FN,
+      a4FormatExact: wmMapPrintA4CssMatches_()
+    };
+    status.verified = Object.keys(status).every(function(key){
+      return key === 'verified' || status[key] === true;
+    });
+    return Object.freeze(status);
+  }
+
+  function wmLogMapPrintA4FormatLockStatus_(){
+    var s = wmGetMapPrintA4FormatLockStatus_();
+    console.group('🔒 WORD MATE MAP PRINT A4 FORMAT LOCK STATUS');
+    console.log('LOCK VERSION : ' + VERSION);
+    console.log('LOCK DATE    : ' + DATE);
+    console.table(s);
+    console.log(s.verified ? '🔒 MAP PRINT A4 FORMAT LOCK VERIFIED' : '❌ MAP PRINT A4 FORMAT LOCK CHECK REQUIRED');
+    console.groupEnd();
+    return s;
+  }
+
+  var globalsLocked = [
+    lockGlobal_('WM_MAP_PRINT_A4_FORMAT_LOCK', REGISTRY),
+    lockGlobal_('wmGetMapPrintA4FormatLockStatus', wmGetMapPrintA4FormatLockStatus_),
+    lockGlobal_('wmLogMapPrintA4FormatLockStatus', wmLogMapPrintA4FormatLockStatus_)
+  ].every(function(value){ return value === true; });
+
+  if(!globalsLocked){
+    console.error('MAP PRINT A4 FORMAT LOCK GLOBAL PROTECTION ERROR');
+  }
+})();
+
 wmInitPublishedReportModal_();
 wmInitLearningMap();
 wmForceHomeworkBottomFixedBarOnFirstView();
