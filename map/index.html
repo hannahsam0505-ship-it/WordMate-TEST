@@ -1851,7 +1851,7 @@ body.wm-map-loading-active #wm-learning-record-widget{
     border-radius:28px !important;
     box-sizing:border-box !important;
     overflow:visible !important;
-    zoom:.49;
+    zoom:.51;
     -webkit-print-color-adjust:exact !important;
     print-color-adjust:exact !important;
   }
@@ -5606,7 +5606,15 @@ async function wmLogout(){
 }
 
 function printRecords(){
+  const level = Number(currentLevelNumber);
+  const printZoom = (level >= 3 && level <= 6) ? '.51'
+    : (level >= 7 && level <= 9) ? '.49'
+    : (level >= 10 && level <= 13) ? '.47'
+    : '';
+  const root = document.getElementById('wm-map-root');
+  if(root && printZoom) root.style.setProperty('zoom', printZoom, 'important');
   window.print();
+  if(root && printZoom) root.style.removeProperty('zoom');
 }
 
 function wmInitHomeworkSearchEnterKey(){
@@ -6472,7 +6480,9 @@ function wmInitPublishedReportModal_(){
     rootWidth:'1320px',
     rootPadding:'24px',
     rootPaddingBottom:'44px',
-    rootZoom:'.51'
+    elementaryZoom:'.51',
+    middleZoom:'.49',
+    highZoom:'.47'
   });
 
   function lockGlobal_(name, value){
