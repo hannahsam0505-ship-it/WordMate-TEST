@@ -5555,6 +5555,76 @@ function escapeJs(value){
   return String(value == null ? '' : value).replace(/'/g, "\\'");
 }
 
+/* WM_MAP_AUTO_LOGOUT_ON_EXIT_V1_20260827
+   Map에서 실제 이탈할 때 기존 studentLogout 경로만 1회 호출합니다.
+   학습시작으로 Study에 이동하는 내부 이동은 로그아웃하지 않습니다.
+   반복 타이머·추가 세션조회·추가 DB조회는 사용하지 않습니다. */
+let wmPageExitLogoutSent_ = false;
+let wmInternalStudyExitApproved_ = false;
+const WM_MAP_STUDY_EXIT_MARKER_ = 'WM_MAP_STUDY_EXIT_MARKER_V1';
+
+try{ sessionStorage.removeItem(WM_MAP_STUDY_EXIT_MARKER_); }catch(err){}
+
+document.addEventListener('click', function(event){
+  const target = event.target && event.target.closest ? event.target.closest('[onclick]') : null;
+  if(!target) return;
+  const action = String(target.getAttribute('onclick') || '');
+  if(action.indexOf('startStudy(') === -1) return;
+  try{
+    sessionStorage.removeItem('WM_STUDY_ENTRY_READY_V1');
+    sessionStorage.setItem(WM_MAP_STUDY_EXIT_MARKER_, String(Date.now()));
+  }catch(err){}
+}, true);
+
+function wmIsInternalStudyExit_(){
+  if(wmInternalStudyExitApproved_) return true;
+
+  let markedAt = 0;
+  let studyReady = '';
+  try{
+    markedAt = Number(sessionStorage.getItem(WM_MAP_STUDY_EXIT_MARKER_) || 0);
+    studyReady = String(sessionStorage.getItem('WM_STUDY_ENTRY_READY_V1') || '');
+  }catch(err){}
+
+  if(markedAt && studyReady && Date.now() - markedAt >= 0 && Date.now() - markedAt < 30000){
+    wmInternalStudyExitApproved_ = true;
+    return true;
+  }
+  return false;
+}
+
+function wmLogoutOnPageExit_(){
+  if(wmLogoutInProgress || wmPageExitLogoutSent_ || wmIsLmsMapPreview_() || wmIsInternalStudyExit_()) return;
+
+  const studentId = wmCurrentStudent && wmCurrentStudent.학생ID
+    ? String(wmCurrentStudent.학생ID).trim()
+    : '';
+  const sessionToken = String(
+    wmGetUrlParam('sessionToken') ||
+    wmGetUrlParam('wmSessionToken') ||
+    (wmCurrentStudent && (wmCurrentStudent.sessionToken || wmCurrentStudent.현재세션 || wmCurrentStudent.wmSessionToken)) ||
+    wmGetCurrentSessionToken() ||
+    ''
+  ).trim();
+
+  if(!studentId || !sessionToken) return;
+
+  wmPageExitLogoutSent_ = true;
+  const logoutUrl = wmGetApiBaseUrl()
+    + '?action=studentLogout'
+    + '&mode=studentLogout'
+    + '&studentId=' + encodeURIComponent(studentId)
+    + '&sessionToken=' + encodeURIComponent(sessionToken)
+    + '&t=' + Date.now();
+
+  try{
+    fetch(logoutUrl, { cache:'no-store', keepalive:true }).catch(function(){});
+  }catch(err){}
+}
+
+window.addEventListener('beforeunload', wmLogoutOnPageExit_);
+window.addEventListener('pagehide', wmLogoutOnPageExit_);
+
 async function wmLogout(){
   if(wmLogoutInProgress) return;
   const studentId = wmCurrentStudent && wmCurrentStudent.학생ID ? String(wmCurrentStudent.학생ID).trim() : '';
