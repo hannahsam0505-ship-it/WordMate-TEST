@@ -1,4 +1,4 @@
-<!-- [TEST부스] Map 로그인직로 6644-6661 -->
+<!-- [TEST부스] Map 학습기록최근15개날짜제한제거 6661-6648 -->
 <!-- ==========================================================
    🧪 WORD MATE Map.html - TEST / REAL 전환 설정
    ==========================================================
@@ -3431,12 +3431,12 @@ function wmLoadLearningRecordsDirectForMap_(reason, page, loadAll, done, query){
   const fromDate = String(
     requestQuery && requestQuery.fromDate
       ? requestQuery.fromDate
-      : wmGetHomeworkPeriodDateTextByMonthsAgo_(WM_HOMEWORK_DEFAULT_MONTHS)
+      : ''
   ).trim();
   const toDate = String(
     requestQuery && requestQuery.toDate
       ? requestQuery.toDate
-      : wmGetHomeworkPeriodDateTextByMonthsAgo_(0)
+      : ''
   ).trim();
   const searchFilter = requestQuery ? {
     setKeyword:String(requestQuery.setKeyword || '').trim(),
@@ -4971,17 +4971,7 @@ function wmGetHomeworkPeriodDateTextByMonthsAgo_(monthsAgo){
 }
 
 function wmApplyHomeworkDefaultPeriod_(records){
-  const sourceRecords = wmSortLearningRecordsDesc_(Array.isArray(records) ? records : []);
-  const range = wmGetHomeworkPeriodRange_();
-  const periodStart = wmGetHomeworkPeriodDateTextByMonthsAgo_(range.toMonthsAgo);
-  const periodEnd = range.fromMonthsAgo > 0 ? wmGetHomeworkPeriodDateTextByMonthsAgo_(range.fromMonthsAgo) : '';
-
-  return sourceRecords.filter(function(record){
-    const dateText = wmNormalizeLearningRecordDateText_(record && record.학습날짜);
-    if(!dateText || dateText < periodStart) return false;
-    if(periodEnd && dateText >= periodEnd) return false;
-    return true;
-  });
+  return wmSortLearningRecordsDesc_(Array.isArray(records) ? records : []);
 }
 
 function wmNormalizeMapWrongWordItems_(items){
@@ -5866,9 +5856,6 @@ function filterHomeworkRecords(){
       wmShowHomeworkSearchNotice_('1개월 단위로 검색이 가능합니다.');
       return;
     }
-  }else{
-    queryFromDate = wmGetHomeworkPeriodDateTextByMonthsAgo_(WM_HOMEWORK_DEFAULT_MONTHS);
-    queryToDate = wmGetHomeworkPeriodDateTextByMonthsAgo_(0);
   }
 
   const query = {
@@ -6658,4 +6645,4 @@ wmInitPublishedReportModal_();
 wmInitLearningMap();
 wmForceHomeworkBottomFixedBarOnFirstView();
 </script>
-<!-- [TEST부스] Map 로그인직로 6644-6661 -->
+<!-- [TEST부스] Map 학습기록최근15개날짜제한제거 6661-6648 -->
