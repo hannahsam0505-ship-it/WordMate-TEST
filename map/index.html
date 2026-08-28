@@ -1,3 +1,4 @@
+<!-- [TEST부스] Map 로그인직로 6644-6661 -->
 <!-- ==========================================================
    🧪 WORD MATE Map.html - TEST / REAL 전환 설정
    ==========================================================
@@ -2428,11 +2429,14 @@ let wmSessionCheckTimer = null;
 let wmLogoutInProgress = false;
 
 function wmGetCurrentSessionToken(){
+  /* WM_LOGIN_SESSION_TOKEN_DIRECT_PRIORITY_V1_20260828
+     Login이 방금 발급해 URL로 전달한 최신 세션토큰을 최우선으로 사용합니다.
+     과거 window/학생객체/storage 토큰이 새 로그인 세션보다 먼저 선택되는 경로를 차단합니다. */
   const candidates = [
-    window.WM_SESSION_TOKEN,
-    wmCurrentStudent && (wmCurrentStudent.sessionToken || wmCurrentStudent.현재세션),
     wmGetUrlParam('sessionToken'),
-    wmGetUrlParam('wmSessionToken')
+    wmGetUrlParam('wmSessionToken'),
+    wmCurrentStudent && (wmCurrentStudent.sessionToken || wmCurrentStudent.현재세션),
+    window.WM_SESSION_TOKEN
   ];
 
   try{ candidates.push(sessionStorage.getItem('WM_SESSION_TOKEN')); }catch(err){}
@@ -2950,8 +2954,20 @@ function wmInitLearningMap(){
   /* WM_MAP_AUTH_DATA_SINGLE_ROUNDTRIP_V1_20260818
      Vercel Map은 getLearningMapCacheData 요청에 세션토큰을 함께 보내 서버에서 인증+Map 데이터를 한 번에 확인합니다.
      동일 응답에 1.학생관리_DB studentProfile이 포함되므로 별도 기본정보 선조회도 하지 않습니다.
-     Apps Script 내부 실행환경은 기존 세션확인 순서를 그대로 유지합니다. */
+     Apps Script 내부 실행환경도 Login 입장만 재심사를 생략하고 Study 복귀는 기존 세션확인을 유지합니다. */
   if(window.google && google.script && google.script.run){
+    const entrySource = String(window.history && window.history.state && window.history.state.wmMapEntrySource || '').trim().toLowerCase();
+
+    /* WM_LOGIN_MAP_DIRECT_ENTRY_V1_20260828
+       Login 서버에서 ID+비밀번호+ACTIVE 확인과 새 sessionToken 발급이 끝난 직후에는
+       같은 학생을 checkStudentSession으로 다시 입장심사하지 않고 바로 Map 데이터를 불러옵니다.
+       Study 복귀와 입장 후 세션감시는 기존대로 유지합니다. */
+    if(entrySource === 'login'){
+      wmRevealAuthenticatedMap_();
+      wmFetchLearningMap(wmCurrentStudent.학생ID);
+      return;
+    }
+
     wmCheckCurrentSession({ redirectOnInvalid:true }).then(function(valid){
       if(!valid) return;
       wmRevealAuthenticatedMap_();
@@ -6642,3 +6658,4 @@ wmInitPublishedReportModal_();
 wmInitLearningMap();
 wmForceHomeworkBottomFixedBarOnFirstView();
 </script>
+<!-- [TEST부스] Map 로그인직로 6644-6661 -->
