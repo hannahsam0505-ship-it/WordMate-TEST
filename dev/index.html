@@ -323,7 +323,7 @@ WMDC_CURRENT_SET_RUN_AND_AUX_TESTS_V2 적용: 현재세트실행 상단 고정�
    DEV CENTER 제어영역만 블루 계열로 통일.
    실제 Study iframe/Study 원본 화면에는 적용하지 않음. */
 #wmdc-root .dev-header{
-  background:#0c4fb8;
+  background:#0c2b63;
 }
 #wmdc-root .status-item,
 #wmdc-root .wmdc-course-badge{
@@ -980,8 +980,8 @@ WMDC_CURRENT_SET_RUN_AND_AUX_TESTS_V2 적용: 현재세트실행 상단 고정�
 }
 
 #wmdc-root .wmdc-set-nav[data-wmdc-nav="top"]{
-  background:#fef3c7;
-  border:2px solid #f59e0b;
+  background:#0c2b63;
+  border:2px solid #0c2b63;
   padding:4px 6px;
   gap:4px;
   flex-wrap:nowrap;
@@ -5392,7 +5392,7 @@ function wmClearCachedStudyMode(setId){
 }
 
 async function wmFetchStudentLearningMode(){
-  if(WM_DEV_LIVE_REVIEW_MODE) return wmNormalizeStudyMode(WM_DEFAULT_STUDY_MODE);
+  if(document.getElementById('wmdc-root')) return wmNormalizeStudyMode(Object.assign({},WM_DEFAULT_STUDY_MODE,{S4실루엣단계:'전체',S6테스트모드:'기본전체'}));
   const activeSetCache = wmReadCachedStudyMode(currentSetId);
   if(activeSetCache) return activeSetCache;
   const serverMode = wmReadServerStudyMode();

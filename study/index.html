@@ -2204,7 +2204,7 @@ function wmClearCachedStudyMode(setId){
 }
 
 async function wmFetchStudentLearningMode(){
-  if(WM_DEV_LIVE_REVIEW_MODE) return wmNormalizeStudyMode(WM_DEFAULT_STUDY_MODE);
+  if(WM_DEV_LIVE_REVIEW_MODE) return wmNormalizeStudyMode(Object.assign({},WM_DEFAULT_STUDY_MODE,{S4실루엣단계:'전체',S6테스트모드:'기본전체'}));
   const activeSetCache = wmReadCachedStudyMode(currentSetId);
   if(activeSetCache) return activeSetCache;
   const serverMode = wmReadServerStudyMode();
