@@ -980,8 +980,8 @@ WMDC_CURRENT_SET_RUN_AND_AUX_TESTS_V2 적용: 현재세트실행 상단 고정�
 }
 
 #wmdc-root .wmdc-set-nav[data-wmdc-nav="top"]{
-  background:#0c2b63;
-  border:2px solid #0c2b63;
+  background:#fef3c7;
+  border:2px solid #f59e0b;
   padding:4px 6px;
   gap:4px;
   flex-wrap:nowrap;
@@ -3533,10 +3533,7 @@ window.addEventListener('load',function wmApplyDevActualFunctionLock_(){
   }
 
   function quickStep(step){
-    if(typeof window.WMDC_RUN_LIVE_STUDY_STEP === 'function'){
-      return window.WMDC_RUN_LIVE_STUDY_STEP(step);
-    }
-    addLog('[DEV LIVE STEP ERROR] 현재 /study 원본 연결함수를 찾지 못했습니다.');
+    runDevStepPlayer(step);
   }
 
 
@@ -3793,7 +3790,7 @@ const WM_LMS_URL = WM_CONFIG.LMS_URL;
     box-sizing:border-box;
     align-items:center;
     justify-content:center;
-    background:#dc2626;
+    background:#0c2b63;
     color:#fff;
     text-align:center;
     font-size:28px;
@@ -5395,7 +5392,6 @@ function wmClearCachedStudyMode(setId){
 }
 
 async function wmFetchStudentLearningMode(){
-  if(document.getElementById('wmdc-root')) return wmNormalizeStudyMode(Object.assign({},WM_DEFAULT_STUDY_MODE,{S4실루엣단계:'전체',S6테스트모드:'기본전체'}));
   const activeSetCache = wmReadCachedStudyMode(currentSetId);
   if(activeSetCache) return activeSetCache;
   const serverMode = wmReadServerStudyMode();
@@ -10179,25 +10175,96 @@ renderStart();
     return true;
   }
 
-  /* WM_DEV_STUDY_LIVE_SYNC_V2_20260829
-     빠른 이동테스트의 화면·Memory·TEST 목록은 DEV 내부 복제본을 사용하지 않습니다.
-     현재 TEST /study 원본을 iframe으로 직접 실행하고 TEST 목록도 /study가 postMessage로 전달합니다.
-     따라서 Study 배포가 바뀌면 DEV 파일 재복사 없이 다음 실행부터 같은 Study 원본이 즉시 반영됩니다. */
+  /* WM_DEV_STUDY_SINGLE_SOURCE_SYNC_V1_20260829
+     DEV 빠른이동 학습화면은 DEV 내부 Study 복제 실행경로를 사용하지 않습니다.
+     현재 배포된 TEST /study 원본을 iframe으로 직접 로드한 뒤, 같은 원본의 함수만 호출해 Step을 이동합니다.
+     동기화를 위해 Study.html에 추가 API·DB조회·타이머·이벤트를 넣지 않습니다. */
+  var WMDC_LIVE_STUDY_TESTS=[];
+
   function wmdcBuildLiveStudyUrl(step,testIndex){
     var url=new URL(WM_STUDY_URL,window.location.href);
     url.searchParams.set('wmDevReview','1');
-    url.searchParams.set('wmDevStep',String(step || '1'));
     url.searchParams.set('set_id',wmdcGetSetId());
-    if(String(step)==='6' && testIndex!==undefined && testIndex!==null){
-      url.searchParams.set('wmDevTestIndex',String(Number(testIndex) || 0));
-    }
+    url.searchParams.set('studentName','DEV');
     url.searchParams.set('wmDevTs',String(Date.now()));
     return url.href;
   }
 
+  function wmdcRunLiveStudySourceStep_(frame,step,testIndex){
+    return new Promise(function(resolve){
+      try{
+        var studyWindow=frame && frame.contentWindow;
+        if(!studyWindow){ resolve({success:false,message:'Study iframe window 없음'}); return; }
+        if(studyWindow.location.origin !== window.location.origin){ resolve({success:false,message:'Study iframe origin 불일치'}); return; }
+
+        var safeStep=JSON.stringify(String(step || '1'));
+        var safeTestIndex=Math.max(0,Number(testIndex) || 0);
+        var source='(async function(){' +
+          'try{' +
+            'if(typeof loadSetFromDB!=="function"||typeof render!=="function"||typeof shuffle!=="function") throw new Error("Study 원본 함수 없음");' +
+            'try{clearInterval(testTimer);}catch(e){}' +
+            'try{stopWordAudio();}catch(e){}' +
+            'var loaded=await loadSetFromDB();' +
+            'if(!loaded) return {success:false,message:String(typeof dbLoadError!=="undefined"?dbLoadError:"DB load failed")};' +
+            'if(typeof wmNormalizeStudyMode==="function"){' +
+              'WM_ACTIVE_STUDY_MODE=wmNormalizeStudyMode({S4실루엣단계:"전체",S6테스트모드:"기본전체",레벨완료조건:"2회",레벨회차추가:0});' +
+              'WM_ACTIVE_STUDY_MODE_SET_ID=currentSetId;' +
+            '}' +
+            'learningStartTime=Date.now();wmCurrentStepStartTime=learningStartTime;' +
+            'completedSteps=[];currentWords=shuffle(originalWords);index=0;' +
+            'step2Wrong=[];step3Wrong=[];memoryWrong=[];step2WrongTotal=[];step3WrongTotal=[];memoryWrongTotal=[];' +
+            'isStep2Review=false;isStep3Review=false;isMemoryReview=false;' +
+            'memoryPhase=0;memoryCount=0;memoryLocked=false;afterMemoryAction=null;' +
+            'isRetest=false;firstTestScores=[];firstEngKoWriteWrongWords=[];firstKoEngWriteWrongWords=[];currentTestResults=[];currentTestWrongs=[];activeTestQuestionIndex=null;' +
+            'var requestedStep=' + safeStep + ';' +
+            'if(requestedStep==="2")stage=2;' +
+            'else if(requestedStep==="3")stage=3;' +
+            'else if(requestedStep==="4")stage=4;' +
+            'else if(requestedStep==="5")stage=6;' +
+            'else if(requestedStep==="6"){' +
+              'stage=7;var tests=getTestList();testIndex=Math.max(0,Math.min(' + safeTestIndex + ',Math.max(0,tests.length-1)));testWords=shuffle(originalWords);' +
+            '}else if(requestedStep==="complete")stage=8;' +
+            'else stage=1;' +
+            'render();' +
+            'var testRows=(requestedStep==="6"&&typeof getTestList==="function")?getTestList().map(function(test,i){return {index:i,type:String(test.type||""),direction:String(test.direction||""),label:(typeof wmGetTestShortLabel==="function"?wmGetTestShortLabel(test):"")};}):[];' +
+            'return {success:true,setId:String(currentSetId||""),wordCount:Array.isArray(originalWords)?originalWords.length:0,memorySteps:(typeof getActiveMemorySteps==="function"?getActiveMemorySteps().length:0),tests:testRows,testIndex:(typeof testIndex!=="undefined"?Number(testIndex)||0:0)};' +
+          '}catch(error){return {success:false,message:String(error&&error.message?error.message:error)};}' +
+        '})()';
+
+        Promise.resolve(studyWindow.eval(source)).then(resolve).catch(function(error){
+          resolve({success:false,message:String(error&&error.message?error.message:error)});
+        });
+      }catch(error){
+        resolve({success:false,message:String(error&&error.message?error.message:error)});
+      }
+    });
+  }
+
+  function wmdcApplyLiveStudyResult_(result,step){
+    result=result||{};
+    if(result.success!==true){
+      wmdcSetText('wmdc-status-real-db','REAL DB : FAIL');
+      wmdcSetText('wmdc-status-result','RESULT : FAIL');
+      wmdcSetText('wmdc-status-cause','CAUSE : FAIL');
+      wmdcSetPreviewLoading(false);
+      wmdcLog('[DEV LIVE STUDY ERROR] '+String(result.message||'Study 원본 실행 실패'));
+      return false;
+    }
+
+    wmdcSetText('wmdc-status-real-db','REAL DB : SUCCESS');
+    wmdcSetText('wmdc-status-result','RESULT : SUCCESS');
+    wmdcSetText('wmdc-status-cause','CAUSE : OK');
+    wmdcSetPreviewLoading(false);
+    if(String(step)==='6'){
+      WMDC_LIVE_STUDY_TESTS=Array.isArray(result.tests)?result.tests.slice():[];
+    }
+    wmdcLog('[DEV LIVE STUDY] /study 원본 직접실행 · '+String(result.setId||'')+' · Step='+String(step||'')+' · 단어='+String(result.wordCount||0)+' · Memory='+String(result.memorySteps||0)+'단계 · TEST='+String((result.tests||[]).length)+'종');
+    return true;
+  }
+
   function wmdcMountLiveStudyFrame(step,testIndex){
     var player=wmdcById('wmdc-dev-step-player');
-    if(!player) return false;
+    if(!player) return Promise.resolve({success:false,message:'DEV 실행영역 없음'});
 
     wmdcUnmountStudentApp();
     player.className='wmdc-study-host';
@@ -10208,46 +10275,33 @@ renderStart();
     frame.className='wmdc-study-live-frame';
     frame.title='현재 Study 원본 DEV 빠른 이동테스트';
     frame.setAttribute('allow','fullscreen');
+
+    var readyPromise=new Promise(function(resolve){
+      var finished=false;
+      function finish(result){
+        if(finished) return;
+        finished=true;
+        resolve(result||{success:false,message:'Study 원본 실행 실패'});
+      }
+      frame.onload=function(){
+        wmdcRunLiveStudySourceStep_(frame,step,testIndex).then(finish);
+      };
+      frame.onerror=function(){ finish({success:false,message:'Study 원본 iframe 로드 실패'}); };
+    });
+
     frame.src=wmdcBuildLiveStudyUrl(step,testIndex);
     player.appendChild(frame);
-
     window.WMDC_STUDY_SCREEN_ACTIVE=true;
+
     var topNav=document.querySelector('#wmdc-root .wmdc-set-nav[data-wmdc-nav="top"]');
     if(topNav) topNav.classList.remove('wmdc-nav-docked');
     var navSpacer=document.querySelector('#wmdc-root .wmdc-set-nav-spacer');
     if(navSpacer) navSpacer.classList.remove('is-active');
-    return true;
+    return readyPromise;
   }
 
-  var WMDC_LIVE_STUDY_TESTS=[];
-
-  function wmdcHandleLiveStudyMessage(event){
-    if(event.origin !== window.location.origin) return;
-    var data=event.data || {};
-    if(data.type !== 'WM_DEV_STUDY_LIVE_REVIEW') return;
-
-    if(String(data.status || '').toUpperCase() === 'SUCCESS'){
-      wmdcSetText('wmdc-status-real-db','REAL DB : SUCCESS');
-      wmdcSetText('wmdc-status-result','RESULT : SUCCESS');
-      wmdcSetText('wmdc-status-cause','CAUSE : OK');
-      wmdcSetPreviewLoading(false);
-      if(String(data.step || '') === '6' && Array.isArray(data.tests)){
-        WMDC_LIVE_STUDY_TESTS=data.tests.slice();
-        wmdcShowTestSelector(WMDC_LIVE_STUDY_TESTS,Number(data.testIndex || 0));
-      }
-      wmdcLog('[DEV LIVE STUDY] 현재 /study 원본 렌더링 완료 · ' + String(data.setId || '') + ' · Step=' + String(data.step || ''));
-    }else if(String(data.status || '').toUpperCase() === 'FAIL'){
-      wmdcSetText('wmdc-status-real-db','REAL DB : FAIL');
-      wmdcSetText('wmdc-status-result','RESULT : FAIL');
-      wmdcSetText('wmdc-status-cause','CAUSE : FAIL');
-      wmdcSetPreviewLoading(false);
-      wmdcLog('[DEV LIVE STUDY ERROR] ' + String(data.detail || 'Study 원본 렌더링 실패'));
-    }
-  }
-
-  if(!window.__WMDC_LIVE_STUDY_MESSAGE_BOUND){
-    window.__WMDC_LIVE_STUDY_MESSAGE_BOUND=true;
-    window.addEventListener('message',wmdcHandleLiveStudyMessage);
+  function wmdcHandleLiveStudyMessage(){
+    /* SINGLE_SOURCE_SYNC에서는 Study 수정용 postMessage를 사용하지 않습니다. */
   }
 
   function wmdcSetPlayerMessage(message){
@@ -10391,9 +10445,6 @@ renderStart();
 
 
   function wmdcGetTestSelectorLabel(test, index){
-    if(test && test.label){
-      return 'TEST ' + (index + 1) + ' · ' + String(test.label);
-    }
     var type = test && test.type === 'choice' ? '객관식' : '주관식';
     var direction = test && test.direction === 'eng-ko' ? '영한' : '한영';
     return 'TEST ' + (index + 1) + ' · ' + direction + ' ' + type;
@@ -10409,148 +10460,102 @@ renderStart();
   function wmdcSwitchLiveStudyTestInPlace_(selectedIndex){
     var frame=wmdcById('wmdc-live-study-frame');
     if(!frame || !frame.contentWindow) return false;
-
     try{
       var studyWindow=frame.contentWindow;
       if(studyWindow.location.origin !== window.location.origin) return false;
-
-      var liveUrl=new URL(studyWindow.location.href);
-      if(liveUrl.searchParams.get('wmDevReview') !== '1') return false;
-      if(liveUrl.searchParams.get('wmDevStep') !== '6') return false;
-      if(String(liveUrl.searchParams.get('set_id') || '') !== String(wmdcGetSetId())) return false;
-
-      var targetIndex=Math.max(0,Number(selectedIndex) || 0);
+      var targetIndex=Math.max(0,Number(selectedIndex)||0);
       var switched=studyWindow.eval(
         '(function(targetIndex){' +
           'if(typeof getTestList!=="function"||typeof render!=="function"||typeof shuffle!=="function")return false;' +
           'if(typeof originalWords==="undefined"||!Array.isArray(originalWords)||originalWords.length===0)return false;' +
-          'var tests=getTestList();' +
-          'if(!tests.length)return false;' +
+          'var tests=getTestList();if(!tests.length)return false;' +
           'targetIndex=Math.max(0,Math.min(Number(targetIndex)||0,tests.length-1));' +
-          'if(typeof testIndex!=="undefined"&&targetIndex===testIndex+1&&typeof goNextTest==="function"){' +
-            'goNextTest();' +
-          '}else{' +
-            'testIndex=targetIndex;' +
-            'isRetest=false;' +
-            'testWords=shuffle(originalWords);' +
-            'stage=7;' +
-            'render();' +
-          '}' +
-          'return true;' +
+          'testIndex=targetIndex;isRetest=false;testWords=shuffle(originalWords);stage=7;render();return true;' +
         '})(' + targetIndex + ')'
       );
-
-      if(switched !== true) return false;
-      liveUrl.searchParams.set('wmDevTestIndex',String(targetIndex));
-      studyWindow.history.replaceState(null,'',liveUrl.pathname + liveUrl.search);
-      return true;
+      return switched===true;
     }catch(error){
-      wmdcLog('[DEV TEST SWITCH ERROR] 현재 Study 내부 TEST 즉시전환 실패 · ' + (error && error.message ? error.message : String(error)));
+      wmdcLog('[DEV TEST SWITCH ERROR] Study 원본 TEST 전환 실패 · '+(error&&error.message?error.message:String(error)));
       return false;
     }
   }
 
   function wmdcRunSelectedTest(selectedIndex){
-    var tests = Array.isArray(WMDC_LIVE_STUDY_TESTS) ? WMDC_LIVE_STUDY_TESTS : [];
-    if(!tests.length){ return; }
-    var nextIndex = Math.max(0, Math.min(Number(selectedIndex) || 0, tests.length - 1));
-    var switchedInPlace = wmdcSwitchLiveStudyTestInPlace_(nextIndex);
-    if(!switchedInPlace && !wmdcMountLiveStudyFrame('6', nextIndex)){ return; }
+    var tests=Array.isArray(WMDC_LIVE_STUDY_TESTS)?WMDC_LIVE_STUDY_TESTS:[];
+    if(!tests.length) return;
+    var nextIndex=Math.max(0,Math.min(Number(selectedIndex)||0,tests.length-1));
+    var switched=wmdcSwitchLiveStudyTestInPlace_(nextIndex);
+    if(!switched){
+      wmdcMountLiveStudyFrame('6',nextIndex).then(function(result){
+        if(wmdcApplyLiveStudyResult_(result,'6')) wmdcShowTestSelector(WMDC_LIVE_STUDY_TESTS,nextIndex);
+      });
+    }
 
-    var selector = wmdcById('wmdc-test-selector');
+    var selector=wmdcById('wmdc-test-selector');
     if(selector){
-      var buttons = selector.querySelectorAll('[data-wmdc-test-index]');
-      for(var i=0; i<buttons.length; i++){
-        buttons[i].classList.toggle('is-active', Number(buttons[i].getAttribute('data-wmdc-test-index')) === nextIndex);
+      var buttons=selector.querySelectorAll('[data-wmdc-test-index]');
+      for(var i=0;i<buttons.length;i++){
+        buttons[i].classList.toggle('is-active',Number(buttons[i].getAttribute('data-wmdc-test-index'))===nextIndex);
       }
     }
-    var title = wmdcById('wmdc-quick-title');
-    if(title){ title.textContent = 'DEV 빠른 이동 테스트 실행 · ' + wmdcMakeCourseLabel(wmdcGetSetId()) + ' · ' + wmdcGetTestSelectorLabel(tests[nextIndex], nextIndex); }
-    wmdcSetText('wmdc-status-step', 'STEP : ' + wmdcGetTestSelectorLabel(tests[nextIndex], nextIndex));
-    wmdcSetText('wmdc-status-real-db', switchedInPlace ? 'REAL DB : SUCCESS' : 'REAL DB : LOADING');
-    wmdcSetText('wmdc-status-result', switchedInPlace ? 'RESULT : SUCCESS' : 'RESULT : READY');
-    wmdcLog(switchedInPlace
-      ? '[DEV TEST SWITCH] 현재 Study 원본 내부 TEST 즉시전환 · ' + wmdcGetTestSelectorLabel(tests[nextIndex], nextIndex)
-      : '[DEV TEST RUN] 현재 /study 원본 TEST 실행 시작 · ' + wmdcGetTestSelectorLabel(tests[nextIndex], nextIndex));
+    var title=wmdcById('wmdc-quick-title');
+    if(title) title.textContent='DEV 빠른 이동 테스트 실행 · '+wmdcMakeCourseLabel(wmdcGetSetId())+' · '+wmdcGetTestSelectorLabel(tests[nextIndex],nextIndex);
+    wmdcSetText('wmdc-status-step','STEP : '+wmdcGetTestSelectorLabel(tests[nextIndex],nextIndex));
   }
 
-  function wmdcShowTestSelector(tests, activeIndex){
-    var selector = wmdcById('wmdc-test-selector');
-    if(!selector){ return; }
-    tests = Array.isArray(tests) ? tests : [];
-    selector.innerHTML = tests.map(function(test, index){
-      return '<button type="button" class="wmdc-test-select-btn' + (Number(activeIndex || 0) === index ? ' is-active' : '') + '" data-wmdc-test-index="' + index + '">' + wmdcGetTestSelectorLabel(test, index) + '</button>';
+  function wmdcShowTestSelector(tests,activeIndex){
+    var selector=wmdcById('wmdc-test-selector');
+    if(!selector) return;
+    tests=Array.isArray(tests)?tests:[];
+    selector.innerHTML=tests.map(function(test,index){
+      return '<button type="button" class="wmdc-test-select-btn'+(Number(activeIndex||0)===index?' is-active':'')+'" data-wmdc-test-index="'+index+'">'+wmdcGetTestSelectorLabel(test,index)+'</button>';
     }).join('');
-    selector.hidden = tests.length === 0;
-    var buttons = selector.querySelectorAll('[data-wmdc-test-index]');
-    for(var i=0; i<buttons.length; i++){
-      buttons[i].onclick = function(){
-        wmdcRunSelectedTest(Number(this.getAttribute('data-wmdc-test-index')) || 0);
-      };
+    selector.hidden=tests.length===0;
+    var buttons=selector.querySelectorAll('[data-wmdc-test-index]');
+    for(var i=0;i<buttons.length;i++){
+      buttons[i].onclick=function(){wmdcRunSelectedTest(Number(this.getAttribute('data-wmdc-test-index'))||0);};
     }
   }
 
   async function wmdcPrepareActualTestSelector(){
-    var setId = wmdcGetSetId();
-    var title = wmdcById('wmdc-quick-title');
-    if(title){ title.textContent = 'DEV 빠른 이동 테스트 · 현재 Study 원본 TEST 확인중'; }
+    var setId=wmdcGetSetId();
+    var title=wmdcById('wmdc-quick-title');
+    if(title) title.textContent='DEV 빠른 이동 테스트 · 현재 Study 원본 TEST 확인중';
 
     WMDC_LIVE_STUDY_TESTS=[];
     wmdcHideTestSelector();
-    wmdcSetText('wmdc-status-set', 'SET : ' + setId);
-    wmdcSetText('wmdc-status-step', 'STEP : TEST');
-    wmdcSetText('wmdc-status-real-db', 'REAL DB : LOADING');
-    wmdcSetText('wmdc-status-result', 'RESULT : READY');
-    wmdcSetText('wmdc-status-cause', 'CAUSE : OK');
-    wmdcLog('[DEV TEST RUN] 현재 /study 원본 TEST 직접 실행 시작 · ' + setId);
+    wmdcSetText('wmdc-status-set','SET : '+setId);
+    wmdcSetText('wmdc-status-step','STEP : TEST');
+    wmdcSetText('wmdc-status-real-db','REAL DB : LOADING');
+    wmdcSetText('wmdc-status-result','RESULT : READY');
+    wmdcSetText('wmdc-status-cause','CAUSE : OK');
+    wmdcLog('[DEV TEST RUN] /study 원본 4종 TEST 직접 실행 시작 · '+setId);
 
-    if(!wmdcMountLiveStudyFrame('6', 0)){
-      wmdcSetText('wmdc-status-real-db', 'REAL DB : FAIL');
-      wmdcSetText('wmdc-status-result', 'RESULT : FAIL');
-      wmdcSetText('wmdc-status-cause', 'CAUSE : FAIL');
-      wmdcLog('[DEV TEST RUN ERROR] 현재 /study 원본 iframe 실행영역을 찾지 못했습니다.');
-    }
+    var result=await wmdcMountLiveStudyFrame('6',0);
+    if(!wmdcApplyLiveStudyResult_(result,'6')) return;
+    wmdcShowTestSelector(WMDC_LIVE_STUDY_TESTS,Number(result.testIndex||0));
+    if(title) title.textContent='DEV 빠른 이동 테스트 · '+wmdcMakeCourseLabel(setId)+' · TEST 4종';
   }
-
 
   async function wmdcPrepareActualStudentScreen(step){
     wmdcHideTestSelector();
-    var setId = wmdcGetSetId();
-    var stepName = wmdcGetStepName(step);
-    var title = wmdcById('wmdc-quick-title');
-
-    if(title){
-      title.textContent = 'DEV 빠른 이동 테스트 실행 · ' + wmdcMakeCourseLabel(setId) + ' · ' + stepName;
-    }
+    var setId=wmdcGetSetId();
+    var stepName=wmdcGetStepName(step);
+    var title=wmdcById('wmdc-quick-title');
+    if(title) title.textContent='DEV 빠른 이동 테스트 실행 · '+wmdcMakeCourseLabel(setId)+' · '+stepName;
 
     wmdcRefreshCourseBadges();
-    wmdcSetText('wmdc-status-set', 'SET : ' + setId);
-    wmdcSetText('wmdc-status-step', 'STEP : ' + stepName);
-    wmdcSetText('wmdc-status-real-db', 'REAL DB : LOADING');
-    wmdcSetText('wmdc-status-result', 'RESULT : READY');
-    wmdcSetText('wmdc-status-cause', 'CAUSE : OK');
-
+    wmdcSetText('wmdc-status-set','SET : '+setId);
+    wmdcSetText('wmdc-status-step','STEP : '+stepName);
+    wmdcSetText('wmdc-status-real-db','REAL DB : LOADING');
+    wmdcSetText('wmdc-status-result','RESULT : READY');
+    wmdcSetText('wmdc-status-cause','CAUSE : OK');
     wmdcLog('====================================');
-    wmdcLog('[DEV LIVE STEP] 현재 /study 원본 실행 시작');
-    wmdcLog('[DEV LIVE STEP] Set_ID=' + setId + ' / Step=' + stepName);
+    wmdcLog('[DEV LIVE STEP] /study 원본 직접 실행 · Set_ID='+setId+' / Step='+stepName);
 
-    if(!wmdcMountLiveStudyFrame(step)){
-      wmdcSetText('wmdc-status-real-db', 'REAL DB : FAIL');
-      wmdcSetText('wmdc-status-result', 'RESULT : FAIL');
-      wmdcSetText('wmdc-status-cause', 'CAUSE : FAIL');
-      wmdcLog('[DEV LIVE STEP ERROR] iframe 실행영역을 찾지 못했습니다.');
-      return;
-    }
+    var result=await wmdcMountLiveStudyFrame(step);
+    wmdcApplyLiveStudyResult_(result,step);
   }
-
-  function wmdcRunLiveStudyStep_(step){
-    step=String(step || '1');
-    if(step === '6'){
-      return wmdcPrepareActualTestSelector();
-    }
-    return wmdcPrepareActualStudentScreen(step);
-  }
-  window.WMDC_RUN_LIVE_STUDY_STEP=wmdcRunLiveStudyStep_;
 
   function wmdcInitTopNavDocking(){
     var topNav = document.querySelector('#wmdc-root .wmdc-set-nav[data-wmdc-nav="top"]');
@@ -10646,7 +10651,12 @@ renderStart();
     var quickButtons = document.querySelectorAll('#wmdc-root [data-wmdc-step]');
     for(var i=0; i<quickButtons.length; i++){
       quickButtons[i].onclick = function(){
-        window.WMDC_RUN_LIVE_STUDY_STEP(this.getAttribute('data-wmdc-step') || '1');
+        var step = this.getAttribute('data-wmdc-step') || '1';
+        if(String(step) === '6'){
+          wmdcPrepareActualTestSelector();
+          return;
+        }
+        wmdcPrepareActualStudentScreen(step);
       };
     }
 

@@ -124,7 +124,7 @@ const WM_DEV_LIVE_REVIEW_MODE = window.WM_DEV_ADMIN_REVIEW_MODE === true || (()=
     box-sizing:border-box;
     align-items:center;
     justify-content:center;
-    background:#dc2626;
+    background:#0c2b63;
     color:#fff;
     text-align:center;
     font-size:28px;
@@ -2204,7 +2204,6 @@ function wmClearCachedStudyMode(setId){
 }
 
 async function wmFetchStudentLearningMode(){
-  if(WM_DEV_LIVE_REVIEW_MODE) return wmNormalizeStudyMode(Object.assign({},WM_DEFAULT_STUDY_MODE,{S4실루엣단계:'전체',S6테스트모드:'기본전체'}));
   const activeSetCache = wmReadCachedStudyMode(currentSetId);
   if(activeSetCache) return activeSetCache;
   const serverMode = wmReadServerStudyMode();
@@ -6306,23 +6305,11 @@ document.addEventListener("keydown",function(e){
 function wmPostDevLiveReviewStatus_(status, detail){
   if(!WM_DEV_LIVE_REVIEW_MODE || window.parent === window) return;
   try{
-    const params = new URLSearchParams(window.location.search || '');
-    const step = String(params.get('wmDevStep') || '');
-    const tests = step === '6' ? getTestList().map(function(test,index){
-      return {
-        index:index,
-        type:String((test && test.type) || ''),
-        direction:String((test && test.direction) || ''),
-        label:wmGetTestShortLabel(test)
-      };
-    }) : [];
     window.parent.postMessage({
       type:'WM_DEV_STUDY_LIVE_REVIEW',
       status:String(status || ''),
       setId:String(currentSetId || ''),
-      step:step,
-      testIndex:Number(typeof testIndex !== 'undefined' ? testIndex : 0) || 0,
-      tests:tests,
+      step:String(new URLSearchParams(window.location.search || '').get('wmDevStep') || ''),
       detail:String(detail || '')
     }, window.location.origin);
   }catch(err){}
