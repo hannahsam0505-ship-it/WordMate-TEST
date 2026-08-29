@@ -6306,11 +6306,23 @@ document.addEventListener("keydown",function(e){
 function wmPostDevLiveReviewStatus_(status, detail){
   if(!WM_DEV_LIVE_REVIEW_MODE || window.parent === window) return;
   try{
+    const params = new URLSearchParams(window.location.search || '');
+    const step = String(params.get('wmDevStep') || '');
+    const tests = step === '6' ? getTestList().map(function(test,index){
+      return {
+        index:index,
+        type:String((test && test.type) || ''),
+        direction:String((test && test.direction) || ''),
+        label:wmGetTestShortLabel(test)
+      };
+    }) : [];
     window.parent.postMessage({
       type:'WM_DEV_STUDY_LIVE_REVIEW',
       status:String(status || ''),
       setId:String(currentSetId || ''),
-      step:String(new URLSearchParams(window.location.search || '').get('wmDevStep') || ''),
+      step:step,
+      testIndex:Number(typeof testIndex !== 'undefined' ? testIndex : 0) || 0,
+      tests:tests,
       detail:String(detail || '')
     }, window.location.origin);
   }catch(err){}

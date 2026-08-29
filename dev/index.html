@@ -3533,7 +3533,10 @@ window.addEventListener('load',function wmApplyDevActualFunctionLock_(){
   }
 
   function quickStep(step){
-    runDevStepPlayer(step);
+    if(typeof window.WMDC_RUN_LIVE_STUDY_STEP === 'function'){
+      return window.WMDC_RUN_LIVE_STUDY_STEP(step);
+    }
+    addLog('[DEV LIVE STEP ERROR] 현재 /study 원본 연결함수를 찾지 못했습니다.');
   }
 
 
@@ -10176,9 +10179,10 @@ renderStart();
     return true;
   }
 
-  /* WM_DEV_STUDY_LIVE_SYNC_V1_20260825
-     빠른 이동테스트의 실제 화면은 DEV 내부 복제본이 아니라 현재 배포된 /study를 직접 엽니다.
-     따라서 Study 화면이 바뀌면 DEV 파일 재복사 없이 다음 실행부터 그대로 반영됩니다. */
+  /* WM_DEV_STUDY_LIVE_SYNC_V2_20260829
+     빠른 이동테스트의 화면·Memory·TEST 목록은 DEV 내부 복제본을 사용하지 않습니다.
+     현재 TEST /study 원본을 iframe으로 직접 실행하고 TEST 목록도 /study가 postMessage로 전달합니다.
+     따라서 Study 배포가 바뀌면 DEV 파일 재복사 없이 다음 실행부터 같은 Study 원본이 즉시 반영됩니다. */
   function wmdcBuildLiveStudyUrl(step,testIndex){
     var url=new URL(WM_STUDY_URL,window.location.href);
     url.searchParams.set('wmDevReview','1');
@@ -10215,6 +10219,8 @@ renderStart();
     return true;
   }
 
+  var WMDC_LIVE_STUDY_TESTS=[];
+
   function wmdcHandleLiveStudyMessage(event){
     if(event.origin !== window.location.origin) return;
     var data=event.data || {};
@@ -10225,6 +10231,10 @@ renderStart();
       wmdcSetText('wmdc-status-result','RESULT : SUCCESS');
       wmdcSetText('wmdc-status-cause','CAUSE : OK');
       wmdcSetPreviewLoading(false);
+      if(String(data.step || '') === '6' && Array.isArray(data.tests)){
+        WMDC_LIVE_STUDY_TESTS=data.tests.slice();
+        wmdcShowTestSelector(WMDC_LIVE_STUDY_TESTS,Number(data.testIndex || 0));
+      }
       wmdcLog('[DEV LIVE STUDY] 현재 /study 원본 렌더링 완료 · ' + String(data.setId || '') + ' · Step=' + String(data.step || ''));
     }else if(String(data.status || '').toUpperCase() === 'FAIL'){
       wmdcSetText('wmdc-status-real-db','REAL DB : FAIL');
@@ -10381,6 +10391,9 @@ renderStart();
 
 
   function wmdcGetTestSelectorLabel(test, index){
+    if(test && test.label){
+      return 'TEST ' + (index + 1) + ' · ' + String(test.label);
+    }
     var type = test && test.type === 'choice' ? '객관식' : '주관식';
     var direction = test && test.direction === 'eng-ko' ? '영한' : '한영';
     return 'TEST ' + (index + 1) + ' · ' + direction + ' ' + type;
@@ -10438,7 +10451,7 @@ renderStart();
   }
 
   function wmdcRunSelectedTest(selectedIndex){
-    var tests = getTestList();
+    var tests = Array.isArray(WMDC_LIVE_STUDY_TESTS) ? WMDC_LIVE_STUDY_TESTS : [];
     if(!tests.length){ return; }
     var nextIndex = Math.max(0, Math.min(Number(selectedIndex) || 0, tests.length - 1));
     var switchedInPlace = wmdcSwitchLiveStudyTestInPlace_(nextIndex);
@@ -10457,18 +10470,18 @@ renderStart();
     wmdcSetText('wmdc-status-real-db', switchedInPlace ? 'REAL DB : SUCCESS' : 'REAL DB : LOADING');
     wmdcSetText('wmdc-status-result', switchedInPlace ? 'RESULT : SUCCESS' : 'RESULT : READY');
     wmdcLog(switchedInPlace
-      ? '[DEV TEST SWITCH] 현재 Study 내부 TEST 즉시전환 · ' + wmdcGetTestSelectorLabel(tests[nextIndex], nextIndex)
-      : '[DEV TEST RUN] 현재 /study 원본 TEST 최초 실행 시작 · ' + wmdcGetTestSelectorLabel(tests[nextIndex], nextIndex));
+      ? '[DEV TEST SWITCH] 현재 Study 원본 내부 TEST 즉시전환 · ' + wmdcGetTestSelectorLabel(tests[nextIndex], nextIndex)
+      : '[DEV TEST RUN] 현재 /study 원본 TEST 실행 시작 · ' + wmdcGetTestSelectorLabel(tests[nextIndex], nextIndex));
   }
 
-  function wmdcShowTestSelector(){
+  function wmdcShowTestSelector(tests, activeIndex){
     var selector = wmdcById('wmdc-test-selector');
     if(!selector){ return; }
-    var tests = getTestList();
+    tests = Array.isArray(tests) ? tests : [];
     selector.innerHTML = tests.map(function(test, index){
-      return '<button type="button" class="wmdc-test-select-btn" data-wmdc-test-index="' + index + '">' + wmdcGetTestSelectorLabel(test, index) + '</button>';
+      return '<button type="button" class="wmdc-test-select-btn' + (Number(activeIndex || 0) === index ? ' is-active' : '') + '" data-wmdc-test-index="' + index + '">' + wmdcGetTestSelectorLabel(test, index) + '</button>';
     }).join('');
-    selector.hidden = false;
+    selector.hidden = tests.length === 0;
     var buttons = selector.querySelectorAll('[data-wmdc-test-index]');
     for(var i=0; i<buttons.length; i++){
       buttons[i].onclick = function(){
@@ -10480,38 +10493,25 @@ renderStart();
   async function wmdcPrepareActualTestSelector(){
     var setId = wmdcGetSetId();
     var title = wmdcById('wmdc-quick-title');
-    if(title){ title.textContent = 'DEV 빠른 이동 테스트 · 배정 TEST 확인중'; }
+    if(title){ title.textContent = 'DEV 빠른 이동 테스트 · 현재 Study 원본 TEST 확인중'; }
 
+    WMDC_LIVE_STUDY_TESTS=[];
     wmdcHideTestSelector();
-    wmdcSetPlayerMessage(wmdcLoadingMessage('배정 TEST를 확인하는 중입니다', '잠시만 기다려주세요.'));
     wmdcSetText('wmdc-status-set', 'SET : ' + setId);
-    wmdcSetText('wmdc-status-step', 'STEP : TEST 선택');
+    wmdcSetText('wmdc-status-step', 'STEP : TEST');
     wmdcSetText('wmdc-status-real-db', 'REAL DB : LOADING');
+    wmdcSetText('wmdc-status-result', 'RESULT : READY');
+    wmdcSetText('wmdc-status-cause', 'CAUSE : OK');
+    wmdcLog('[DEV TEST RUN] 현재 /study 원본 TEST 직접 실행 시작 · ' + setId);
 
-    try{
-      if(currentSetId !== setId || !isDbReady || !Array.isArray(originalWords) || originalWords.length === 0 || WM_ACTIVE_STUDY_MODE_SET_ID !== setId){
-        var ok = await wmdcLoadActualDbForPreview(setId);
-        if(!ok){ throw new Error('실제 학생학습화면 loadSetFromDB 실패'); }
-      }
-      stage = 7;
-      testIndex = 0;
-      testWords = shuffle(originalWords);
-      wmdcSetPlayerMessage('위 TEST 선택기에서 확인할 시험을 선택하세요.<br>현재 배정값 기준 ' + getTestList().length + '개 TEST만 표시됩니다.');
-      wmdcShowTestSelector();
-      wmdcSetText('wmdc-status-real-db', 'REAL DB : SUCCESS');
-      wmdcSetText('wmdc-status-result', 'RESULT : SUCCESS');
-      wmdcSetText('wmdc-status-cause', 'CAUSE : OK');
-      if(title){ title.textContent = 'DEV 빠른 이동 테스트 · ' + wmdcMakeCourseLabel(setId) + ' · TEST 선택'; }
-      wmdcLog('[DEV TEST SELECTOR] 실제 배정 TEST ' + getTestList().length + '개 표시 완료');
-    } catch(error){
-      wmdcHideTestSelector();
+    if(!wmdcMountLiveStudyFrame('6', 0)){
       wmdcSetText('wmdc-status-real-db', 'REAL DB : FAIL');
       wmdcSetText('wmdc-status-result', 'RESULT : FAIL');
       wmdcSetText('wmdc-status-cause', 'CAUSE : FAIL');
-      wmdcSetPlayerMessage('TEST 선택기 실행 실패: ' + (error && error.message ? error.message : String(error)));
-      wmdcLog('[DEV TEST SELECTOR ERROR] ' + (error && error.message ? error.message : String(error)));
+      wmdcLog('[DEV TEST RUN ERROR] 현재 /study 원본 iframe 실행영역을 찾지 못했습니다.');
     }
   }
+
 
   async function wmdcPrepareActualStudentScreen(step){
     wmdcHideTestSelector();
@@ -10542,6 +10542,15 @@ renderStart();
       return;
     }
   }
+
+  function wmdcRunLiveStudyStep_(step){
+    step=String(step || '1');
+    if(step === '6'){
+      return wmdcPrepareActualTestSelector();
+    }
+    return wmdcPrepareActualStudentScreen(step);
+  }
+  window.WMDC_RUN_LIVE_STUDY_STEP=wmdcRunLiveStudyStep_;
 
   function wmdcInitTopNavDocking(){
     var topNav = document.querySelector('#wmdc-root .wmdc-set-nav[data-wmdc-nav="top"]');
@@ -10637,12 +10646,7 @@ renderStart();
     var quickButtons = document.querySelectorAll('#wmdc-root [data-wmdc-step]');
     for(var i=0; i<quickButtons.length; i++){
       quickButtons[i].onclick = function(){
-        var step = this.getAttribute('data-wmdc-step') || '1';
-        if(String(step) === '6'){
-          wmdcPrepareActualTestSelector();
-          return;
-        }
-        wmdcPrepareActualStudentScreen(step);
+        window.WMDC_RUN_LIVE_STUDY_STEP(this.getAttribute('data-wmdc-step') || '1');
       };
     }
 
