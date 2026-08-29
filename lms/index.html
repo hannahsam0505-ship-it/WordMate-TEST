@@ -3310,7 +3310,12 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
       return yy+'-'+mm+'-'+dd+' '+Number(match[4])+':'+String(Number(match[5])).padStart(2,'0');
     }
 
+    /* WM_SET_ID_DATE_WEEK_SEPARATION_RULE_V1
+       Set_ID: WM2003-1-5 / 2003-1-5 = 세트번호. 날짜·주차로 해석 금지.
+       학습날짜: YYYY-MM-DD 계열만 사용. 리포트주차: YYYY-MM-N주차 값만 사용. */
     function displayCellValue(value, header){
+      if(header === 'Set_ID') return normalizeSetIdText(value);
+      if(header === '리포트주차') return String(value === undefined || value === null ? '' : value).trim();
       if(header === '학습날짜') return formatStudyDateMinute(value);
       if(['이전일','등록일','최근결제일'].includes(header)) return formatKoreaDateDot(value);
       return formatKoreaDate(value);
@@ -6381,7 +6386,7 @@ function extractRecordRowsFromResponse(data){
     }
 
     function reportDetailDate(row){
-      return reportDetailFirst(row, ['학습날짜','Study_Date','학습일','날짜','date','리포트주차','Report_Week']);
+      return reportDetailFirst(row, ['학습날짜','Study_Date','학습일','날짜','date']);
     }
 
     function reportDetailSetId(row){
