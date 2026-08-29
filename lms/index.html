@@ -5059,6 +5059,9 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
         if(title) title.textContent='최근성적표보기 · '+(WM_RECENT_REPORT_STUDENT_NAME||'이름 없음')+' · '+item.label;
         renderer.prepareModal();
         body.innerHTML=renderer.render(data);
+        if(!(data&&data.grade&&data.grade.found)){
+          const comments=body.querySelector('.wmr-comments'); if(comments) comments.remove();
+        }
         console.log('LMS 공통 최근성적표 표시시간(ms):',Math.round(performance.now()-startedAt));
       }catch(err){
         console.error('최근성적표 월간 데이터 조회 실패:',err);

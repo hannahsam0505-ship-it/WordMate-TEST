@@ -6275,6 +6275,9 @@ async function wmMapRecentRender_(){
     if(title) title.textContent='최근성적표보기 · '+name+' · '+item.label;
     results[1].prepareModal();
     body.innerHTML=wmMapBindRecentReport_(data)||'<div class="wm-note">성적 내용이 없습니다.</div>';
+    if(!(data&&data.grade&&data.grade.found)){
+      const comments=body.querySelector('.wmr-comments'); if(comments) comments.remove();
+    }
     console.log('MAP 공통 최근성적표 표시시간(ms):',Math.round(performance.now()-startedAt));
   }catch(err){
     body.innerHTML='<div class="wm-note">성적 내용이 없습니다.</div>';
