@@ -5059,9 +5059,6 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
         if(title) title.textContent='최근성적표보기 · '+(WM_RECENT_REPORT_STUDENT_NAME||'이름 없음')+' · '+item.label;
         renderer.prepareModal();
         body.innerHTML=renderer.render(data);
-        if(!(data&&data.grade&&data.grade.found)){
-          const comments=body.querySelector('.wmr-comments'); if(comments) comments.remove();
-        }
         console.log('LMS 공통 최근성적표 표시시간(ms):',Math.round(performance.now()-startedAt));
       }catch(err){
         console.error('최근성적표 월간 데이터 조회 실패:',err);
@@ -7341,36 +7338,47 @@ function extractRecordRowsFromResponse(data){
     }
 
     async function loadReports(){
-      wmLockStatusMessage('ReportDB_V2_LOCK','성적표조회 완료 세트 조회');
+      wmLockStatusMessage('ReportDB_V2_LOCK','4-1.성적표생성_DB 생성·조회');
       const tbody = document.getElementById('reportManageTbody');
       setManageLoading('reports', true);
-      if(tbody) tbody.innerHTML = '<tr><td colspan="14"><div class="wm-report-detail-loading"><span class="wm-loading-spinner"></span><span>완료 세트 조회 중입니다.</span></div></td></tr>';
+      if(tbody) tbody.innerHTML = '<tr><td colspan="14"><div class="wm-report-detail-loading"><span class="wm-loading-spinner"></span><span>성적표생성_DB 동기화 중입니다.</span></div></td></tr>';
 
       try{
-        let rows = [];
-        const urls = [
-          WM_APPS_SCRIPT_URL + '?mode=records&initial=1&limit=25&ts=' + Date.now() + wmLmsActorQuery(),
-          WM_APPS_SCRIPT_URL + '?action=learningRecords&initial=1&limit=25&ts=' + Date.now() + wmLmsActorQuery()
-        ];
-
-        for(const url of urls){
-          rows = await wmFetchLearningRecordRows(url);
-          if(rows.length) break;
+        const initUrl = WM_APPS_SCRIPT_URL
+          + '?mode=initializeReportsFromLearningRecords'
+          + '&action=initializeReportsFromLearningRecords'
+          + '&ts=' + Date.now()
+          + wmLmsActorQuery();
+        const initResponse = await fetch(initUrl,{method:'GET',cache:'no-store'});
+        const initText = await initResponse.text();
+        let initResult = null;
+        try{ initResult = JSON.parse(initText); }catch(parseError){}
+        if(!initResponse.ok || !initResult || initResult.success !== true){
+          throw new Error(initResult && initResult.message ? initResult.message : '4-1.성적표생성_DB 생성 실패');
         }
 
-        if(!rows.length){
-          rows = await readSheetRows(['2.학습기록_DB','학습기록_DB','records']);
+        const reportUrl = WM_APPS_SCRIPT_URL
+          + '?mode=reports'
+          + '&action=reports'
+          + '&ts=' + Date.now()
+          + wmLmsActorQuery();
+        const reportResponse = await fetch(reportUrl,{method:'GET',cache:'no-store'});
+        const reportText = await reportResponse.text();
+        let reportResult = null;
+        try{ reportResult = JSON.parse(reportText); }catch(parseError){}
+        if(!reportResponse.ok || !reportResult || reportResult.success !== true){
+          throw new Error(reportResult && reportResult.message ? reportResult.message : '4-1.성적표생성_DB 조회 실패');
         }
 
-        WM_REPORT_MANAGE_ROWS = wmNormalizeCompletedSetRows(rows);
+        WM_REPORT_MANAGE_ROWS = extractReportRowsFromResponse(reportResult).filter(isValidReportDbRow);
         WM_REPORT_MANAGE_PAGE = 1;
         renderReportManageRows();
         setManageLoading('reports', false);
-        console.log('성적표 완료세트 표시 성공:', WM_REPORT_MANAGE_ROWS.length, WM_REPORT_MANAGE_ROWS);
+        console.log('4-1.성적표생성_DB 연결 성공:', WM_REPORT_MANAGE_ROWS.length, initResult);
         return WM_REPORT_MANAGE_ROWS;
       }catch(err){
-        console.error('성적표 완료세트 조회 실패', err);
-        if(tbody) tbody.innerHTML = '<tr><td colspan="14">완료 세트 조회 실패: '+escapeHtml(err && err.message ? err.message : err)+'</td></tr>';
+        console.error('4-1.성적표생성_DB 생성·조회 실패', err);
+        if(tbody) tbody.innerHTML = '<tr><td colspan="14">성적표생성_DB 실패: '+escapeHtml(err && err.message ? err.message : err)+'</td></tr>';
         setManageLoading('reports', false);
         return [];
       }
