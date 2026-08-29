@@ -3326,8 +3326,27 @@ HTML/CSS 배치·크기·여백·폰트·아이콘·표·그래프·푸터 구�
         .trim()
         .replace(/[‐‑‒–—―−－]/g,'-')
         .replace(/\s+/g,'');
-      const match = raw.match(/\d{1,2}-\d{1,2}-\d{1,2}/);
-      return match ? match[0] : raw;
+
+      let match = raw.match(/^WM(\d{1,2})-(\d{1,2})-(\d{1,2})$/i);
+      if(match) return 'WM' + Number(match[1]) + '-' + Number(match[2]) + '-' + Number(match[3]);
+
+      match = raw.match(/^20(\d{2})-(\d{1,2})-(\d{1,2})$/);
+      if(match){
+        const level = Number(match[1]);
+        if(level >= 3 && level <= 13){
+          return 'WM' + level + '-' + Number(match[2]) + '-' + Number(match[3]);
+        }
+      }
+
+      match = raw.match(/^(\d{1,2})-(\d{1,2})-(\d{1,2})$/);
+      if(match){
+        const level = Number(match[1]);
+        if(level >= 3 && level <= 13){
+          return 'WM' + level + '-' + Number(match[2]) + '-' + Number(match[3]);
+        }
+      }
+
+      return raw;
     }
 
     function looksLikeSetId(value){
