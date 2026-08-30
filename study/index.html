@@ -4661,13 +4661,13 @@ function protectDirectTypingInputs(){
     });
 
     input.addEventListener("compositionstart",()=>{
-      directComposition=true;
+      directKeyArmed=false; directComposition=true;
     });
     input.addEventListener("compositionend",()=>{
       directComposition=false;
       if(insertedCharacterCount_(acceptedValue,String(input.value || ""))<=1) rememberAcceptedValue_();
       else restoreAcceptedValue_();
-      directKeyArmed=false;
+      directKeyArmed=input.classList.contains("test-input") && input.dataset.direction==="eng-ko";
     });
 
     input.addEventListener("paste",e=>e.preventDefault());
