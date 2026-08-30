@@ -323,7 +323,7 @@ WMDC_CURRENT_SET_RUN_AND_AUX_TESTS_V2 적용: 현재세트실행 상단 고정�
    DEV CENTER 제어영역만 블루 계열로 통일.
    실제 Study iframe/Study 원본 화면에는 적용하지 않음. */
 #wmdc-root .dev-header{
-  background:#0c4fb8;
+  background:#0c2b63;
 }
 #wmdc-root .status-item,
 #wmdc-root .wmdc-course-badge{
@@ -1045,6 +1045,9 @@ floating sticky mini bar docking 위치를 하향 조정
 #wmdc-root .wmdc-set-nav[data-wmdc-nav="top"] .wmdc-nav-btn{
   min-height:36px;
   padding:5px 8px;
+  background:#0c2b63 !important;
+  border-color:#0c2b63 !important;
+  color:#fff !important;
 }
 
 #wmdc-root .wmdc-nav-current{
@@ -1069,8 +1072,10 @@ floating sticky mini bar docking 위치를 하향 조정
   font-size:13px;
   padding:3px 8px;
   min-width:178px;
-  border:2px solid #f59e0b;
-  box-shadow:0 3px 8px rgba(245,158,11,0.18);
+  background:#0c2b63 !important;
+  border:2px solid #0c2b63 !important;
+  color:#fff !important;
+  box-shadow:0 3px 8px rgba(12,43,99,0.18);
   white-space:nowrap;
 }
 
@@ -1144,8 +1149,8 @@ floating sticky mini bar docking 위치를 하향 조정
   align-items:center;
   justify-content:center;
   border-radius:999px;
-  background:#2563eb;
-  color:#fff;
+  background:#facc15;
+  color:#111827;
   font-size:12px;
   font-weight:900;
   line-height:1;
@@ -10207,10 +10212,6 @@ renderStart();
     player.appendChild(frame);
 
     window.WMDC_STUDY_SCREEN_ACTIVE=true;
-    var topNav=document.querySelector('#wmdc-root .wmdc-set-nav[data-wmdc-nav="top"]');
-    if(topNav) topNav.classList.remove('wmdc-nav-docked');
-    var navSpacer=document.querySelector('#wmdc-root .wmdc-set-nav-spacer');
-    if(navSpacer) navSpacer.classList.remove('is-active');
     return true;
   }
 
@@ -10571,11 +10572,6 @@ renderStart();
     }
 
     function applyDocking(){
-      if(window.WMDC_STUDY_SCREEN_ACTIVE === true){
-        topNav.classList.remove('wmdc-nav-docked');
-        spacer.classList.remove('is-active');
-        return;
-      }
       var shouldDock = window.pageYOffset > Math.max(dockAt, 0);
       if(shouldDock){
         spacer.classList.add('is-active');
