@@ -1862,6 +1862,9 @@ body.wm-map-loading-active #wm-learning-record-widget{
     -webkit-print-color-adjust:exact !important;
     print-color-adjust:exact !important;
   }
+  body.wm-map-record-print #wm-map-root{
+    zoom:var(--wm-map-record-print-zoom,.51) !important;
+  }
 
   body.wm-map-record-print #wm-map-root,
   body.wm-map-record-print #wm-map-root *{
@@ -5698,16 +5701,17 @@ function printRecords(){
   const body = document.body;
 
   function cleanupPrintLayout(){
-    if(root && printZoom) root.style.removeProperty('zoom');
+    if(root) root.style.removeProperty('--wm-map-record-print-zoom');
     if(html) html.classList.remove('wm-map-record-print');
     if(body) body.classList.remove('wm-map-record-print');
   }
 
   if(html) html.classList.add('wm-map-record-print');
   if(body) body.classList.add('wm-map-record-print');
-  if(root && printZoom) root.style.setProperty('zoom', printZoom, 'important');
+  if(root && printZoom) root.style.setProperty('--wm-map-record-print-zoom', printZoom);
 
-  window.addEventListener('afterprint', cleanupPrintLayout, {once:true});
+  window.addEventListener('pointerdown', cleanupPrintLayout, {once:true, capture:true});
+  window.addEventListener('keydown', cleanupPrintLayout, {once:true, capture:true});
   try{
     window.print();
   }catch(err){
