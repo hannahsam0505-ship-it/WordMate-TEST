@@ -4611,6 +4611,7 @@ function protectDirectTypingInputs(){
     let directKeyArmed=false;
     let directDeleteArmed=false;
     let directComposition=false;
+    const nativeKoreanTyping=input.classList.contains("test-input") && String(input.dataset.direction || "")==="eng-ko";
     input.dataset.wmDirectTypingValue=acceptedValue;
 
     function rememberAcceptedValue_(){
@@ -4661,13 +4662,14 @@ function protectDirectTypingInputs(){
     });
 
     input.addEventListener("compositionstart",()=>{
-      directKeyArmed=false; directComposition=true;
+      directComposition=true;
     });
     input.addEventListener("compositionend",()=>{
       directComposition=false;
-      if(insertedCharacterCount_(acceptedValue,String(input.value || ""))<=1) rememberAcceptedValue_();
+      if(nativeKoreanTyping) rememberAcceptedValue_();
+      else if(insertedCharacterCount_(acceptedValue,String(input.value || ""))<=1) rememberAcceptedValue_();
       else restoreAcceptedValue_();
-      directKeyArmed=input.classList.contains("test-input") && input.dataset.direction==="eng-ko";
+      directKeyArmed=nativeKoreanTyping;
     });
 
     input.addEventListener("paste",e=>e.preventDefault());
@@ -4675,7 +4677,13 @@ function protectDirectTypingInputs(){
 
     input.onbeforeinput=e=>{
       const inputType=String(e.inputType || "");
-      if(inputType==="insertReplacementText" || inputType==="insertFromPaste" || inputType==="insertFromDrop"){
+      if(inputType==="insertFromPaste" || inputType==="insertFromDrop"){
+        e.preventDefault();
+        return;
+      }
+      if(nativeKoreanTyping && (inputType==="insertCompositionText" || e.isComposing || directComposition)) return;
+      if(nativeKoreanTyping && inputType==="insertReplacementText" && directKeyArmed) return;
+      if(inputType==="insertReplacementText"){
         e.preventDefault();
         return;
       }
@@ -4701,11 +4709,23 @@ function protectDirectTypingInputs(){
       const currentValue=String(input.value || "");
       const insertedCount=insertedCharacterCount_(acceptedValue,currentValue);
 
-      if(
-        inputType==="insertReplacementText" ||
-        inputType==="insertFromPaste" ||
-        inputType==="insertFromDrop"
-      ){
+      if(inputType==="insertFromPaste" || inputType==="insertFromDrop"){
+        restoreAcceptedValue_();
+        return;
+      }
+
+      if(nativeKoreanTyping && (inputType==="insertCompositionText" || e.isComposing || directComposition)){
+        rememberAcceptedValue_();
+        return;
+      }
+
+      if(nativeKoreanTyping && inputType==="insertReplacementText" && directKeyArmed){
+        rememberAcceptedValue_();
+        directKeyArmed=false;
+        return;
+      }
+
+      if(inputType==="insertReplacementText"){
         restoreAcceptedValue_();
         return;
       }
