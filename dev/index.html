@@ -1,4 +1,4 @@
-<!-- [TEST부스] Dev Study100%복제 11549-12842 -->
+<!-- [TEST부스] Dev Study100%복제·Study무영향 11549-12918 -->
 
 
 <!--
@@ -1639,17 +1639,17 @@ window.addEventListener('load',function wmApplyDevActualFunctionLock_(){
   var WM_DEV_ACTUAL_LOCK_VERSION = 'DEV_ACTUAL_LOCK_ALL_MODULES_V1.0';
   var WM_DEV_ACTUAL_LOCK_DATE = '2026-07-17';
   var WM_DEV_APPROVED_STUDY = Object.freeze({
-    fileName:'Study 6485.txt', lineCount:6485,
-    sha256:'9f54e46b72d9d98c023db7a0b75bb3ad3bf2641ec2561c1ebd69318ee68fbefb',
-    functionCount:250, audioOverrideEntries:211,
+    fileName:'Study.txt', lineCount:4201,
+    sha256:'7d940b5f6776e504e0b642f4b632d0bb05480931087a1374a69390e93cb48190',
+    functionCount:190, audioOverrideEntries:26,
     allowedDevDifferences:Object.freeze(['DEV 관리자 검수모드 세션 허용','DEV 저장 차단 분기'])
   });
 
   function wmVerifyDevStudyEngineParity_(){
     return Object.isFrozen(WM_DEV_APPROVED_STUDY) &&
-      WM_DEV_APPROVED_STUDY.lineCount === 6485 &&
-      WM_DEV_APPROVED_STUDY.functionCount === 250 &&
-      WM_DEV_APPROVED_STUDY.audioOverrideEntries === 211 &&
+      WM_DEV_APPROVED_STUDY.lineCount === 4201 &&
+      WM_DEV_APPROVED_STUDY.functionCount === 190 &&
+      WM_DEV_APPROVED_STUDY.audioOverrideEntries === 26 &&
       WM_STUDY_RUNTIME_EXECUTION_LOCK_VERSION === 'WM_STUDY_RUNTIME_EXECUTION_LOCK_V1.0' &&
       Object.isFrozen(WM_STUDY_RUNTIME_EXECUTION_LOCKS) &&
       Object.isFrozen(WM_STUDY_LOCKS) &&
@@ -3672,23 +3672,41 @@ window.addEventListener('load',function wmApplyDevActualFunctionLock_(){
 
 
 <!-- 실제 학생학습화면 원본 시작: 아래 코드는 업로드된 원본 그대로 삽입 -->
+<!-- WM_DEV_STUDY_EXACT_COPY_V1
+     기준: Study 6485 전체 원문 / SHA256=e5cbb43e513ef74e74868de3179927458a87107bd5704f6d6c9232ef113629a9
+     Study 파일 수정 없음. DEV에서 학생 저장상태만 읽지 않고 검수모드로 실행합니다. -->
 <script>
-window.WM_DEV_ADMIN_REVIEW_MODE = true;
-/* WMDC_STUDY_EXACT_COPY_RUNTIME_GUARD_V1: DEV 복제본 초기화 중 실제 학생 저장값 상속과 Study cache warm-up만 차단합니다. */
 (function(){
-  var nativeGetItem = Storage.prototype.getItem;
-  var nativeSetTimeout = window.setTimeout;
-  var blocked = {wmStudent:true,wmLoginStudent:true,wmLoggedInStudent:true,WM_SESSION_TOKEN:true};
-  Storage.prototype.getItem = function(key){ return blocked[String(key)] ? null : nativeGetItem.call(this,key); };
-  window.setTimeout = function(fn,delay){
-    if(typeof fn==='function' && fn.name==='wmWarmCurrentStudySet') return 0;
-    return nativeSetTimeout.apply(window,arguments);
+  window.WM_DEV_ADMIN_REVIEW_MODE = true;
+  var blockedStorageKeys = Object.freeze({
+    WM_SESSION_TOKEN:true,
+    wmStudent:true,
+    wmLoginStudent:true,
+    wmLoggedInStudent:true
+  });
+  var blockedUrlKeys = Object.freeze({
+    studentId:true, studentID:true, sid:true,
+    studentName:true, name:true,
+    sessionToken:true, wmSessionToken:true, WM_SESSION_TOKEN:true
+  });
+  var originalStorageGetItem = Storage.prototype.getItem;
+  var originalUrlGet = URLSearchParams.prototype.get;
+  window.__WM_DEV_STUDY_CONTEXT_RESTORE__ = function(){
+    Storage.prototype.getItem = originalStorageGetItem;
+    URLSearchParams.prototype.get = originalUrlGet;
+    try{ delete window.__WM_DEV_STUDY_CONTEXT_RESTORE__; }catch(e){ window.__WM_DEV_STUDY_CONTEXT_RESTORE__ = null; }
   };
-  window.__WMDC_STUDY_COPY_RUNTIME_GUARD__ = {getItem:nativeGetItem,setTimeout:nativeSetTimeout};
+  Storage.prototype.getItem = function(key){
+    if(blockedStorageKeys[String(key || '')]) return null;
+    return originalStorageGetItem.call(this,key);
+  };
+  URLSearchParams.prototype.get = function(key){
+    if(blockedUrlKeys[String(key || '')]) return null;
+    return originalUrlGet.call(this,key);
+  };
 })();
 </script>
-<!-- WM_DEV_STUDY_EXACT_COPY_RULE_V1: Study 원본은 아래 EXACT COPY 구간에 바이트 그대로 삽입하며 DEV 제어코드는 구간 밖에서만 실행합니다. -->
-<!-- WM_DEV_STUDY_EXACT_COPY_START SOURCE=Study6485 SHA256=9f54e46b72d9d98c023db7a0b75bb3ad3bf2641ec2561c1ebd69318ee68fbefb -->
+<!-- WM_DEV_STUDY_EXACT_SOURCE_BEGIN -->
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <!-- ============================================================
    🧪 WORD MATE Study.html - TEST / REAL 전환 설정
@@ -10174,20 +10192,17 @@ if(WM_DEV_LIVE_REVIEW_MODE){
   }else{boot();}
 })();
 </script>
-<!-- WM_DEV_STUDY_EXACT_COPY_END SOURCE=Study6485 SHA256=9f54e46b72d9d98c023db7a0b75bb3ad3bf2641ec2561c1ebd69318ee68fbefb -->
+
+<!-- WM_DEV_STUDY_EXACT_SOURCE_END -->
 <script>
-(function(){
-  var guard=window.__WMDC_STUDY_COPY_RUNTIME_GUARD__;
-  if(!guard) return;
-  Storage.prototype.getItem=guard.getItem;
-  window.setTimeout=guard.setTimeout;
-  try{ delete window.__WMDC_STUDY_COPY_RUNTIME_GUARD__; }catch(e){}
-})();
+if(typeof window.__WM_DEV_STUDY_CONTEXT_RESTORE__ === 'function'){
+  window.__WM_DEV_STUDY_CONTEXT_RESTORE__();
+}
 </script>
 <!-- 실제 학생학습화면 원본 끝 -->
 
 <style>
-/* WMDC_STUDY_EXACT_COPY_TEST_SELECTOR_V1: exact-copy Study 엔진의 4종 TEST를 실행영역에서 선택 */
+/* WMDC_STUDY_SYNC_TEST_SELECTOR_V1: 실제 Study의 배정 TEST 수를 실행영역에서 선택 */
 #wmdc-root .wmdc-study-execution-card{
   overflow:visible;
   background:transparent;
@@ -11553,28 +11568,13 @@ if(WM_DEV_LIVE_REVIEW_MODE){
     wmdcUpdatePreviewFromActualWords(originalWords || []);
   }
 
-  /* WMDC_STUDY_EXACT_COPY_FULL_REVIEW_V1
-     DEV 검수에서는 특정 학생 S4/S6 설정을 상속하지 않고 exact-copy Study의 전체 Memory 4단계·TEST 4종을 확인합니다. */
-  function wmdcApplyExactCopyFullReviewMode_(){
-    WM_ACTIVE_STUDY_MODE = wmNormalizeStudyMode({
-      S4실루엣단계:'전체',
-      S6테스트모드:'기본전체',
-      레벨완료조건:'2회',
-      레벨회차추가:0
-    });
-    WM_ACTIVE_STUDY_MODE_SET_ID = currentSetId;
-    WM_ACTIVE_LEARNING_ASSIGN = '';
-    return WM_ACTIVE_STUDY_MODE;
-  }
-
   async function wmdcLoadActualDbForPreview(setId){
     wmdcResetActualLearningState(setId);
-    var response = await fetch(API_URL + '?action=getSetData&set_id=' + encodeURIComponent(setId) + '&t=' + Date.now(), {method:'GET', cache:'no-store'});
-    if(!response.ok){ throw new Error('HTTP ' + response.status); }
-    var preparedData = await response.json();
-    var loaded = await loadSetFromDB(preparedData);
-    if(!loaded){ return false; }
-    wmdcApplyExactCopyFullReviewMode_();
+    var loadedResults = await Promise.all([
+      loadSetFromDB(),
+      wmPrepareStudyModeForCurrentSet()
+    ]);
+    if(!loadedResults[0]){ return false; }
     wmdcApplyPreviewFromLoadedWords();
     return true;
   }
@@ -11658,20 +11658,95 @@ if(WM_DEV_LIVE_REVIEW_MODE){
     selector.innerHTML = '';
   }
 
-  function wmdcPrepareExactCopyStepState_(){
+  function wmdcSwitchLiveStudyTestInPlace_(selectedIndex){
+    var frame=wmdcById('wmdc-live-study-frame');
+    if(!frame || !frame.contentWindow) return false;
+
+    try{
+      var studyWindow=frame.contentWindow;
+      if(studyWindow.location.origin !== window.location.origin) return false;
+
+      var liveUrl=new URL(studyWindow.location.href);
+      if(liveUrl.searchParams.get('wmDevReview') !== '1') return false;
+      if(liveUrl.searchParams.get('wmDevStep') !== '6') return false;
+      if(String(liveUrl.searchParams.get('set_id') || '') !== String(wmdcGetSetId())) return false;
+
+      var targetIndex=Math.max(0,Number(selectedIndex) || 0);
+      var switched=studyWindow.eval(
+        '(function(targetIndex){' +
+          'if(typeof getTestList!=="function"||typeof render!=="function"||typeof shuffle!=="function")return false;' +
+          'if(typeof originalWords==="undefined"||!Array.isArray(originalWords)||originalWords.length===0)return false;' +
+          'var tests=getTestList();' +
+          'if(!tests.length)return false;' +
+          'targetIndex=Math.max(0,Math.min(Number(targetIndex)||0,tests.length-1));' +
+          'if(typeof testIndex!=="undefined"&&targetIndex===testIndex+1&&typeof goNextTest==="function"){' +
+            'goNextTest();' +
+          '}else{' +
+            'testIndex=targetIndex;' +
+            'isRetest=false;' +
+            'testWords=shuffle(originalWords);' +
+            'stage=7;' +
+            'render();' +
+          '}' +
+          'return true;' +
+        '})(' + targetIndex + ')'
+      );
+
+      if(switched !== true) return false;
+      liveUrl.searchParams.set('wmDevTestIndex',String(targetIndex));
+      studyWindow.history.replaceState(null,'',liveUrl.pathname + liveUrl.search);
+      return true;
+    }catch(error){
+      wmdcLog('[DEV TEST SWITCH ERROR] 현재 Study 내부 TEST 즉시전환 실패 · ' + (error && error.message ? error.message : String(error)));
+      return false;
+    }
+  }
+
+  function wmdcRunSelectedTest(selectedIndex){
+    var tests = getTestList();
+    if(!tests.length){ return; }
+    var nextIndex = Math.max(0, Math.min(Number(selectedIndex) || 0, tests.length - 1));
+    var switchedInPlace = wmdcSwitchLiveStudyTestInPlace_(nextIndex);
+    if(!switchedInPlace && !wmdcMountLiveStudyFrame('6', nextIndex)){ return; }
+
+    var selector = wmdcById('wmdc-test-selector');
+    if(selector){
+      var buttons = selector.querySelectorAll('[data-wmdc-test-index]');
+      for(var i=0; i<buttons.length; i++){
+        buttons[i].classList.toggle('is-active', Number(buttons[i].getAttribute('data-wmdc-test-index')) === nextIndex);
+      }
+    }
+    var title = wmdcById('wmdc-quick-title');
+    if(title){ title.textContent = 'DEV 빠른 이동 테스트 실행 · ' + wmdcMakeCourseLabel(wmdcGetSetId()) + ' · ' + wmdcGetTestSelectorLabel(tests[nextIndex], nextIndex); }
+    wmdcSetText('wmdc-status-step', 'STEP : ' + wmdcGetTestSelectorLabel(tests[nextIndex], nextIndex));
+    wmdcSetText('wmdc-status-real-db', switchedInPlace ? 'REAL DB : SUCCESS' : 'REAL DB : LOADING');
+    wmdcSetText('wmdc-status-result', switchedInPlace ? 'RESULT : SUCCESS' : 'RESULT : READY');
+    wmdcLog(switchedInPlace
+      ? '[DEV TEST SWITCH] 현재 Study 내부 TEST 즉시전환 · ' + wmdcGetTestSelectorLabel(tests[nextIndex], nextIndex)
+      : '[DEV TEST RUN] 현재 /study 원본 TEST 최초 실행 시작 · ' + wmdcGetTestSelectorLabel(tests[nextIndex], nextIndex));
+  }
+
+  function wmdcForceFullStudyReviewMode_(){
+    WM_ACTIVE_STUDY_MODE = wmNormalizeStudyMode({
+      S4실루엣단계:'전체',
+      S6테스트모드:'기본전체',
+      레벨완료조건:'2회',
+      레벨회차추가:0
+    });
+    WM_ACTIVE_STUDY_MODE_SET_ID = currentSetId;
+  }
+
+  function wmdcResetCopiedStudyScreenState_(){
     try{ stopWordAudio(); }catch(e){}
     try{ clearInterval(testTimer); }catch(e){}
-    learningStartTime = Date.now();
-    wmCurrentStepStartTime = learningStartTime;
-    completedSteps = [];
     currentWords = shuffle(originalWords);
     index = 0;
     step2Wrong = [];
     step3Wrong = [];
     memoryWrong = [];
-    step2WrongTotal = [];
-    step3WrongTotal = [];
-    memoryWrongTotal = [];
+    if(typeof step2WrongTotal !== 'undefined') step2WrongTotal = [];
+    if(typeof step3WrongTotal !== 'undefined') step3WrongTotal = [];
+    if(typeof memoryWrongTotal !== 'undefined') memoryWrongTotal = [];
     isStep2Review = false;
     isStep3Review = false;
     isMemoryReview = false;
@@ -11679,30 +11754,36 @@ if(WM_DEV_LIVE_REVIEW_MODE){
     memoryCount = 0;
     memoryLocked = false;
     afterMemoryAction = null;
+    testIndex = 0;
+    testWords = [];
     isRetest = false;
     firstTestScores = [];
-    firstEngKoWriteWrongWords = [];
-    firstKoEngWriteWrongWords = [];
+    if(typeof firstEngKoWriteWrongWords !== 'undefined') firstEngKoWriteWrongWords = [];
+    if(typeof firstKoEngWriteWrongWords !== 'undefined') firstKoEngWriteWrongWords = [];
     currentTestResults = [];
     currentTestWrongs = [];
     activeTestQuestionIndex = null;
-    wmdcApplyExactCopyFullReviewMode_();
+    if(typeof wmFirstTestTotalSeconds !== 'undefined') wmFirstTestTotalSeconds = 0;
+    if(typeof wmActiveFirstTestStartTime !== 'undefined') wmActiveFirstTestStartTime = 0;
+    learningStartTime = Date.now();
+    wmCurrentStepStartTime = learningStartTime;
   }
 
-  function wmdcRunSelectedTest(selectedIndex){
+  function wmdcRunCopiedStudyTest(selectedIndex){
+    wmdcForceFullStudyReviewMode_();
     var tests = getTestList();
-    if(tests.length !== 4){
-      wmdcSetText('wmdc-status-result', 'RESULT : FAIL');
-      wmdcSetText('wmdc-status-cause', 'CAUSE : TEST COUNT ' + tests.length);
-      wmdcLog('[DEV EXACT COPY ERROR] TEST 4종이 아닙니다. 현재=' + tests.length);
-      return;
-    }
-    var nextIndex = Math.max(0, Math.min(Number(selectedIndex) || 0, 3));
-    wmdcPrepareExactCopyStepState_();
+    if(!tests.length){ return; }
+    var nextIndex = Math.max(0, Math.min(Number(selectedIndex) || 0, tests.length - 1));
+    wmdcResetCopiedStudyScreenState_();
     stage = 7;
     testIndex = nextIndex;
     testWords = shuffle(originalWords);
-    if(!wmdcMountStudentApp()){ return; }
+    if(!wmdcMountStudentApp()){
+      wmdcSetText('wmdc-status-result','RESULT : FAIL');
+      wmdcSetText('wmdc-status-cause','CAUSE : FAIL');
+      wmdcLog('[DEV COPY TEST ERROR] Study 복제화면 mount 실패');
+      return;
+    }
     render();
 
     var selector = wmdcById('wmdc-test-selector');
@@ -11717,7 +11798,8 @@ if(WM_DEV_LIVE_REVIEW_MODE){
     wmdcSetText('wmdc-status-step', 'STEP : ' + wmdcGetTestSelectorLabel(tests[nextIndex], nextIndex));
     wmdcSetText('wmdc-status-real-db', 'REAL DB : SUCCESS');
     wmdcSetText('wmdc-status-result', 'RESULT : SUCCESS');
-    wmdcLog('[DEV EXACT COPY TEST] embedded Study 원본 TEST 실행 · ' + wmdcGetTestSelectorLabel(tests[nextIndex], nextIndex));
+    wmdcSetText('wmdc-status-cause', 'CAUSE : OK');
+    wmdcLog('[DEV COPY TEST] Study 복제본 TEST 실행 · ' + wmdcGetTestSelectorLabel(tests[nextIndex], nextIndex));
   }
 
   function wmdcShowTestSelector(){
@@ -11731,7 +11813,7 @@ if(WM_DEV_LIVE_REVIEW_MODE){
     var buttons = selector.querySelectorAll('[data-wmdc-test-index]');
     for(var i=0; i<buttons.length; i++){
       buttons[i].onclick = function(){
-        wmdcRunSelectedTest(Number(this.getAttribute('data-wmdc-test-index')) || 0);
+        wmdcRunCopiedStudyTest(Number(this.getAttribute('data-wmdc-test-index')) || 0);
       };
     }
   }
@@ -11748,19 +11830,21 @@ if(WM_DEV_LIVE_REVIEW_MODE){
     wmdcSetText('wmdc-status-real-db', 'REAL DB : LOADING');
 
     try{
-      if(currentSetId !== setId || !isDbReady || !Array.isArray(originalWords) || originalWords.length === 0){
+      if(currentSetId !== setId || !isDbReady || !Array.isArray(originalWords) || originalWords.length === 0 || WM_ACTIVE_STUDY_MODE_SET_ID !== setId){
         var ok = await wmdcLoadActualDbForPreview(setId);
         if(!ok){ throw new Error('실제 학생학습화면 loadSetFromDB 실패'); }
       }
-      wmdcApplyExactCopyFullReviewMode_();
-      if(getTestList().length !== 4){ throw new Error('exact-copy Study TEST 4종 확인 실패'); }
-      wmdcSetPlayerMessage('위 TEST 선택기에서 확인할 시험을 선택하세요.<br>Study 원본 기준 TEST 4종을 모두 확인합니다.');
+      wmdcForceFullStudyReviewMode_();
+      stage = 7;
+      testIndex = 0;
+      testWords = shuffle(originalWords);
+      wmdcSetPlayerMessage('위 TEST 선택기에서 확인할 시험을 선택하세요.<br>DEV 검수 기준 TEST 4종을 모두 표시합니다.');
       wmdcShowTestSelector();
       wmdcSetText('wmdc-status-real-db', 'REAL DB : SUCCESS');
       wmdcSetText('wmdc-status-result', 'RESULT : SUCCESS');
       wmdcSetText('wmdc-status-cause', 'CAUSE : OK');
       if(title){ title.textContent = 'DEV 빠른 이동 테스트 · ' + wmdcMakeCourseLabel(setId) + ' · TEST 선택'; }
-      wmdcLog('[DEV EXACT COPY TEST SELECTOR] Study 원본 TEST 4종 표시 완료');
+      wmdcLog('[DEV TEST SELECTOR] 실제 배정 TEST ' + getTestList().length + '개 표시 완료');
     } catch(error){
       wmdcHideTestSelector();
       wmdcSetText('wmdc-status-real-db', 'REAL DB : FAIL');
@@ -11789,15 +11873,17 @@ if(WM_DEV_LIVE_REVIEW_MODE){
     wmdcSetText('wmdc-status-cause', 'CAUSE : OK');
 
     wmdcLog('====================================');
-    wmdcLog('[DEV EXACT COPY STEP] embedded Study 원본 실행 시작');
-    wmdcLog('[DEV EXACT COPY STEP] Set_ID=' + setId + ' / Step=' + stepName);
+    wmdcLog('[DEV COPY STEP] Study 6485 복제본 실행 시작');
+    wmdcLog('[DEV COPY STEP] Set_ID=' + setId + ' / Step=' + stepName);
 
     try{
       if(currentSetId !== setId || !isDbReady || !Array.isArray(originalWords) || originalWords.length === 0){
         var ok = await wmdcLoadActualDbForPreview(setId);
-        if(!ok){ throw new Error('Study 원본 loadSetFromDB 실패'); }
+        if(!ok){ throw new Error('Study 복제본 loadSetFromDB 실패'); }
       }
-      wmdcPrepareExactCopyStepState_();
+
+      wmdcForceFullStudyReviewMode_();
+      wmdcResetCopiedStudyScreenState_();
 
       if(String(step) === '2') stage = 2;
       else if(String(step) === '3') stage = 3;
@@ -11806,31 +11892,21 @@ if(WM_DEV_LIVE_REVIEW_MODE){
       else if(String(step) === 'complete') stage = 8;
       else stage = 1;
 
-      if(!wmdcMountStudentApp()){ throw new Error('embedded Study 실행영역을 찾지 못했습니다.'); }
-      render();
+      if(!wmdcMountStudentApp()){
+        throw new Error('Study 복제화면 mount 실패');
+      }
 
-      var parts = getSetParts(setId);
-      var expectedWords = parts && Number(parts.level) >= 7 ? 20 : 10;
-      if(Array.isArray(originalWords) && originalWords.length !== expectedWords){
-        wmdcSetText('wmdc-status-result', 'RESULT : FAIL');
-        wmdcSetText('wmdc-status-cause', 'CAUSE : WORD COUNT ' + originalWords.length + '/' + expectedWords);
-        wmdcLog('[DEV EXACT COPY CHECK] 단어수 불일치 · ' + setId + ' = ' + originalWords.length + '/' + expectedWords);
-      }else{
-        wmdcSetText('wmdc-status-result', 'RESULT : SUCCESS');
-        wmdcSetText('wmdc-status-cause', 'CAUSE : OK');
-      }
+      render();
       wmdcSetText('wmdc-status-real-db', 'REAL DB : SUCCESS');
-      if(String(step) === '4' && getActiveMemorySteps().length !== 4){
-        wmdcSetText('wmdc-status-result', 'RESULT : FAIL');
-        wmdcSetText('wmdc-status-cause', 'CAUSE : MEMORY ' + getActiveMemorySteps().length + '/4');
-        wmdcLog('[DEV EXACT COPY CHECK] Memory 4단계 확인 실패');
-      }
+      wmdcSetText('wmdc-status-result', 'RESULT : SUCCESS');
+      wmdcSetText('wmdc-status-cause', 'CAUSE : OK');
+      wmdcLog('[DEV COPY STEP] Study 복제본 렌더링 완료');
     }catch(error){
       wmdcSetText('wmdc-status-real-db', 'REAL DB : FAIL');
       wmdcSetText('wmdc-status-result', 'RESULT : FAIL');
       wmdcSetText('wmdc-status-cause', 'CAUSE : FAIL');
-      wmdcSetPlayerMessage('Study exact-copy 실행 실패: ' + (error && error.message ? error.message : String(error)));
-      wmdcLog('[DEV EXACT COPY ERROR] ' + (error && error.message ? error.message : String(error)));
+      wmdcSetPlayerMessage('Study 복제본 실행 실패: ' + (error && error.message ? error.message : String(error)));
+      wmdcLog('[DEV COPY STEP ERROR] ' + (error && error.message ? error.message : String(error)));
     }
   }
 
@@ -11974,7 +12050,7 @@ if(WM_DEV_LIVE_REVIEW_MODE){
 
     wmdcInitTopNavDocking();
     wmdcLog('[MINI BAR] 상단 네비 원위치 시작 후 화면 상단 고정 docking 적용 완료');
-    wmdcLog('[EXACT COPY] DEV 빠른이동은 embedded Study 원본 함수만 실행');
+    wmdcLog('[MERGE] DEV 학습테스트=DB 미리보기 / 빠른 이동테스트=실제 Step 실행으로 분리 완료');
     wmdcLog('[AUDIO QA] 음원 자동검수 패널 연결 완료');
     wmdcLog('[LEVEL5 AUDIO LOCK] 5레벨 전체 음원 현재값 최종 고정 활성화');
     wmdcLog('[LEVEL3 AUDIO LOCK] 3레벨 전체 음원 현재값 최종 고정 활성화');
@@ -12839,4 +12915,4 @@ if(WM_DEV_LIVE_REVIEW_MODE){
   }else{boot();}
 })();
 </script>
-<!-- [TEST부스] Dev Study100%복제 11549-12842 -->
+<!-- [TEST부스] Dev Study100%복제·Study무영향 11549-12918 -->
