@@ -222,11 +222,11 @@ try{
 
 <style>
   #wm-student-login-box {
-    width: calc(100% - 48px);
-    max-width: 1040px;
-    min-height: 640px;
-    margin: clamp(28px, 5vh, 52px) auto;
-    padding: 64px 32px;
+    width: calc(100% - 40px);
+    max-width: 920px;
+    min-height: 560px;
+    margin: 0 auto;
+    padding: 58px 24px;
     box-sizing: border-box;
     display: flex;
     align-items: center;
@@ -242,57 +242,57 @@ try{
 
   .wm-login-card {
     width: 100%;
-    max-width: 480px;
+    max-width: 420px;
     position: relative;
     z-index: 1;
     background: #fff;
     border: 3px solid #ffd633;
-    border-radius: 22px;
-    padding: 36px 32px;
+    border-radius: 20px;
+    padding: 30px 26px;
     box-sizing: border-box;
     box-shadow: 0 18px 42px rgba(7,31,75,0.20);
   }
 
   .wm-login-title {
-    font-size: 28px;
+    font-size: 24px;
     font-weight: 900;
     text-align: center;
     color: #071f4b;
   }
 
   .wm-login-desc {
-    font-size: 15px;
+    font-size: 14px;
     text-align: center;
     color: #6b7280;
-    margin-bottom: 24px;
+    margin-bottom: 20px;
   }
 
   .wm-login-label {
     display: block;
-    font-size: 14px;
-    margin-top: 14px;
+    font-size: 13px;
+    margin-top: 12px;
     font-weight: 700;
   }
 
   .wm-login-input {
     width: 100%;
-    padding: 14px;
+    padding: 12px;
     border: 1px solid #b9cbe1;
-    border-radius: 12px;
-    margin-top: 6px;
+    border-radius: 10px;
+    margin-top: 5px;
     box-sizing: border-box;
-    background: #f5f9fd; font-size: 16px;
+    background: #f5f9fd;
   }
 
   .wm-login-btn {
     width: 100%;
-    margin-top: 20px;
-    padding: 14px;
+    margin-top: 18px;
+    padding: 12px;
     background: #071f4b;
     color: white;
     border: none;
     border-radius: 12px;
-    font-weight: 700; font-size: 16px;
+    font-weight: 700;
     cursor: pointer;
   }
 
@@ -302,38 +302,38 @@ try{
 
   @media (max-width: 640px) {
     #wm-student-login-box {
-      width: calc(100% - 16px);
-      min-height: calc(100vh - var(--wm-test-booth-height) - 24px);
-      margin: 12px auto;
-      padding: 36px 12px 26px;
-      border-radius: 20px;
+      width: calc(100% - 24px);
+      min-height: 520px;
+      margin: 0 auto;
+      padding: 48px 16px 34px;
+      border-radius: 22px;
       background: linear-gradient(180deg, #071f4b 0 28%, #eaf4ff 28% 100%);
     }
 
     .wm-login-card {
-      padding: 30px 22px;
+      padding: 26px 20px;
     }
   }
 
   .wm-login-message {
-    margin-top: 14px;
+    margin-top: 12px;
     text-align: center;
-    font-size: 15px;
+    font-size: 14px;
     color: red;
   }
 
   .wm-login-result {
     margin-top: 16px;
-    padding: 14px;
+    padding: 12px;
     background: #f3f4f6;
     border-radius: 12px;
     display: none;
-    font-size: 15px;
+    font-size: 14px;
     line-height: 1.7;
   }
-
-  html,body{min-height:100%;margin:0;background:#f3f7fc;}
-  body{min-height:100vh;background:linear-gradient(180deg,#f8fbff 0%,#eef5fd 58%,#f8fbff 100%);overflow-x:hidden;}
+  html,body{min-height:100%;}
+  body{min-height:100vh;margin:0;display:grid;place-items:center;padding:clamp(72px,9vh,112px) 0;box-sizing:border-box;background:radial-gradient(circle at 14% 18%,rgba(255,226,142,.34) 0 7%,transparent 23%),radial-gradient(circle at 86% 17%,rgba(180,232,221,.30) 0 8%,transparent 24%),radial-gradient(circle at 82% 84%,rgba(198,213,255,.32) 0 8%,transparent 24%),linear-gradient(135deg,#f7fbff 0%,#fffaf1 50%,#f3fbf7 100%);}
+  body.wm-test-booth-active{min-height:calc(100vh - var(--wm-test-booth-height));}
 </style>
 
 <script>
