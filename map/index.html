@@ -1,4 +1,4 @@
-<!-- [TEST부스] Map 학습기록최근15개날짜제한제거 6661-6648 -->
+<!-- [REAL부스] Map 모든기기A4한장인쇄 6678-6681 -->
 <!-- ==========================================================
    🧪 WORD MATE Map.html - TEST / REAL 전환 설정
    ==========================================================
@@ -14,7 +14,7 @@
    🚨 리얼 배포 체크: ① WM_ENV TEST → REAL 변경 → ② 저장(Ctrl+S) → ③ 배포(Deploy) → ④ 리얼 테스트 완료
 ========================================================== -->
 <script>
-const WM_ENV = 'TEST';
+const WM_ENV = 'REAL';
 
 
 /* ==========================================================
@@ -1761,7 +1761,7 @@ body.wm-map-loading-active #wm-learning-record-widget{
   font-weight:900;
 }
 
-@media(max-width:768px){
+@media screen and (max-width:768px){
 
   .main-title{
     font-size:40px !important;
@@ -3075,6 +3075,7 @@ function wmApplyCurrentProgressDisplayOverrideToSetData_(){
   const override = wmCurrentProgressDisplayOverride || {};
   const currentSet = wmNormalizeCurrentSetIdForMap_(override.currentSet || '');
   if(!currentSet || !Array.isArray(setData)) return;
+  if(wmViewingCompletedHistoryLevel || Number(currentSet.split('-')[0]) !== Number(currentLevelNumber)) return;
 
   const dbSetProgress = wmParseProgressPercentNumber_(override.setProgress);
   const safeSetProgress = Math.max(0, Math.min(99, Math.floor(dbSetProgress || 0)));
@@ -3152,9 +3153,9 @@ function wmBuildCurrentProgressHistoryCacheForMap_(raw, latestLevel){
 
   const latest = Number(String(wmPickFirstValue_(raw.현재레벨, raw.currentLevel, raw.level, latestLevel, 0)).replace(/[^0-9]/g, '')) || 0;
 
-  if(!levels.length && latest && WM_LEVEL_CONFIG[latest]){
-    levels = [latest];
-    rounds = [Number(wmPickFirstValue_(raw.순차완주회차, raw.sequentialRound, raw.완료회차, 0)) || 0];
+  if(latest && WM_LEVEL_CONFIG[latest] && levels.indexOf(latest) < 0){
+    levels.push(latest);
+    rounds.push(Number(wmPickFirstValue_(raw.순차완주회차, raw.sequentialRound, raw.완료회차, 0)) || 0);
   }
 
   const pairs = levels.map(function(level, index){
@@ -3164,7 +3165,7 @@ function wmBuildCurrentProgressHistoryCacheForMap_(raw, latestLevel){
   return {
     levels: pairs.map(function(item){ return item.level; }),
     roundsByLevel: pairs.reduce(function(acc, item){ acc[item.level] = item.round; return acc; }, {}),
-    currentLevel: pairs.length ? pairs[pairs.length - 1].level : latest,
+    currentLevel: latest,
     levelProgress: wmParseProgressPercentNumber_(wmPickFirstValue_(raw.레벨진행률, raw.levelProgress, raw.progressPercent, 0))
   };
 }
@@ -4465,69 +4466,45 @@ function wmRenderRecordLevelHistoryBoard_(records, setStatusMap, latestLevelOver
   const bar = document.querySelector('.level-bar');
   if(!bar) return;
 
-  const cacheHistory = (wmCurrentProgressHistoryCache && Array.isArray(wmCurrentProgressHistoryCache.levels) && wmCurrentProgressHistoryCache.levels.length)
-    ? wmCurrentProgressHistoryCache
-    : null;
+  const raw = (wmCurrentProgressDisplayOverride && typeof wmCurrentProgressDisplayOverride === 'object')
+    ? wmCurrentProgressDisplayOverride
+    : {};
+  const levels = wmParsePipeNumberListForHistory_(raw.히스토리레벨, false);
+  const rounds = wmParsePipeNumberListForHistory_(raw.히스토리횟수, true);
+  const pairs = levels.map(function(level, index){
+    return { level:Number(level), round:Number(rounds[index] || 0) };
+  }).filter(function(item){
+    return !!WM_LEVEL_CONFIG[item.level];
+  });
 
-  const latestLevel = Number(
-    latestLevelOverride ||
-    (cacheHistory && cacheHistory.currentLevel) ||
-    currentLevelNumber ||
-    0
-  );
-
-  let levels = cacheHistory
-    ? cacheHistory.levels.map(function(level){ return Number(level || 0); })
-    : [];
-
-  if(!levels.length){
-    levels = wmGetRecordLevelListForHistory_(records, latestLevel);
+  if(!pairs.length){
+    bar.innerHTML = '';
+    wmHistoryCompletedLevel = 0;
+    wmHistoryCurrentLevel = 0;
+    return;
   }
 
-  const seen = {};
-  levels = levels.filter(function(level){
-    const n = Number(level || 0);
-    if(!WM_LEVEL_CONFIG[n] || seen[n]) return false;
-    seen[n] = true;
-    return true;
-  }).sort(function(a,b){ return a-b; });
+  const currentHistoryLevel = Number(pairs[pairs.length - 1].level || 0);
 
-  if(!levels.length && WM_LEVEL_CONFIG[latestLevel]){
-    levels = [latestLevel];
-  }
-  if(!levels.length) return;
-
-  const currentHistoryLevel = levels.indexOf(latestLevel) >= 0 ? latestLevel : levels[levels.length - 1];
-  const levelProgress = Math.max(0, Math.min(100, Math.round(Number(
-    (cacheHistory && cacheHistory.levelProgress) ||
-    (wmCurrentProgressDisplayOverride && wmCurrentProgressDisplayOverride.levelProgress) ||
-    0
-  ))));
-  const roundsByLevel = (cacheHistory && cacheHistory.roundsByLevel) || {};
-
-  /* WM_HISTORY_DIRECT_DB_RENDER_FIX_26070748
-     원인: 이전 함수는 히스토리레벨을 읽은 뒤에도 records/levelDone 공식으로 다시 판정했습니다.
-     그래서 현재진행_DB에 4|5가 있어도 과거 버튼 렌더가 공식 결과에 묶였습니다.
-     수정: 히스토리레벨 값이 있으면 그 값 자체를 버튼 목록으로 확정하고, 현재 레벨이 아닌 과거 레벨은 초록 버튼으로 렌더합니다. */
-  bar.innerHTML = levels.map(function(level){
-    const isCurrentHistory = Number(level) === Number(currentHistoryLevel);
-    const isActive = Number(currentLevelNumber) === Number(level);
-    const round = Math.max(0, Math.min(3, Number(roundsByLevel[level] || 0)));
+  bar.innerHTML = pairs.map(function(item){
+    const level = Number(item.level || 0);
+    const round = Number(item.round || 0);
+    const isCurrentHistory = level === currentHistoryLevel;
     const cls = isCurrentHistory ? 'level-current' : 'level-done';
-    const activeCls = isActive ? ' level-history-active' : '';
+    const activeCls = isCurrentHistory ? ' level-history-active' : '';
     const strongId = isCurrentHistory ? ' id="levelPercent"' : '';
     const spanId = isCurrentHistory ? ' id="currentLevelLabel"' : '';
-    const label = isCurrentHistory ? (levelProgress + '%') : (round > 0 ? (round + '회완료') : '완료');
+    const label = isCurrentHistory ? (round + '회') : (round + '회완료');
     const completedView = !isCurrentHistory;
 
     return '<button class="level-block ' + cls + activeCls + '" type="button" onclick="wmSwitchHistoryLevel_(' + level + ', ' + (completedView ? 'true' : 'false') + ')">'
       + '<span' + spanId + '>' + level + ' LEVEL</span><br><strong' + strongId + '>' + label + '</strong></button>';
   }).join('');
 
-  wmSaveLevelHistoryList_(levels);
-  wmHistoryCompletedLevel = levels.length >= 2 ? levels[0] : 0;
+  wmHistoryCompletedLevel = pairs.length >= 2 ? Number(pairs[0].level || 0) : 0;
   wmHistoryCurrentLevel = currentHistoryLevel;
 }
+
 function wmSwitchHistoryLevel_(levelNumber, completedView){
   levelNumber = Number(levelNumber || 0);
   if(!WM_LEVEL_CONFIG[levelNumber] || !wmLastLearningMapData) return;
@@ -4813,7 +4790,7 @@ function renderSetMap(){
               ? 'startStudy'
               : 'showSetDetail';
           return `
-            <button class="set-block ${getBlockClass(item)}" onclick="${blockAction}('${item.set}')">
+            <button class="set-block ${getBlockClass(item)}" ${wmViewingCompletedHistoryLevel ? 'disabled aria-disabled="true"' : `onclick="${blockAction}('${item.set}')"`}>
               ${getBlockContent(item)}
             </button>
           `;
@@ -5450,6 +5427,7 @@ function wmForceHomeworkBottomFixedBarOnFirstView(){
 }
 
 async function startStudy(setId){
+  if(wmViewingCompletedHistoryLevel) return;
   if(!wmMapDataReady){
     alert('학습맵을 불러오는 중입니다. 잠시만 기다려 주세요.');
     return;
@@ -5700,18 +5678,27 @@ function printRecords(){
   const html = document.documentElement;
   const body = document.body;
 
+  function applyPrintLayout(){
+    if(html) html.classList.add('wm-map-record-print');
+    if(body){ body.classList.add('wm-map-record-print'); body.style.setProperty('--wm-map-record-print-align', wmMobileTabletPrint ? 'flex-start' : 'center'); }
+    if(root && printZoom) root.style.setProperty('--wm-map-record-print-zoom', printZoom);
+  }
+
   function cleanupPrintLayout(){
     if(root) root.style.removeProperty('--wm-map-record-print-zoom');
     if(html) html.classList.remove('wm-map-record-print');
-    if(body) body.classList.remove('wm-map-record-print');
+    if(body){ body.classList.remove('wm-map-record-print'); body.style.removeProperty('--wm-map-record-print-align'); }
   }
 
-  if(html) html.classList.add('wm-map-record-print');
-  if(body) body.classList.add('wm-map-record-print');
-  if(root && printZoom) root.style.setProperty('--wm-map-record-print-zoom', printZoom);
-
-  window.addEventListener('pointerdown', cleanupPrintLayout, {once:true, capture:true});
-  window.addEventListener('keydown', cleanupPrintLayout, {once:true, capture:true});
+  const wmMobileTabletPrint = !!(window.matchMedia && window.matchMedia('(hover: none) and (pointer: coarse), screen and (max-width: 768px)').matches);
+  window.addEventListener('beforeprint', applyPrintLayout, {once:true});
+  if(wmMobileTabletPrint){
+    window.addEventListener('pointerdown', cleanupPrintLayout, {once:true, capture:true});
+    window.addEventListener('keydown', cleanupPrintLayout, {once:true, capture:true});
+  }else{
+    window.addEventListener('afterprint', cleanupPrintLayout, {once:true});
+  }
+  applyPrintLayout();
   try{
     window.print();
   }catch(err){
@@ -6675,4 +6662,5 @@ wmInitPublishedReportModal_();
 wmInitLearningMap();
 wmForceHomeworkBottomFixedBarOnFirstView();
 </script>
-<!-- [TEST부스] Map 학습기록최근15개날짜제한제거 6661-6648 -->
+<!-- [REAL부스] Map 모든기기A4한장인쇄 6678-6681 -->
+
